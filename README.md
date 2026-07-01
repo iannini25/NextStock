@@ -25,8 +25,6 @@ API em Flask + SQLAlchemy com banco MySQL, e um **app em Flutter** que consome e
 **Banco:** MySQL (driver PyMySQL)
 **Frontend:** Flutter (Dart), usando o pacote `http` pra falar com a API
 
-> O frontend antigo em HTML/CSS/JS ficou salvo na pasta `legacy_frontend/`, só como histórico.
-
 ## Arquitetura
 
 Backend em camadas (como pede a atividade):
@@ -120,21 +118,20 @@ NextStock/
 ├── proxy/                          # proxy simples na frente da API
 │   ├── proxy.py
 │   └── requirements.txt
-├── frontend/                       # o app Flutter (novo)
-│   ├── pubspec.yaml                # dependencias (tem o http)
-│   └── lib/
-│       ├── main.dart               # entrada do app, tema e navegacao
-│       ├── models/
-│       │   ├── produto.dart        # classe Produto (fromJson/toJson)
-│       │   └── categoria.dart
-│       ├── services/
-│       │   └── api_service.dart    # todas as chamadas http + erros
-│       └── screens/
-│           ├── produtos_screen.dart
-│           ├── produto_form.dart
-│           ├── categorias_screen.dart
-│           └── categoria_form.dart
-└── legacy_frontend/                # frontend antigo em HTML/CSS/JS (so historico)
+└── frontend/                       # o app Flutter (novo)
+    ├── pubspec.yaml                # dependencias (tem o http)
+    └── lib/
+        ├── main.dart               # entrada do app, tema e navegacao
+        ├── models/
+        │   ├── produto.dart        # classe Produto (fromJson/toJson)
+        │   └── categoria.dart
+        ├── services/
+        │   └── api_service.dart    # todas as chamadas http + erros
+        └── screens/
+            ├── produtos_screen.dart
+            ├── produto_form.dart
+            ├── categorias_screen.dart
+            └── categoria_form.dart
 ```
 
 ## Como rodar
