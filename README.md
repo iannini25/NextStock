@@ -7,9 +7,8 @@ perecíveis. A ideia é usar dados de vendas, estoque, sazonalidade, clima e eve
 prever a demanda e ajudar o lojista a comprar, repor e promover melhor, reduzindo desperdício e
 evitando falta de produto em mercados, padarias, açougues e hortifrutis.
 
-Esta entrega é a parte de **CRUD da API**: implementamos o cadastro/listagem/edição/exclusão das
-principais Models do sistema, com backend em Flask + SQLAlchemy, banco MySQL e uma tela simples em
-HTML/CSS/JavaScript consumindo a API.
+Esta entrega é o **CRUD das principais Models**: cadastro/listagem/edição/exclusão feitos por uma
+API em Flask + SQLAlchemy com banco MySQL, e um **app em Flutter** que consome essa API.
 
 ## Equipe
 
@@ -24,17 +23,16 @@ HTML/CSS/JavaScript consumindo a API.
 
 **Backend:** Python + Flask + SQLAlchemy (ORM)
 **Banco:** MySQL (driver PyMySQL)
-**Frontend:** HTML + CSS + JavaScript puro
+**Frontend:** Flutter (Dart), usando o pacote `http` pra falar com a API
 
-> A visão do produto usa Flutter/IA, mas para esta atividade de CRUD o frontend é web simples
-> (HTML/CSS/JS) consumindo a API do Flask.
+> O frontend antigo em HTML/CSS/JS ficou salvo na pasta `legacy_frontend/`, só como histórico.
 
 ## Arquitetura
 
-Seguimos a arquitetura em camadas pedida na atividade:
+Backend em camadas (como pede a atividade):
 
 ```
-Tela (HTML/JS)  ->  Controller  ->  Service  ->  Model (ORM)  ->  MySQL
+App Flutter  ->  Proxy  ->  Controller  ->  Service  ->  Model (ORM)  ->  MySQL
 ```
 
 * **Model** (`models/`): representa a tabela, herda de `db.Model` e tem os métodos de salvar,
@@ -43,6 +41,12 @@ Tela (HTML/JS)  ->  Controller  ->  Service  ->  Model (ORM)  ->  MySQL
   deletar). É onde ficam as validações.
 * **Controller** (`controllers/`): as rotas da API (Blueprint do Flask), recebem a requisição,
   chamam o service e devolvem JSON.
+* **Proxy** (`proxy/`): um Flask pequeno que fica na frente da API. O app só fala com o proxy, e
+  o proxy repassa tudo pra API. Assim a API não fica exposta direto.
+
+No app Flutter a organização é simples: `models/` (as classes), `services/api_service.dart` (as
+chamadas http) e `screens/` (as telas). Nada de gerenciador de estado, só `StatefulWidget` +
+`setState`.
 
 ## Models implementadas
 
@@ -54,16 +58,17 @@ Cada produto pode pertencer a uma categoria (relacionamento por chave estrangeir
 
 ## Funcionalidades
 
-Para as duas Models tem o CRUD completo, tanto na API quanto na tela:
+Para as duas Models tem o CRUD completo, tanto na API quanto no app:
 
 * Cadastrar
 * Listar
 * Buscar por id
 * Editar
-* Excluir
+* Excluir (com confirmação)
 
 Validações: nome e preço de venda obrigatórios, preço/quantidade não podem ser negativos, código
-de barras não pode repetir e a categoria informada tem que existir.
+de barras não pode repetir e a categoria informada tem que existir. Os erros da API aparecem no app
+num SnackBar vermelho.
 
 ## Rotas da API
 
@@ -104,44 +109,38 @@ Exemplo de JSON pra criar um produto:
 
 ```
 NextStock/
-├── backend/
-│   ├── app.py                     # sobe a api, conecta no banco e registra as rotas
+├── backend/                        # a API (Flask) - NÃO muda
+│   ├── app.py
 │   ├── requirements.txt
-│   ├── .env.example               # copie pra .env e ponha a senha do mysql
-│   ├── database/
-│   │   └── create_database.sql    # cria o banco no mysql + dados de exemplo
-│   ├── models/
-│   │   ├── database.py            # instancia do SQLAlchemy (db)
-│   │   ├── categoria_model.py
-│   │   └── produto_model.py
-│   ├── services/                  # um arquivo por caso de uso
-│   │   ├── utils.py               # conversoes (numero, inteiro, data)
-│   │   ├── criar_categoria_service.py
-│   │   ├── listar_categorias_service.py
-│   │   ├── buscar_categoria_service.py
-│   │   ├── atualizar_categoria_service.py
-│   │   ├── deletar_categoria_service.py
-│   │   ├── criar_produto_service.py
-│   │   ├── listar_produtos_service.py
-│   │   ├── buscar_produto_service.py
-│   │   ├── atualizar_produto_service.py
-│   │   └── deletar_produto_service.py
-│   └── controllers/
-│       ├── categoria_controller.py
-│       └── produto_controller.py
-└── frontend/
-    ├── index.html                 # tela de produtos
-    ├── categorias.html            # tela de categorias
-    ├── css/style.css
-    └── js/
-        ├── api.js                 # funcao que fala com a api
-        ├── produtos.js
-        └── categorias.js
+│   ├── .env.example
+│   ├── database/create_database.sql
+│   ├── models/                     # Categoria e Produto (herdam de db.Model)
+│   ├── services/                   # um arquivo por caso de uso
+│   └── controllers/                # as rotas da API
+├── proxy/                          # proxy simples na frente da API
+│   ├── proxy.py
+│   └── requirements.txt
+├── frontend/                       # o app Flutter (novo)
+│   ├── pubspec.yaml                # dependencias (tem o http)
+│   └── lib/
+│       ├── main.dart               # entrada do app, tema e navegacao
+│       ├── models/
+│       │   ├── produto.dart        # classe Produto (fromJson/toJson)
+│       │   └── categoria.dart
+│       ├── services/
+│       │   └── api_service.dart    # todas as chamadas http + erros
+│       └── screens/
+│           ├── produtos_screen.dart
+│           ├── produto_form.dart
+│           ├── categorias_screen.dart
+│           └── categoria_form.dart
+└── legacy_frontend/                # frontend antigo em HTML/CSS/JS (so historico)
 ```
 
 ## Como rodar
 
-Precisa de Python 3.10+ e MySQL instalado e rodando.
+Precisa de **Python 3.10+**, **MySQL** e o **Flutter SDK** instalados. São 3 partes: a API, o
+proxy e o app. Cada um roda num terminal.
 
 ### 1. Backend (a API)
 
@@ -165,20 +164,40 @@ copy .env.example .env       # linux/mac: cp .env.example .env
 python app.py
 ```
 
-A API fica em `http://127.0.0.1:5000`. Abrir esse endereço mostra a mensagem "API do NextStock
-rodando", sinal de que subiu.
+A API fica em `http://127.0.0.1:5000`.
 
 > Se não quiser instalar MySQL só pra testar, dá pra usar SQLite: no `.env` deixe
 > `DATABASE_URL=sqlite:///nextstock.db`. A aplicação cria as tabelas sozinha ao subir.
 
-### 2. Frontend (a tela)
+> **Deixar a API escondida:** o ideal é a API só aceitar conexão local, pra ninguém acessar ela
+> direto (só o proxy). Pra isso, em `app.py` troque `host="0.0.0.0"` por `host="127.0.0.1"`. Aí
+> só o proxy fica acessível de fora.
 
-São arquivos estáticos, sobem separados da API. Jeito mais fácil:
+### 2. Proxy
+
+Com a API rodando, em outro terminal:
+
+```bash
+cd proxy
+pip install -r requirements.txt
+python proxy.py
+```
+
+O proxy sobe em `http://127.0.0.1:8000` e repassa tudo pra API na 5000.
+
+### 3. Frontend (o app Flutter)
+
+Deixe a API e o proxy rodando e, em outro terminal:
 
 ```bash
 cd frontend
-python -m http.server 5500
+flutter pub get
+flutter run
 ```
 
-Depois abre no navegador `http://127.0.0.1:5500`. Também dá pra abrir com a extensão Live Server do
-VS Code. Se mudar a porta/endereço da API, ajuste a constante `URL` em `frontend/js/api.js`.
+Escolha o dispositivo (Chrome, Windows, Android...). Pra rodar no Chrome direto:
+`flutter run -d chrome`.
+
+> **Endereço:** no arquivo `frontend/lib/services/api_service.dart` tem a constante `baseUrl`, que
+> aponta pro **proxy**. Deixe `http://127.0.0.1:8000` pra web e desktop. Se for rodar no **emulador
+> Android**, troque pra `http://10.0.2.2:8000` (é assim que o emulador enxerga o localhost do PC).

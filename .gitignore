@@ -6,7 +6,7 @@ env/
 # Variáveis de ambiente (contém senha do banco)
 .env
 
-# Banco SQLite (caso use no teste)
+# Banco SQLite (vai que ne)
 *.db
 *.sqlite3
 
@@ -19,5 +19,12 @@ __pycache__/
 .vscode/
 .idea/
 
-#santa ajuda
+#santa ajuda de cada dia
 .claude
+.agents
+.skills
+.codeium
+.cursorrules
+.cursorignore
+.windsurf
+.gleison
