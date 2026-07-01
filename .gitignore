@@ -1,0 +1,23 @@
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Variáveis de ambiente (contém senha do banco)
+.env
+
+# Banco SQLite (caso use no teste)
+*.db
+*.sqlite3
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Sistema / IDEs
+.DS_Store
+.vscode/
+.idea/
+
+#santa ajuda
+.claude
