@@ -20,7 +20,8 @@ class InicioScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('NextStock')),
       body: ListView(
         children: [
-          Padding(
+          Container(
+            color: corNavy,
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
@@ -31,7 +32,7 @@ class InicioScreen extends StatelessWidget {
                 const Text(
                   'SEU ESTOQUE SEMPRE UM PASSO À FRENTE',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, letterSpacing: 2, color: corNavy),
+                  style: TextStyle(fontSize: 11, letterSpacing: 2, color: Colors.white),
                 ),
               ],
             ),

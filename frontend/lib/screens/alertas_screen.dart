@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 
@@ -102,7 +103,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
 
   ButtonStyle estiloBotao(bool ativo) {
     return ElevatedButton.styleFrom(
-      backgroundColor: ativo ? const Color(0xFF2563EB) : Colors.grey.shade300,
+      backgroundColor: ativo ? corAzul : Colors.grey.shade300,
       foregroundColor: ativo ? Colors.white : Colors.black87,
       elevation: ativo ? 2 : 0,
     );

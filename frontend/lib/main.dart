@@ -5,8 +5,8 @@ import 'screens/alertas_screen.dart';
 import 'screens/assistente_screen.dart';
 
 // cores da marca
-const corNavy = Color(0xFF1E293B);
-const corAzul = Color(0xFF2563EB);
+const corNavy = Color(0xFF122540);
+const corAzul = Color(0xFF0066FF);
 
 void main() {
   runApp(const App());

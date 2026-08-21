@@ -35,13 +35,44 @@ class AssistenteService:
 
         return "\n".join(linhas)
 
+    def responder_simples(self, pergunta):
+        texto = (pergunta or "").lower()
+        if "vencer" in texto or "validade" in texto:
+            nomes = [p["nome"] for p in ListarProdutosVencendoService().executar(7)]
+            if not nomes:
+                return "Nenhum produto vencendo nos próximos 7 dias."
+            return "Produtos vencendo em 7 dias: " + ", ".join(nomes)
+        if "faltar" in texto or "ruptura" in texto or "acabar" in texto:
+            nomes = [p["nome"] for p in ListarProdutosEmRiscoService().executar()]
+            if not nomes:
+                return "Nenhum produto em risco de faltar."
+            return "Produtos em risco de faltar: " + ", ".join(nomes)
+        if "desperd" in texto or "perda" in texto or "painel" in texto:
+            painel = MontarPainelService().executar()
+            return (
+                "Desperdício: " + str(painel["percentual_desperdicio"]) + "% • "
+                "vencidos: " + str(painel["produtos_vencidos"]) +
+                " • valor perdido: R$ " + str(painel["valor_vencido"])
+            )
+        if "estoque" in texto or "produto" in texto:
+            linhas = []
+            for p in ListarProdutosService().executar():
+                linhas.append(str(p["nome"]) + ": " + str(p["quantidade_estoque"]) + " " + str(p["unidade"]))
+            if not linhas:
+                return "Não tem produto cadastrado."
+            return "Estoque atual:\n" + "\n".join(linhas)
+        return (
+            "Posso ajudar com validade, risco de faltar, desperdício e estoque. "
+            "Pergunta usando uma dessas palavras."
+        )
+
     def executar(self, pergunta, historico):
         if not pergunta:
             raise ValueError("pergunta é obrigatória")
 
         chave = os.getenv("ANTHROPIC_API_KEY")
-        if not chave:
-            raise ValueError("configure a ANTHROPIC_API_KEY no .env pra usar o assistente")
+        if not chave or chave == "sua_chave":
+            return {"resposta": self.responder_simples(pergunta)}
 
         contexto = self.montar_contexto()
         instrucoes = (

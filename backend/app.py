@@ -4,6 +4,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 
 from models.database import db
+from models.venda_model import Venda
+from models.evento_model import Evento
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
