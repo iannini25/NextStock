@@ -1,5 +1,7 @@
 from models.categoria_model import Categoria
 
 
-def listar_categorias():
-    return [c.virarDict() for c in Categoria.pegarTodas()]
+class ListarCategoriasService:
+
+    def executar(self):
+        return [c.virar_dict() for c in Categoria.listar_todos()]

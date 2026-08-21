@@ -62,6 +62,24 @@ class ApiService {
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
+  // -------- ALERTAS --------
+
+  // produtos que vencem daqui a X dias
+  static Future<List<Produto>> listarProdutosVencendo(int dias) async {
+    final r = await http.get(Uri.parse('$baseUrl/produtos/vencendo?dias=$dias'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => Produto.fromJson(e)).toList();
+  }
+
+  // produtos com estoque no limite (risco de faltar)
+  static Future<List<Produto>> listarProdutosEmRisco() async {
+    final r = await http.get(Uri.parse('$baseUrl/produtos/risco-ruptura'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => Produto.fromJson(e)).toList();
+  }
+
   // pega a mensagem do campo "erro" que o backend manda
   static Exception pegarErro(http.Response r) {
     try {

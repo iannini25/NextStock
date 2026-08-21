@@ -1,37 +1,40 @@
 from models.produto_model import Produto
 from models.categoria_model import Categoria
-from services.utils import numero, inteiro, virarData
+from services.utils import numero, inteiro, virar_data
 
 
-def atualizar_produto(id, dados):
-    p = Produto.pegarPorId(id)
-    if not p:
-        return None
+class AtualizarProdutoService:
 
-    if not dados.get("nome"):
-        raise ValueError("nome é obrigatório")
-    if not dados.get("preco_venda"):
-        raise ValueError("preço de venda é obrigatório")
+    def executar(self, id, dados):
+        p = Produto.buscar_por_id(id)
+        if not p:
+            return None
 
-    # codigo de barras: so da problema se for de OUTRO produto
-    cod = dados.get("codigo_barras") or None
-    if cod:
-        outro = Produto.pegarPorCodigo(cod)
-        if outro and outro.id_produto != id:
-            raise ValueError("já existe produto com esse código de barras")
+        if not dados.get("nome"):
+            raise ValueError("nome é obrigatório")
+        if not dados.get("preco_venda"):
+            raise ValueError("preço de venda é obrigatório")
 
-    cat = dados.get("id_categoria") or None
-    if cat and not Categoria.pegarPorId(cat):
-        raise ValueError("categoria não existe")
+        # codigo de barras: so da problema se for de OUTRO produto
+        cod = dados.get("codigo_barras") or None
+        if cod:
+            outro = Produto.buscar_por_codigo(cod)
+            if outro and outro.id_produto != id:
+                raise ValueError("já existe produto com esse código de barras")
 
-    p.editar(
-        dados["nome"],
-        cat,
-        cod,
-        numero(dados.get("preco_custo")),
-        numero(dados.get("preco_venda")),
-        inteiro(dados.get("quantidade_estoque")) or 0,
-        (dados.get("unidade") or "UN").upper(),
-        virarData(dados.get("data_validade")),
-    )
-    return p.virarDict()
+        cat = dados.get("id_categoria") or None
+        if cat and not Categoria.buscar_por_id(cat):
+            raise ValueError("categoria não existe")
+
+        p.atualizar(
+            dados["nome"],
+            cat,
+            cod,
+            numero(dados.get("preco_custo")),
+            numero(dados.get("preco_venda")),
+            inteiro(dados.get("quantidade_estoque")) or 0,
+            inteiro(dados.get("estoque_minimo")) or 0,
+            (dados.get("unidade") or "UN").upper(),
+            virar_data(dados.get("data_validade")),
+        )
+        return p.virar_dict()

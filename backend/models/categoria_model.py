@@ -13,24 +13,24 @@ class Categoria(db.Model):
         db.session.commit()
 
     # muda nome e descricao
-    def editar(self, nome, descricao):
+    def atualizar(self, nome, descricao):
         self.nome = nome
         self.descricao = descricao
         db.session.commit()
 
-    def apagar(self):
+    def deletar(self):
         db.session.delete(self)
         db.session.commit()
 
     @staticmethod
-    def pegarTodas():
+    def listar_todos():
         return Categoria.query.all()
 
     @staticmethod
-    def pegarPorId(id):
+    def buscar_por_id(id):
         return Categoria.query.get(id)
 
-    def virarDict(self):
+    def virar_dict(self):
         return {
             "id_categoria": self.id_categoria,
             "nome": self.nome,

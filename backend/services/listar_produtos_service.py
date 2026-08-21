@@ -1,5 +1,7 @@
 from models.produto_model import Produto
 
 
-def listar_produtos():
-    return [p.virarDict() for p in Produto.pegarTodos()]
+class ListarProdutosService:
+
+    def executar(self):
+        return [p.virar_dict() for p in Produto.listar_todos()]

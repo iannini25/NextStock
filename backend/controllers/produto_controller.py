@@ -1,49 +1,74 @@
 from flask import Blueprint, request, jsonify
 
-from services.criar_produto_service import criar_produto
-from services.listar_produtos_service import listar_produtos
-from services.buscar_produto_service import buscar_produto
-from services.atualizar_produto_service import atualizar_produto
-from services.deletar_produto_service import deletar_produto
+from services.criar_produto_service import CriarProdutoService
+from services.listar_produtos_service import ListarProdutosService
+from services.buscar_produto_service import BuscarProdutoService
+from services.atualizar_produto_service import AtualizarProdutoService
+from services.deletar_produto_service import DeletarProdutoService
+from services.listar_produtos_vencendo_service import ListarProdutosVencendoService
+from services.listar_produtos_em_risco_service import ListarProdutosEmRiscoService
 
 prod_bp = Blueprint("prod", __name__)
 
 
-@prod_bp.get("/produtos")
-def listar():
-    return jsonify(listar_produtos())
+# a controller so pega a requisicao, chama o service e devolve json.
+# regra de negocio nenhuma aqui dentro.
+class ProdutoController:
 
+    @staticmethod
+    def listar():
+        return jsonify(ListarProdutosService().executar())
 
-@prod_bp.post("/produtos")
-def criar():
-    try:
-        p = criar_produto(request.get_json() or {})
-        return jsonify(p), 201
-    except ValueError as e:
-        return jsonify({"erro": str(e)}), 400
+    @staticmethod
+    def criar():
+        try:
+            p = CriarProdutoService().executar(request.get_json() or {})
+            return jsonify(p), 201
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
-
-@prod_bp.get("/produtos/<int:id>")
-def buscar(id):
-    p = buscar_produto(id)
-    if not p:
-        return jsonify({"erro": "produto não encontrado"}), 404
-    return jsonify(p)
-
-
-@prod_bp.put("/produtos/<int:id>")
-def atualizar(id):
-    try:
-        p = atualizar_produto(id, request.get_json() or {})
+    @staticmethod
+    def buscar(id):
+        p = BuscarProdutoService().executar(id)
         if not p:
             return jsonify({"erro": "produto não encontrado"}), 404
         return jsonify(p)
-    except ValueError as e:
-        return jsonify({"erro": str(e)}), 400
+
+    @staticmethod
+    def atualizar(id):
+        try:
+            p = AtualizarProdutoService().executar(id, request.get_json() or {})
+            if not p:
+                return jsonify({"erro": "produto não encontrado"}), 404
+            return jsonify(p)
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
+
+    @staticmethod
+    def deletar(id):
+        if not DeletarProdutoService().executar(id):
+            return jsonify({"erro": "produto não encontrado"}), 404
+        return "", 204
+
+    # /produtos/vencendo?dias=7
+    @staticmethod
+    def listar_vencendo():
+        try:
+            dias = request.args.get("dias", 7)
+            return jsonify(ListarProdutosVencendoService().executar(dias))
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
+
+    @staticmethod
+    def listar_em_risco():
+        return jsonify(ListarProdutosEmRiscoService().executar())
 
 
-@prod_bp.delete("/produtos/<int:id>")
-def deletar(id):
-    if not deletar_produto(id):
-        return jsonify({"erro": "produto não encontrado"}), 404
-    return "", 204
+# rotas apontando pros metodos da controller
+prod_bp.add_url_rule("/produtos/vencendo", view_func=ProdutoController.listar_vencendo, methods=["GET"])
+prod_bp.add_url_rule("/produtos/risco-ruptura", view_func=ProdutoController.listar_em_risco, methods=["GET"])
+prod_bp.add_url_rule("/produtos", view_func=ProdutoController.listar, methods=["GET"])
+prod_bp.add_url_rule("/produtos", view_func=ProdutoController.criar, methods=["POST"])
+prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.buscar, methods=["GET"])
+prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.atualizar, methods=["PUT"])
+prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.deletar, methods=["DELETE"])

@@ -99,7 +99,7 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
             title: Text(p.nome),
             subtitle: Text(
               '${p.categoriaNome ?? "sem categoria"}  •  R\$ ${p.precoVenda?.toStringAsFixed(2) ?? "-"}\n'
-              'estoque: ${p.quantidade ?? 0} ${p.unidade ?? ""}  •  validade: ${p.validade ?? "-"}',
+              'estoque: ${p.quantidade ?? 0} ${p.unidade ?? ""} (mín: ${p.estoqueMinimo ?? 0})  •  validade: ${p.validade ?? "-"}',
             ),
             isThreeLine: true,
             trailing: Row(

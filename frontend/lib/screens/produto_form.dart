@@ -17,6 +17,7 @@ class _ProdutoFormState extends State<ProdutoForm> {
   final custo = TextEditingController();
   final venda = TextEditingController();
   final qtd = TextEditingController();
+  final minimo = TextEditingController();
   final unidade = TextEditingController(text: 'UN');
   final validade = TextEditingController();
 
@@ -36,6 +37,7 @@ class _ProdutoFormState extends State<ProdutoForm> {
       custo.text = p.precoCusto?.toString() ?? '';
       venda.text = p.precoVenda?.toString() ?? '';
       qtd.text = p.quantidade?.toString() ?? '';
+      minimo.text = p.estoqueMinimo?.toString() ?? '';
       unidade.text = p.unidade ?? 'UN';
       validade.text = p.validade ?? '';
       categoriaId = p.idCategoria;
@@ -76,6 +78,7 @@ class _ProdutoFormState extends State<ProdutoForm> {
       precoCusto: double.tryParse(custo.text.replaceAll(',', '.')),
       precoVenda: double.tryParse(venda.text.replaceAll(',', '.')),
       quantidade: int.tryParse(qtd.text),
+      estoqueMinimo: int.tryParse(minimo.text),
       unidade: unidade.text.isEmpty ? 'UN' : unidade.text,
       validade: validade.text.isEmpty ? null : validade.text,
     );
@@ -108,6 +111,7 @@ class _ProdutoFormState extends State<ProdutoForm> {
           campo(custo, 'Preço de custo', numero: true),
           campo(venda, 'Preço de venda *', numero: true),
           campo(qtd, 'Quantidade em estoque', numero: true),
+          campo(minimo, 'Estoque mínimo (pra alertar antes de faltar)', numero: true),
           campo(unidade, 'Unidade'),
           campo(validade, 'Validade (aaaa-mm-dd)'),
           const SizedBox(height: 16),

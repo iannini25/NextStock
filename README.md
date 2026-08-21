@@ -7,8 +7,9 @@ perecíveis. A ideia é usar dados de vendas, estoque, sazonalidade, clima e eve
 prever a demanda e ajudar o lojista a comprar, repor e promover melhor, reduzindo desperdício e
 evitando falta de produto em mercados, padarias, açougues e hortifrutis.
 
-Esta entrega é o **CRUD das principais Models**: cadastro/listagem/edição/exclusão feitos por uma
-API em Flask + SQLAlchemy com banco MySQL, e um **app em Flutter** que consome essa API.
+Esta entrega são **10 funcionalidades completas de ponta a ponta**: o CRUD de Produto e Categoria
+mais dois alertas (produto vencendo e produto em risco de faltar), feitos por uma API em Flask +
+SQLAlchemy com banco MySQL e um **app em Flutter** que consome essa API.
 
 ## Equipe
 
@@ -30,15 +31,19 @@ API em Flask + SQLAlchemy com banco MySQL, e um **app em Flutter** que consome e
 Backend em camadas (como pede a atividade):
 
 ```
-App Flutter  ->  Proxy  ->  Controller  ->  Service  ->  Model (ORM)  ->  MySQL
+App Flutter  ->  Proxy  ->  Controller  ->  Service  ->  Model / Repository  ->  MySQL
 ```
 
-* **Model** (`models/`): representa a tabela, herda de `db.Model` e tem os métodos de salvar,
-  editar, apagar, pegar todos e pegar por id.
-* **Service** (`services/`): um arquivo por caso de uso (criar, listar, buscar, atualizar,
-  deletar). É onde ficam as validações.
-* **Controller** (`controllers/`): as rotas da API (Blueprint do Flask), recebem a requisição,
-  chamam o service e devolvem JSON.
+* **Model** (`models/`): representa a tabela, herda de `db.Model` e tem os métodos `salvar()`,
+  `atualizar()`, `deletar()`, `listar_todos()` e `buscar_por_id()`.
+* **Service** (`services/`): uma classe por caso de uso (`CriarProdutoService`,
+  `ListarProdutosVencendoService`...), cada uma com um método `executar()`. É onde ficam as
+  validações.
+* **Repository** (`repositories/`): só pras consultas que fogem do CRUD, tipo filtro por data de
+  validade e comparação entre colunas. O service não monta query, ele pede pro repository.
+* **Controller** (`controllers/`): uma classe por recurso (`ProdutoController`,
+  `CategoriaController`). Recebe a requisição, chama o service e devolve JSON. As rotas do
+  Blueprint ficam registradas no fim do arquivo apontando pros métodos da classe.
 * **Proxy** (`proxy/`): um Flask pequeno que fica na frente da API. O app só fala com o proxy, e
   o proxy repassa tudo pra API. Assim a API não fica exposta direto.
 
@@ -50,22 +55,31 @@ chamadas http) e `screens/` (as telas). Nada de gerenciador de estado, só `Stat
 
 * **Categoria** — `id_categoria`, `nome`, `descricao`
 * **Produto** — `id_produto`, `id_categoria` (FK pra Categoria), `nome`, `codigo_barras`,
-  `preco_custo`, `preco_venda`, `quantidade_estoque`, `unidade`, `data_validade`
+  `preco_custo`, `preco_venda`, `quantidade_estoque`, `estoque_minimo`, `unidade`, `data_validade`
 
 Cada produto pode pertencer a uma categoria (relacionamento por chave estrangeira).
 
-## Funcionalidades
+## Funcionalidades Implementadas
 
-Para as duas Models tem o CRUD completo, tanto na API quanto no app:
+As 10 funcionalidades estao completas de ponta a ponta
+(tela Flutter -> proxy -> API Flask -> Controller -> Service -> Model/Repository -> banco):
 
-* Cadastrar
-* Listar
-* Buscar por id
-* Editar
-* Excluir (com confirmação)
+1. Cadastrar categoria
+2. Listar categorias
+3. Atualizar categoria
+4. Excluir categoria
+5. Cadastrar produto
+6. Listar produtos
+7. Atualizar produto
+8. Excluir produto
+9. Listar produtos proximos do vencimento (alerta de validade, com filtro de dias)
+10. Listar produtos em risco de ruptura (estoque atual <= estoque minimo)
 
-Validações: nome e preço de venda obrigatórios, preço/quantidade não podem ser negativos, código
-de barras não pode repetir e a categoria informada tem que existir. Os erros da API aparecem no app
+As duas ultimas usam o `ProdutoRepository`, porque sao consultas com filtro e nao CRUD simples.
+Elas atendem os requisitos RF03 (alerta de vencimento) e RF06 (risco de ruptura) do projeto.
+
+Validacoes: nome e preco de venda obrigatorios, preco/quantidade nao podem ser negativos, codigo
+de barras nao pode repetir e a categoria informada tem que existir. Os erros da API aparecem no app
 num SnackBar vermelho.
 
 ## Rotas da API
@@ -88,6 +102,12 @@ num SnackBar vermelho.
 | PUT    | `/produtos/<id>`  | edita                  |
 | DELETE | `/produtos/<id>`  | apaga                  |
 
+### Alertas (essas duas passam pelo Repository)
+| Método | Rota                        | O que faz                                |
+|--------|-----------------------------|------------------------------------------|
+| GET    | `/produtos/vencendo?dias=7` | produtos que vencem nos próximos X dias  |
+| GET    | `/produtos/risco-ruptura`   | produtos com estoque <= estoque mínimo   |
+
 Exemplo de JSON pra criar um produto:
 
 ```json
@@ -98,6 +118,7 @@ Exemplo de JSON pra criar um produto:
   "preco_custo": "1.80",
   "preco_venda": "3.50",
   "quantidade_estoque": 60,
+  "estoque_minimo": 20,
   "unidade": "UN",
   "data_validade": "2026-08-15"
 }
@@ -113,8 +134,9 @@ NextStock/
 │   ├── .env.example
 │   ├── database/create_database.sql
 │   ├── models/                     # Categoria e Produto (herdam de db.Model)
-│   ├── services/                   # um arquivo por caso de uso
-│   └── controllers/                # as rotas da API
+│   ├── services/                   # uma classe por caso de uso
+│   ├── repositories/               # consultas especiais (vencimento, ruptura)
+│   └── controllers/                # classes com as rotas da API
 ├── proxy/                          # proxy simples na frente da API
 │   ├── proxy.py
 │   └── requirements.txt
@@ -130,6 +152,7 @@ NextStock/
         └── screens/
             ├── produtos_screen.dart
             ├── produto_form.dart
+            ├── alertas_screen.dart
             ├── categorias_screen.dart
             └── categoria_form.dart
 ```

@@ -1,49 +1,55 @@
 from flask import Blueprint, request, jsonify
 
-from services.criar_categoria_service import criar_categoria
-from services.listar_categorias_service import listar_categorias
-from services.buscar_categoria_service import buscar_categoria
-from services.atualizar_categoria_service import atualizar_categoria
-from services.deletar_categoria_service import deletar_categoria
+from services.criar_categoria_service import CriarCategoriaService
+from services.listar_categorias_service import ListarCategoriasService
+from services.buscar_categoria_service import BuscarCategoriaService
+from services.atualizar_categoria_service import AtualizarCategoriaService
+from services.deletar_categoria_service import DeletarCategoriaService
 
 cat_bp = Blueprint("cat", __name__)
 
 
-@cat_bp.get("/categorias")
-def listar():
-    return jsonify(listar_categorias())
+class CategoriaController:
 
+    @staticmethod
+    def listar():
+        return jsonify(ListarCategoriasService().executar())
 
-@cat_bp.post("/categorias")
-def criar():
-    try:
-        c = criar_categoria(request.get_json() or {})
-        return jsonify(c), 201
-    except ValueError as e:
-        return jsonify({"erro": str(e)}), 400
+    @staticmethod
+    def criar():
+        try:
+            c = CriarCategoriaService().executar(request.get_json() or {})
+            return jsonify(c), 201
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
-
-@cat_bp.get("/categorias/<int:id>")
-def buscar(id):
-    c = buscar_categoria(id)
-    if not c:
-        return jsonify({"erro": "categoria não encontrada"}), 404
-    return jsonify(c)
-
-
-@cat_bp.put("/categorias/<int:id>")
-def atualizar(id):
-    try:
-        c = atualizar_categoria(id, request.get_json() or {})
+    @staticmethod
+    def buscar(id):
+        c = BuscarCategoriaService().executar(id)
         if not c:
             return jsonify({"erro": "categoria não encontrada"}), 404
         return jsonify(c)
-    except ValueError as e:
-        return jsonify({"erro": str(e)}), 400
+
+    @staticmethod
+    def atualizar(id):
+        try:
+            c = AtualizarCategoriaService().executar(id, request.get_json() or {})
+            if not c:
+                return jsonify({"erro": "categoria não encontrada"}), 404
+            return jsonify(c)
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
+
+    @staticmethod
+    def deletar(id):
+        if not DeletarCategoriaService().executar(id):
+            return jsonify({"erro": "categoria não encontrada"}), 404
+        return "", 204
 
 
-@cat_bp.delete("/categorias/<int:id>")
-def deletar(id):
-    if not deletar_categoria(id):
-        return jsonify({"erro": "categoria não encontrada"}), 404
-    return "", 204
+# rotas apontando pros metodos da controller
+cat_bp.add_url_rule("/categorias", view_func=CategoriaController.listar, methods=["GET"])
+cat_bp.add_url_rule("/categorias", view_func=CategoriaController.criar, methods=["POST"])
+cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.buscar, methods=["GET"])
+cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.atualizar, methods=["PUT"])
+cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.deletar, methods=["DELETE"])

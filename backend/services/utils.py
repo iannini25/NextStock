@@ -27,7 +27,7 @@ def inteiro(v):
 
 
 # data no formato aaaa-mm-dd
-def virarData(v):
+def virar_data(v):
     if v is None or v == "":
         return None
     try:

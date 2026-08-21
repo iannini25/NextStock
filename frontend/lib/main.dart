@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/produtos_screen.dart';
 import 'screens/categorias_screen.dart';
+import 'screens/alertas_screen.dart';
 
 // cores da marca
 const corNavy = Color(0xFF1E293B);
@@ -43,7 +44,7 @@ class Inicio extends StatefulWidget {
 
 class _InicioState extends State<Inicio> {
   int aba = 0;
-  final telas = const [ProdutosScreen(), CategoriasScreen()];
+  final telas = const [ProdutosScreen(), CategoriasScreen(), AlertasScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +57,7 @@ class _InicioState extends State<Inicio> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Produtos'),
           BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categorias'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alertas'),
         ],
       ),
     );

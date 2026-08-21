@@ -1,9 +1,11 @@
 from models.categoria_model import Categoria
 
 
-def deletar_categoria(id):
-    c = Categoria.pegarPorId(id)
-    if not c:
-        return False
-    c.apagar()
-    return True
+class DeletarCategoriaService:
+
+    def executar(self, id):
+        c = Categoria.buscar_por_id(id)
+        if not c:
+            return False
+        c.deletar()
+        return True

@@ -19,6 +19,9 @@ __pycache__/
 .vscode/
 .idea/
 
+#design que fala ne
+/Design
+
 #santa ajuda de cada dia
 .claude
 .agents
