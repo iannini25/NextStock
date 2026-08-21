@@ -28,3 +28,12 @@ class ProdutoRepository:
             .order_by(Produto.quantidade_estoque.asc())
             .all()
         )
+
+    def listar_vencidos(self):
+        return (
+            Produto.query
+            .filter(Produto.data_validade.isnot(None))
+            .filter(Produto.data_validade < date.today())
+            .order_by(Produto.data_validade.asc())
+            .all()
+        )

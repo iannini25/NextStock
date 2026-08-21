@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'screens/inicio_screen.dart';
 import 'screens/produtos_screen.dart';
-import 'screens/categorias_screen.dart';
 import 'screens/alertas_screen.dart';
+import 'screens/assistente_screen.dart';
 
 // cores da marca
 const corNavy = Color(0xFF1E293B);
@@ -34,7 +35,7 @@ class App extends StatelessWidget {
   }
 }
 
-// tela base com as duas abas embaixo
+// tela base com as abas embaixo
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
 
@@ -44,7 +45,12 @@ class Inicio extends StatefulWidget {
 
 class _InicioState extends State<Inicio> {
   int aba = 0;
-  final telas = const [ProdutosScreen(), CategoriasScreen(), AlertasScreen()];
+  final telas = const [
+    InicioScreen(),
+    ProdutosScreen(),
+    AlertasScreen(),
+    AssistenteScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +58,14 @@ class _InicioState extends State<Inicio> {
       body: telas[aba],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: aba,
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: corAzul,
         onTap: (i) => setState(() => aba = i),
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Início'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Produtos'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categorias'),
           BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alertas'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'Assistente'),
         ],
       ),
     );

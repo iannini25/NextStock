@@ -6,6 +6,16 @@ from dotenv import load_dotenv
 from models.database import db
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
+from controllers.venda_controller import venda_bp
+from controllers.evento_controller import evento_bp
+from controllers.previsao_controller import previsao_bp
+from controllers.compra_controller import compra_bp
+from controllers.reposicao_controller import reposicao_bp
+from controllers.erp_controller import erp_bp
+from controllers.painel_controller import painel_bp
+from controllers.recomendacao_controller import recomendacao_bp
+from controllers.relatorio_controller import relatorio_bp
+from controllers.assistente_controller import assistente_bp
 
 load_dotenv()
 
@@ -23,6 +33,16 @@ db.init_app(app)
 
 app.register_blueprint(cat_bp)
 app.register_blueprint(prod_bp)
+app.register_blueprint(venda_bp)
+app.register_blueprint(evento_bp)
+app.register_blueprint(previsao_bp)
+app.register_blueprint(compra_bp)
+app.register_blueprint(reposicao_bp)
+app.register_blueprint(erp_bp)
+app.register_blueprint(painel_bp)
+app.register_blueprint(recomendacao_bp)
+app.register_blueprint(relatorio_bp)
+app.register_blueprint(assistente_bp)
 
 
 @app.get("/")
