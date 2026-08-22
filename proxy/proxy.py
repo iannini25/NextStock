@@ -3,7 +3,7 @@ from flask import Flask, request, Response
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # deixa o app (flutter web) falar com o proxy
+CORS(app, expose_headers=["Content-Disposition"])  # deixa o app (flutter web) falar com o proxy
 
 # a api de verdade fica aqui, escondida. so o proxy conversa com ela.
 API = "http://127.0.0.1:5000"

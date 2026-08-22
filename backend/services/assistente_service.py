@@ -42,6 +42,8 @@ class AssistenteService:
         hoje = date.today()
         clima = ListarClimaService().executar(hoje - timedelta(days=14), hoje + timedelta(days=7))
         linhas.append("Clima em " + clima["cidade"] + " (fonte: " + clima["fonte"] + "):")
+        if clima.get("aviso"):
+            linhas.append("- aviso: " + str(clima["aviso"]))
         if clima["dias"]:
             for d in clima["dias"]:
                 linhas.append(

@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from models.produto_model import Produto
 from repositories.produto_repository import ProdutoRepository
 from repositories.venda_repository import VendaRepository
+from services.listar_produtos_em_risco_service import ListarProdutosEmRiscoService
 
 
 class MontarPainelService:
@@ -16,7 +17,7 @@ class MontarPainelService:
         produtos = Produto.listar_todos()
         vencidos = self.repo_produto.listar_vencidos()
         vencendo = self.repo_produto.listar_proximos_do_vencimento(7)
-        em_risco = self.repo_produto.listar_em_risco_de_ruptura()
+        em_risco = ListarProdutosEmRiscoService().executar()
         vendas = self.repo_venda.listar_por_periodo(hoje - timedelta(days=30), hoje)
 
         itens_em_estoque = 0

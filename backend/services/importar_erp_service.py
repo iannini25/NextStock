@@ -2,7 +2,7 @@ from datetime import date
 
 from models.produto_model import Produto
 from models.categoria_model import Categoria
-from models.venda_model import Venda
+from services.registrar_venda_service import RegistrarVendaService
 from services.utils import numero, inteiro, virar_data
 
 
@@ -96,5 +96,8 @@ class ImportarErpService:
         if not quantidade:
             raise ValueError("quantidade tem que ser maior que zero")
         data_venda = virar_data(item.get("data_venda")) or date.today()
-        venda = Venda(id_produto=produto.id_produto, quantidade=quantidade, data_venda=data_venda)
-        venda.salvar()
+        RegistrarVendaService().executar({
+            "id_produto": produto.id_produto,
+            "quantidade": quantidade,
+            "data_venda": data_venda.isoformat(),
+        })

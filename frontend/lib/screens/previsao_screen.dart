@@ -15,6 +15,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
   String clima = 'auto';
   String cidade = '';
   String fonte = '';
+  String? avisoClima;
   List<ClimaDia> climaDias = [];
   List<Previsao> lista = [];
   bool carregando = true;
@@ -35,6 +36,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
         climaDias = r.climaDias;
         cidade = r.cidade;
         fonte = r.fonte;
+        avisoClima = r.aviso;
         carregando = false;
       });
     } catch (e) {
@@ -126,6 +128,11 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
         children: [
           Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(nota, style: const TextStyle(fontSize: 12)),
+          if (avisoClima != null && avisoClima!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: Colors.orange)),
+            ),
           const SizedBox(height: 8),
           if (climaDias.isEmpty)
             const Text('Sem dados de clima ainda.')
@@ -145,7 +152,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
     final temp = c.temperatura?.toStringAsFixed(0) ?? '-';
     return Chip(
       avatar: Icon(iconeClima(c.condicao), size: 18, color: corClima(c.condicao)),
-      label: Text('${c.dataCurta()}  ${c.nomeCondicao()}  ${chuva}mm  ${temp}°'),
+      label: Text('${c.dataCurta()}  ${c.nomeCondicao()}  $chuva mm  $temp°'),
     );
   }
 

@@ -16,6 +16,7 @@ class ImportarController:
                 as_attachment=True,
                 download_name=nome,
                 mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                max_age=0,
             )
         except ValueError as e:
             return jsonify({"erro": str(e)}), 400

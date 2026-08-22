@@ -1,8 +1,8 @@
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../models/importacao.dart';
 import '../services/api_service.dart';
+import '../services/salvar_arquivo.dart';
 
 const Map<String, Map<String, String>> modulos = {
   'categorias': {
@@ -24,7 +24,7 @@ const Map<String, Map<String, String>> modulos = {
     'colunas': 'id_produto, quantidade, data_venda',
     'obrigatorias': 'id_produto, quantidade',
     'dica':
-        'id_produto é o número do produto já cadastrado. Datas no formato aaaa-mm-dd.',
+        'id_produto é o número do produto já cadastrado. Datas no formato aaaa-mm-dd. Cada venda baixa o estoque, igual registrar na tela de vendas.',
   },
   'eventos': {
     'label': 'Eventos',
@@ -63,11 +63,13 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
     setState(() => baixando = true);
     try {
       final bytes = await ApiService.baixarModelo(modulo);
+      if (bytes.length < 2 || bytes[0] != 0x50 || bytes[1] != 0x4B) {
+        throw Exception('a API não devolveu a planilha. veja se o proxy está no ar');
+      }
+      await salvarArquivo('modelo_$modulo.xlsx', bytes);
       if (!mounted) return;
-      await FilePicker.platform.saveFile(
-        dialogTitle: 'Salvar modelo',
-        fileName: 'modelo_$modulo.xlsx',
-        bytes: Uint8List.fromList(bytes),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Modelo baixado')),
       );
     } catch (e) {
       mostrarErro(e);

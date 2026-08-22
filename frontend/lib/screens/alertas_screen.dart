@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../models/clima_dia.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 
@@ -15,6 +16,9 @@ class _AlertasScreenState extends State<AlertasScreen> {
   bool modoVencimento = true; // false = risco de ruptura
   int dias = 7;
   List<Produto> lista = [];
+  List<ClimaDia> climaDias = [];
+  String cidade = '';
+  String? avisoClima;
   bool carregando = true;
 
   @override
@@ -26,12 +30,24 @@ class _AlertasScreenState extends State<AlertasScreen> {
   Future<void> carregar() async {
     setState(() => carregando = true);
     try {
-      final r = modoVencimento
-          ? await ApiService.listarProdutosVencendo(dias)
-          : await ApiService.listarProdutosEmRisco();
+      final futuroProdutos = modoVencimento
+          ? ApiService.listarProdutosVencendo(dias)
+          : ApiService.listarProdutosEmRisco();
+      final futuroClima = ApiService.listarClima();
+      final r = await futuroProdutos;
+      final clima = await futuroClima;
       if (!mounted) return;
+      final hoje = DateTime.now();
+      final base = DateTime(hoje.year, hoje.month, hoje.day);
       setState(() {
         lista = r;
+        cidade = clima.cidade;
+        avisoClima = clima.aviso;
+        climaDias = clima.dias.where((d) {
+          final dt = DateTime.tryParse(d.data);
+          if (dt == null) return false;
+          return !DateTime(dt.year, dt.month, dt.day).isBefore(base);
+        }).take(7).toList();
         carregando = false;
       });
     } catch (e) {
@@ -67,13 +83,13 @@ class _AlertasScreenState extends State<AlertasScreen> {
         children: [
           montarBotoes(),
           if (modoVencimento) montarFiltroDias(),
+          montarClima(),
           Expanded(child: montarLista()),
         ],
       ),
     );
   }
 
-  // os dois botoes que trocam o tipo de alerta
   Widget montarBotoes() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
@@ -109,7 +125,6 @@ class _AlertasScreenState extends State<AlertasScreen> {
     );
   }
 
-  // escolhe a janela de dias que vai pro parametro da api
   Widget montarFiltroDias() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -133,6 +148,77 @@ class _AlertasScreenState extends State<AlertasScreen> {
     );
   }
 
+  Widget montarClima() {
+    final titulo = cidade.isEmpty ? 'Clima dos próximos dias' : 'Clima em $cidade';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(
+            modoVencimento
+                ? 'calor antecipa perda; chuva costuma reduzir saída'
+                : 'a lista de risco já usa a demanda prevista com esse clima',
+            style: const TextStyle(fontSize: 12),
+          ),
+          if (avisoClima != null && avisoClima!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: Colors.orange)),
+            ),
+          const SizedBox(height: 8),
+          if (climaDias.isEmpty)
+            const Text('Sem dados de clima ainda.', style: TextStyle(fontSize: 12))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: climaDias.map(chipClima).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget chipClima(ClimaDia c) {
+    final chuva = c.chuvaMm?.toStringAsFixed(1) ?? '-';
+    final temp = c.temperatura?.toStringAsFixed(0) ?? '-';
+    return Chip(
+      avatar: Icon(iconeClima(c.condicao), size: 18, color: corClima(c.condicao)),
+      label: Text('${c.dataCurta()}  ${c.nomeCondicao()}  $chuva mm  $temp°'),
+    );
+  }
+
+  IconData iconeClima(String condicao) {
+    switch (condicao) {
+      case 'chuva_forte':
+      case 'chuva':
+        return Icons.water_drop;
+      case 'calor':
+        return Icons.wb_sunny;
+      case 'frio':
+        return Icons.ac_unit;
+      default:
+        return Icons.cloud_outlined;
+    }
+  }
+
+  Color corClima(String condicao) {
+    switch (condicao) {
+      case 'chuva_forte':
+        return Colors.indigo;
+      case 'chuva':
+        return Colors.blue;
+      case 'calor':
+        return Colors.orange;
+      case 'frio':
+        return Colors.cyan;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
@@ -154,7 +240,10 @@ class _AlertasScreenState extends State<AlertasScreen> {
               color: Colors.red,
             ),
             title: Text(p.nome),
-            subtitle: Text(modoVencimento ? textoVencimento(p) : textoRisco(p)),
+            subtitle: Text(
+              modoVencimento ? textoVencimento(p) : textoRisco(p),
+              maxLines: 3,
+            ),
           ),
         );
       },
@@ -170,7 +259,11 @@ class _AlertasScreenState extends State<AlertasScreen> {
   }
 
   String textoRisco(Produto p) {
-    return 'estoque: ${p.quantidade ?? 0} ${p.unidade ?? ""}  •  '
+    var texto = 'estoque: ${p.quantidade ?? 0} ${p.unidade ?? ""}  •  '
         'mínimo: ${p.estoqueMinimo ?? 0}';
+    if (p.motivo != null && p.motivo!.isNotEmpty) {
+      texto += '\n${p.motivo}';
+    }
+    return texto;
   }
 }

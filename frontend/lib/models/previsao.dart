@@ -39,6 +39,7 @@ class Previsao {
 class ResultadoPrevisao {
   String cidade;
   String fonte;
+  String? aviso;
   String clima;
   List<ClimaDia> climaDias;
   List<Previsao> previsoes;
@@ -46,6 +47,7 @@ class ResultadoPrevisao {
   ResultadoPrevisao({
     required this.cidade,
     required this.fonte,
+    this.aviso,
     required this.clima,
     required this.climaDias,
     required this.previsoes,
@@ -61,6 +63,7 @@ class ResultadoPrevisao {
     return ResultadoPrevisao(
       cidade: j['cidade'] ?? '',
       fonte: j['fonte'] ?? '',
+      aviso: j['aviso'] as String?,
       clima: j['clima'] ?? 'auto',
       climaDias: dias,
       previsoes: lista,

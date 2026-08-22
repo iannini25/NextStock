@@ -12,6 +12,7 @@ import '../models/painel.dart';
 import '../models/recomendacao.dart';
 import '../models/relatorio.dart';
 import '../models/mensagem_chat.dart';
+import '../models/clima_dia.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
 // - Flutter Web e Desktop: http://127.0.0.1:8000
@@ -26,6 +27,7 @@ class ApiService {
 
   static Future<List<Categoria>> listarCategorias() async {
     final r = await http.get(Uri.parse('$baseUrl/categorias'));
+    if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Categoria.fromJson(e)).toList();
   }
@@ -51,6 +53,7 @@ class ApiService {
 
   static Future<List<Produto>> listarProdutos() async {
     final r = await http.get(Uri.parse('$baseUrl/produtos'));
+    if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Produto.fromJson(e)).toList();
   }
@@ -140,6 +143,13 @@ class ApiService {
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Reposicao.fromJson(e)).toList();
+  }
+
+  static Future<ResultadoClima> listarClima() async {
+    final r = await http.get(Uri.parse('$baseUrl/clima'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return ResultadoClima.fromJson(j);
   }
 
   static Future<List<int>> baixarModelo(String modulo) async {

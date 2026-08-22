@@ -25,7 +25,7 @@ from controllers.assistente_controller import assistente_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # libera o front acessar a api
+CORS(app, expose_headers=["Content-Disposition"])  # libera o front acessar a api
 
 # url do banco vem do .env
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(

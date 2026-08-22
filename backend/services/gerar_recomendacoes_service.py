@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from models.produto_model import Produto
 from repositories.venda_repository import VendaRepository
+from services.prever_demanda_service import PreverDemandaService
 
 
 class GerarRecomendacoesService:
@@ -11,6 +12,7 @@ class GerarRecomendacoesService:
 
     def executar(self):
         hoje = date.today()
+        previsoes = {p["id_produto"]: p for p in PreverDemandaService().executar(7, "auto")}
         lista = []
         for produto in Produto.listar_todos():
             estoque = produto.quantidade_estoque or 0
@@ -20,6 +22,7 @@ class GerarRecomendacoesService:
                 dias_para_vencer = (produto.data_validade - hoje).days
             vendido = self.repo_venda.total_vendido(produto.id_produto, hoje - timedelta(days=30), hoje)
             media_diaria = vendido / 30
+            prev = previsoes.get(produto.id_produto)
 
             if dias_para_vencer is not None and dias_para_vencer < 0 and estoque > 0:
                 lista.append(self.montar(produto, "retirar", "alta",
@@ -30,6 +33,9 @@ class GerarRecomendacoesService:
             if minimo > 0 and estoque <= minimo:
                 lista.append(self.montar(produto, "repor", "alta",
                                          f"Estoque ({estoque}) no mínimo ({minimo}): repor agora"))
+            elif prev and prev["previsao_demanda"] > estoque:
+                lista.append(self.montar(produto, "repor", "alta",
+                                         f"Clima dos próximos 7 dias: demanda prevista {prev['previsao_demanda']} acima do estoque {estoque}"))
             if media_diaria > 0 and estoque / media_diaria > 30:
                 lista.append(self.montar(produto, "comprar_menos", "media",
                                          f"Estoque cobre {int(estoque / media_diaria)} dias de venda: compre menos"))

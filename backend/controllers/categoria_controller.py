@@ -42,9 +42,12 @@ class CategoriaController:
 
     @staticmethod
     def deletar(id):
-        if not DeletarCategoriaService().executar(id):
-            return jsonify({"erro": "categoria não encontrada"}), 404
-        return "", 204
+        try:
+            if not DeletarCategoriaService().executar(id):
+                return jsonify({"erro": "categoria não encontrada"}), 404
+            return "", 204
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
 
 # rotas apontando pros metodos da controller

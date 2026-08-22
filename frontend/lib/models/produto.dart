@@ -10,6 +10,7 @@ class Produto {
   int? estoqueMinimo;
   String? unidade;
   String? validade; // aaaa-mm-dd
+  String? motivo; // so leitura, vem nos alertas de risco
 
   Produto({
     this.id,
@@ -23,6 +24,7 @@ class Produto {
     this.estoqueMinimo,
     this.unidade,
     this.validade,
+    this.motivo,
   });
 
   factory Produto.fromJson(Map<String, dynamic> j) {
@@ -38,6 +40,7 @@ class Produto {
       estoqueMinimo: j['estoque_minimo'],
       unidade: j['unidade'],
       validade: j['data_validade'],
+      motivo: j['motivo'],
     );
   }
 

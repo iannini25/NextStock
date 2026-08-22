@@ -10,16 +10,22 @@ class ListarClimaService:
         self.repo = ClimaRepository()
 
     def executar(self, inicio=None, fim=None):
-        AtualizarClimaService().executar()
+        atualizou = AtualizarClimaService().executar()
         hoje = date.today()
         if inicio is None:
             inicio = hoje - timedelta(days=30)
         if fim is None:
             fim = hoje + timedelta(days=16)
         rows = self.repo.listar_no_periodo(inicio, fim)
+        aviso = None
+        if not rows:
+            aviso = "Não consegui baixar o clima agora. A previsão usa clima normal até isso voltar."
+        elif not atualizou:
+            aviso = "Não atualizei o clima hoje. Mostrando o último registro salvo."
         return {
             "cidade": AtualizarClimaService().cidade(),
             "fonte": "open-meteo" if rows else "nenhum",
+            "aviso": aviso,
             "dias": [r.virar_dict() for r in rows],
         }
 

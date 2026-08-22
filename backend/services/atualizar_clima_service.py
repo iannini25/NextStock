@@ -21,11 +21,12 @@ class AtualizarClimaService:
 
     def executar(self, forcar=False):
         if not forcar and self._cache_ok():
-            return
+            return True
         try:
             self._buscar_e_salvar()
+            return True
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError, ValueError, KeyError):
-            return
+            return False
 
     def _cache_ok(self):
         row = self.repo.buscar_por_data(date.today())

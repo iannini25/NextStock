@@ -7,7 +7,7 @@ from openpyxl import Workbook, load_workbook
 from models.categoria_model import Categoria
 from models.evento_model import Evento
 from models.produto_model import Produto
-from models.venda_model import Venda
+from services.registrar_venda_service import RegistrarVendaService
 from services.utils import inteiro, numero, virar_data
 
 # so as colunas que o sistema aceita em cada modulo
@@ -278,7 +278,11 @@ class ImportarPlanilhaService:
         if not quantidade:
             raise ValueError("quantidade tem que ser maior que zero")
         data_venda = _data(item.get("data_venda")) or date.today()
-        Venda(id_produto=id_produto, quantidade=quantidade, data_venda=data_venda).salvar()
+        RegistrarVendaService().executar({
+            "id_produto": id_produto,
+            "quantidade": quantidade,
+            "data_venda": data_venda.isoformat(),
+        })
         return "ok"
 
     def _importar_evento(self, item):

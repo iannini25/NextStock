@@ -25,6 +25,7 @@ class PrevisaoController:
             return jsonify({
                 "cidade": clima_dados["cidade"],
                 "fonte": clima_dados["fonte"],
+                "aviso": clima_dados.get("aviso"),
                 "clima": clima,
                 "clima_dias": clima_dados["dias"],
                 "previsoes": previsoes,

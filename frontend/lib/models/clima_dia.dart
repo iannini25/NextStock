@@ -45,3 +45,29 @@ class ClimaDia {
     return '$dia/$mes';
   }
 }
+
+class ResultadoClima {
+  String cidade;
+  String fonte;
+  String? aviso;
+  List<ClimaDia> dias;
+
+  ResultadoClima({
+    required this.cidade,
+    required this.fonte,
+    this.aviso,
+    required this.dias,
+  });
+
+  factory ResultadoClima.fromJson(Map<String, dynamic> j) {
+    final dias = (j['dias'] as List? ?? [])
+        .map((e) => ClimaDia.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return ResultadoClima(
+      cidade: j['cidade'] ?? '',
+      fonte: j['fonte'] ?? '',
+      aviso: j['aviso'] as String?,
+      dias: dias,
+    );
+  }
+}

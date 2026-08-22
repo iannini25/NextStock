@@ -46,9 +46,12 @@ class ProdutoController:
 
     @staticmethod
     def deletar(id):
-        if not DeletarProdutoService().executar(id):
-            return jsonify({"erro": "produto não encontrado"}), 404
-        return "", 204
+        try:
+            if not DeletarProdutoService().executar(id):
+                return jsonify({"erro": "produto não encontrado"}), 404
+            return "", 204
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
     # /produtos/vencendo?dias=7
     @staticmethod
