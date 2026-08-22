@@ -1,14 +1,20 @@
 import os
+from datetime import date, timedelta
 
-import anthropic
+from google import genai
+from google.genai import types
 
 from services.listar_produtos_service import ListarProdutosService
 from services.listar_produtos_vencendo_service import ListarProdutosVencendoService
 from services.listar_produtos_em_risco_service import ListarProdutosEmRiscoService
 from services.montar_painel_service import MontarPainelService
+from services.listar_clima_service import ListarClimaService
+from services.vendas_em_chuva_service import VendasEmChuvaService
 
 
 class AssistenteService:
+
+    MODELO = "gemini-3.5-flash"
 
     def montar_contexto(self):
         linhas = []
@@ -33,6 +39,42 @@ class AssistenteService:
         painel = MontarPainelService().executar()
         linhas.append("Painel: " + str(painel))
 
+        hoje = date.today()
+        clima = ListarClimaService().executar(hoje - timedelta(days=14), hoje + timedelta(days=7))
+        linhas.append("Clima em " + clima["cidade"] + " (fonte: " + clima["fonte"] + "):")
+        if clima["dias"]:
+            for d in clima["dias"]:
+                linhas.append(
+                    "- " + str(d["data"]) + ": " + str(d["condicao"])
+                    + ", temp " + str(d["temperatura"]) + "°C"
+                    + ", chuva " + str(d["chuva_mm"]) + " mm"
+                )
+        else:
+            linhas.append("- sem dados de clima")
+
+        chuva = VendasEmChuvaService().executar(30)
+        linhas.append(
+            "Dias de chuva (últimos 30): " + (", ".join(chuva["dias_chuva"]) if chuva["dias_chuva"] else "nenhum")
+        )
+        linhas.append(
+            "Dias de chuva forte: "
+            + (", ".join(chuva["dias_chuva_forte"]) if chuva["dias_chuva_forte"] else "nenhum")
+        )
+        if chuva["vendas_chuva"]:
+            linhas.append("Vendas nos dias de chuva:")
+            for item in chuva["vendas_chuva"]:
+                linhas.append(
+                    "- " + item["produto_nome"] + ": " + str(item["quantidade"]) + " " + str(item["unidade"] or "")
+                )
+        else:
+            linhas.append("Vendas nos dias de chuva: nenhuma")
+        if chuva["vendas_chuva_forte"]:
+            linhas.append("Vendas nos dias de chuva forte:")
+            for item in chuva["vendas_chuva_forte"]:
+                linhas.append(
+                    "- " + item["produto_nome"] + ": " + str(item["quantidade"]) + " " + str(item["unidade"] or "")
+                )
+
         return "\n".join(linhas)
 
     def responder_simples(self, pergunta):
@@ -54,6 +96,11 @@ class AssistenteService:
                 "vencidos: " + str(painel["produtos_vencidos"]) +
                 " • valor perdido: R$ " + str(painel["valor_vencido"])
             )
+        if (
+            "chuva" in texto or "choveu" in texto or "chover" in texto
+            or "clima" in texto or "tempo" in texto or "calor" in texto or "frio" in texto
+        ):
+            return VendasEmChuvaService().texto() + "\n" + ListarClimaService().texto_proximos()
         if "estoque" in texto or "produto" in texto:
             linhas = []
             for p in ListarProdutosService().executar():
@@ -62,7 +109,7 @@ class AssistenteService:
                 return "Não tem produto cadastrado."
             return "Estoque atual:\n" + "\n".join(linhas)
         return (
-            "Posso ajudar com validade, risco de faltar, desperdício e estoque. "
+            "Posso ajudar com validade, risco de faltar, desperdício, estoque e clima/chuva. "
             "Pergunta usando uma dessas palavras."
         )
 
@@ -70,7 +117,7 @@ class AssistenteService:
         if not pergunta:
             raise ValueError("pergunta é obrigatória")
 
-        chave = os.getenv("ANTHROPIC_API_KEY")
+        chave = os.getenv("GEMINI_API_KEY")
         if not chave or chave == "sua_chave":
             return {"resposta": self.responder_simples(pergunta)}
 
@@ -78,25 +125,30 @@ class AssistenteService:
         instrucoes = (
             "Você é o assistente do NextStock, sistema de estoque de produtos perecíveis "
             "de mercados, padarias e hortifrutis. Responda em português, curto e prático, "
-            "usando só os dados abaixo. Se não tiver o dado, diga que não tem."
+            "usando só os dados abaixo. Se não tiver o dado, diga que não tem. "
+            "Se perguntarem de chuva, clima ou tempo, use o clima e as vendas nos dias de chuva."
             "\n\nDADOS DO ESTOQUE:\n" + contexto
         )
 
         mensagens = []
         for m in historico or []:
-            papel = "user" if m.get("papel") == "usuario" else "assistant"
-            mensagens.append({"role": papel, "content": m.get("texto") or ""})
-        mensagens.append({"role": "user", "content": pergunta})
+            papel = "user" if m.get("papel") == "usuario" else "model"
+            mensagens.append(types.Content(
+                role=papel,
+                parts=[types.Part(text=m.get("texto") or "")],
+            ))
+        mensagens.append(types.Content(
+            role="user",
+            parts=[types.Part(text=pergunta)],
+        ))
 
-        cliente = anthropic.Anthropic(api_key=chave)
-        resposta = cliente.messages.create(
-            model="claude-opus-5",
-            max_tokens=4096,
-            system=instrucoes,
-            messages=mensagens,
+        cliente = genai.Client(api_key=chave)
+        resposta = cliente.models.generate_content(
+            model=self.MODELO,
+            contents=mensagens,
+            config=types.GenerateContentConfig(
+                system_instruction=instrucoes,
+                max_output_tokens=4096,
+            ),
         )
-        texto = ""
-        for bloco in resposta.content:
-            if bloco.type == "text":
-                texto += bloco.text
-        return {"resposta": texto}
+        return {"resposta": resposta.text or ""}

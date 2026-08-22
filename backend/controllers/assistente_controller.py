@@ -1,5 +1,5 @@
-import anthropic
 from flask import Blueprint, request, jsonify
+from google.genai import errors
 
 from services.assistente_service import AssistenteService
 
@@ -17,7 +17,7 @@ class AssistenteController:
             return jsonify(AssistenteService().executar(pergunta, historico))
         except ValueError as e:
             return jsonify({"erro": str(e)}), 400
-        except anthropic.APIError as e:
+        except errors.APIError as e:
             return jsonify({"erro": "erro ao falar com a IA: " + str(e)}), 502
 
 

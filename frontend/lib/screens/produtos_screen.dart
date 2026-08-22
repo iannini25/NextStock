@@ -77,7 +77,7 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('NextStock')),
+      appBar: AppBar(title: const Text('Produtos')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => abrirForm(),
         child: const Icon(Icons.add),

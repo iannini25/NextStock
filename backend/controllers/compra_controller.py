@@ -11,7 +11,7 @@ class CompraController:
     def sugerir():
         try:
             dias = request.args.get("dias", 7)
-            clima = request.args.get("clima", "normal")
+            clima = request.args.get("clima", "auto")
             return jsonify(SugerirComprasService().executar(dias, clima))
         except ValueError as e:
             return jsonify({"erro": str(e)}), 400

@@ -12,6 +12,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   # usado pra fazer as chamadas na API
   http: ^1.2.0
+  # guarda a preferencia de tema (claro/escuro)
+  shared_preferences: ^2.2.0
+  file_picker: ^8.1.7
 
 dev_dependencies:
   flutter_test:

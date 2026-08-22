@@ -12,13 +12,28 @@ class AssistenteScreen extends StatefulWidget {
 
 class _AssistenteScreenState extends State<AssistenteScreen> {
   final campoPergunta = TextEditingController();
-  List<MensagemChat> mensagens = [
-    MensagemChat(
+  List<MensagemChat> mensagens = [];
+  bool enviando = false;
+
+  static MensagemChat _saudacao() {
+    return MensagemChat(
       papel: 'assistente',
       texto: 'Oi! Pergunta qualquer coisa sobre o seu estoque.',
-    ),
-  ];
-  bool enviando = false;
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    mensagens = [_saudacao()];
+  }
+
+  void limparChat() {
+    setState(() {
+      mensagens = [_saudacao()];
+      enviando = false;
+    });
+  }
 
   void mostrarErro(Object e) {
     if (!mounted) return;
@@ -54,7 +69,16 @@ class _AssistenteScreenState extends State<AssistenteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Assistente')),
+      appBar: AppBar(
+        title: const Text('Assistente'),
+        actions: [
+          IconButton(
+            tooltip: 'Limpar conversa',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: limparChat,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(child: montarMensagens()),

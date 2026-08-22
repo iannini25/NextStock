@@ -1,29 +1,38 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../models/importacao.dart';
 import '../services/api_service.dart';
 
-const String exemploJson = '''{
-  "produtos": [
-    {
-      "codigo_barras": "7890000000062",
-      "nome": "Queijo Minas 500g",
-      "categoria": "Laticínios",
-      "preco_custo": 12.0,
-      "preco_venda": 19.9,
-      "quantidade_estoque": 20,
-      "estoque_minimo": 5,
-      "unidade": "UN",
-      "data_validade": "2026-09-10"
-    }
-  ],
-  "vendas": [
-    {
-      "codigo_barras": "7890000000024",
-      "quantidade": 3,
-      "data_venda": "2026-08-20"
-    }
-  ]
-}''';
+const Map<String, Map<String, String>> modulos = {
+  'categorias': {
+    'label': 'Categorias',
+    'colunas': 'nome, descricao',
+    'obrigatorias': 'nome',
+    'dica': 'Só esses campos existem no cadastro de categorias.',
+  },
+  'produtos': {
+    'label': 'Produtos',
+    'colunas':
+        'nome, id_categoria, codigo_barras, preco_custo, preco_venda, quantidade_estoque, estoque_minimo, unidade, data_validade',
+    'obrigatorias': 'nome, preco_venda',
+    'dica':
+        'id_categoria é o número da categoria já cadastrada. Se o código de barras já existir, o produto é atualizado. Prefira o código de barras como texto na planilha.',
+  },
+  'vendas': {
+    'label': 'Vendas',
+    'colunas': 'id_produto, quantidade, data_venda',
+    'obrigatorias': 'id_produto, quantidade',
+    'dica':
+        'id_produto é o número do produto já cadastrado. Datas no formato aaaa-mm-dd.',
+  },
+  'eventos': {
+    'label': 'Eventos',
+    'colunas': 'nome, data_inicio, data_fim, impacto_percentual',
+    'obrigatorias': 'nome, data_inicio, data_fim',
+    'dica': 'Datas no formato aaaa-mm-dd. impacto_percentual é opcional.',
+  },
+};
 
 class ImportarErpScreen extends StatefulWidget {
   const ImportarErpScreen({super.key});
@@ -33,9 +42,14 @@ class ImportarErpScreen extends StatefulWidget {
 }
 
 class _ImportarErpScreenState extends State<ImportarErpScreen> {
-  final texto = TextEditingController();
+  String modulo = 'produtos';
+  String? nomeArquivo;
+  List<int>? bytesArquivo;
   ResultadoImportacao? resultado;
   bool importando = false;
+  bool baixando = false;
+
+  Map<String, String> get info => modulos[modulo]!;
 
   void mostrarErro(Object e) {
     if (!mounted) return;
@@ -45,14 +59,49 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
     );
   }
 
-  void usarExemplo() {
-    setState(() => texto.text = exemploJson);
+  Future<void> baixarModelo() async {
+    setState(() => baixando = true);
+    try {
+      final bytes = await ApiService.baixarModelo(modulo);
+      if (!mounted) return;
+      await FilePicker.platform.saveFile(
+        dialogTitle: 'Salvar modelo',
+        fileName: 'modelo_$modulo.xlsx',
+        bytes: Uint8List.fromList(bytes),
+      );
+    } catch (e) {
+      mostrarErro(e);
+    }
+    if (mounted) setState(() => baixando = false);
+  }
+
+  Future<void> escolherArquivo() async {
+    final r = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv', 'xlsx'],
+      withData: true,
+    );
+    if (r == null || r.files.isEmpty) return;
+    final f = r.files.first;
+    if (f.bytes == null) {
+      mostrarErro(Exception('não foi possível ler o arquivo'));
+      return;
+    }
+    setState(() {
+      nomeArquivo = f.name;
+      bytesArquivo = f.bytes;
+      resultado = null;
+    });
   }
 
   Future<void> importar() async {
+    if (bytesArquivo == null || nomeArquivo == null) {
+      mostrarErro(Exception('escolha um arquivo .csv ou .xlsx'));
+      return;
+    }
     setState(() => importando = true);
     try {
-      final r = await ApiService.importarErp(texto.text);
+      final r = await ApiService.importarPlanilha(modulo, nomeArquivo!, bytesArquivo!);
       if (!mounted) return;
       setState(() {
         resultado = r;
@@ -68,35 +117,64 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar do ERP')),
+      appBar: AppBar(title: const Text('Importar planilha')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Cole o JSON exportado do ERP com "produtos" e "vendas".'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: texto,
-            maxLines: 12,
+          const Text(
+            'O NextStock só aceita as colunas do modelo. Baixe o arquivo, preencha e envie um CSV ou XLSX. Colunas a mais são ignoradas. A segunda linha do modelo é um exemplo — apague ou substitua.',
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            initialValue: modulo,
             decoration: const InputDecoration(
-                labelText: 'JSON', border: OutlineInputBorder()),
+              labelText: 'Módulo',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              for (final e in modulos.entries)
+                DropdownMenuItem(value: e.key, child: Text(e.value['label']!)),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() {
+                modulo = v;
+                resultado = null;
+                nomeArquivo = null;
+                bytesArquivo = null;
+              });
+            },
           ),
           const SizedBox(height: 12),
+          Text('Colunas: ${info['colunas']}'),
+          const SizedBox(height: 4),
+          Text('Obrigatórias: ${info['obrigatorias']}'),
+          const SizedBox(height: 4),
+          Text(info['dica']!),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: usarExemplo,
-                  child: const Text('Usar exemplo'),
+                  onPressed: baixando ? null : baixarModelo,
+                  child: Text(baixando ? 'Baixando...' : 'Baixar modelo'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: importando ? null : importar,
-                  child: Text(importando ? 'Importando...' : 'Importar'),
+                  onPressed: escolherArquivo,
+                  child: const Text('Escolher arquivo'),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Text(nomeArquivo == null ? 'Nenhum arquivo selecionado' : 'Arquivo: $nomeArquivo'),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: importando ? null : importar,
+            child: Text(importando ? 'Importando...' : 'Importar'),
           ),
           const SizedBox(height: 16),
           if (resultado != null) montarResultado(),
@@ -111,7 +189,7 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'criados: ${r.produtosCriados}  •  atualizados: ${r.produtosAtualizados}  •  vendas: ${r.vendasImportadas}',
+          'importados: ${r.importados}  •  ignorados: ${r.ignorados}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),

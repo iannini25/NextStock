@@ -11,7 +11,7 @@ class ComprasScreen extends StatefulWidget {
 
 class _ComprasScreenState extends State<ComprasScreen> {
   int dias = 7;
-  String clima = 'normal';
+  String clima = 'auto';
   List<SugestaoCompra> lista = [];
   bool carregando = true;
 
@@ -87,6 +87,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
           DropdownButton<String>(
             value: clima,
             items: const [
+              DropdownMenuItem(value: 'auto', child: Text('Automático')),
               DropdownMenuItem(value: 'normal', child: Text('Normal')),
               DropdownMenuItem(value: 'calor', child: Text('Calor')),
               DropdownMenuItem(value: 'frio', child: Text('Frio')),

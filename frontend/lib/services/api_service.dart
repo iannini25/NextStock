@@ -121,11 +121,11 @@ class ApiService {
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
-  static Future<List<Previsao>> preverDemanda(int dias, String clima) async {
+  static Future<ResultadoPrevisao> preverDemanda(int dias, String clima) async {
     final r = await http.get(Uri.parse('$baseUrl/previsao?dias=$dias&clima=$clima'));
     if (r.statusCode != 200) throw pegarErro(r);
-    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
-    return lista.map((e) => Previsao.fromJson(e)).toList();
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return ResultadoPrevisao.fromJson(j);
   }
 
   static Future<List<SugestaoCompra>> sugerirCompras(int dias, String clima) async {
@@ -142,9 +142,28 @@ class ApiService {
     return lista.map((e) => Reposicao.fromJson(e)).toList();
   }
 
-  static Future<ResultadoImportacao> importarErp(String jsonTexto) async {
-    final r = await http.post(Uri.parse('$baseUrl/erp/importar'),
-        headers: headers, body: jsonTexto);
+  static Future<List<int>> baixarModelo(String modulo) async {
+    final r = await http.get(Uri.parse('$baseUrl/importar/modelo?modulo=$modulo'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    return r.bodyBytes;
+  }
+
+  static Future<ResultadoImportacao> importarPlanilha(
+    String modulo,
+    String nomeArquivo,
+    List<int> bytes,
+  ) async {
+    final req = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/importar?modulo=$modulo'),
+    );
+    req.files.add(http.MultipartFile.fromBytes(
+      'arquivo',
+      bytes,
+      filename: nomeArquivo,
+    ));
+    final enviado = await req.send();
+    final r = await http.Response.fromStream(enviado);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return ResultadoImportacao.fromJson(j);

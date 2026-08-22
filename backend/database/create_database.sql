@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS evento (
     impacto_percentual INT DEFAULT 0
 );
 
+-- clima baixado do Open-Meteo (sem chave). a api preenche sozinha.
+CREATE TABLE IF NOT EXISTS clima_dia (
+    data DATE PRIMARY KEY,
+    temperatura FLOAT,
+    chuva_mm FLOAT,
+    condicao VARCHAR(20) NOT NULL,
+    atualizado_em DATETIME
+);
+
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/clima_dia.dart';
 import '../models/previsao.dart';
 import '../services/api_service.dart';
 
@@ -11,7 +12,10 @@ class PrevisaoScreen extends StatefulWidget {
 
 class _PrevisaoScreenState extends State<PrevisaoScreen> {
   int dias = 7;
-  String clima = 'normal';
+  String clima = 'auto';
+  String cidade = '';
+  String fonte = '';
+  List<ClimaDia> climaDias = [];
   List<Previsao> lista = [];
   bool carregando = true;
 
@@ -27,7 +31,10 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
       final r = await ApiService.preverDemanda(dias, clima);
       if (!mounted) return;
       setState(() {
-        lista = r;
+        lista = r.previsoes;
+        climaDias = r.climaDias;
+        cidade = r.cidade;
+        fonte = r.fonte;
         carregando = false;
       });
     } catch (e) {
@@ -55,8 +62,10 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           montarFiltros(),
+          montarClima(),
           Expanded(child: montarLista()),
         ],
       ),
@@ -87,6 +96,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
           DropdownButton<String>(
             value: clima,
             items: const [
+              DropdownMenuItem(value: 'auto', child: Text('Automático')),
               DropdownMenuItem(value: 'normal', child: Text('Normal')),
               DropdownMenuItem(value: 'calor', child: Text('Calor')),
               DropdownMenuItem(value: 'frio', child: Text('Frio')),
@@ -101,6 +111,71 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
         ],
       ),
     );
+  }
+
+  Widget montarClima() {
+    final extra = fonte == 'open-meteo' ? ' (Open-Meteo)' : '';
+    final titulo = cidade.isEmpty ? 'Clima do período' : 'Clima em $cidade$extra';
+    final nota = clima == 'auto'
+        ? 'usando o clima de cada dia na previsão'
+        : 'filtro manual: $clima (o clima real fica só de referência)';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(nota, style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 8),
+          if (climaDias.isEmpty)
+            const Text('Sem dados de clima ainda.')
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: climaDias.map(chipClima).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget chipClima(ClimaDia c) {
+    final chuva = c.chuvaMm?.toStringAsFixed(1) ?? '-';
+    final temp = c.temperatura?.toStringAsFixed(0) ?? '-';
+    return Chip(
+      avatar: Icon(iconeClima(c.condicao), size: 18, color: corClima(c.condicao)),
+      label: Text('${c.dataCurta()}  ${c.nomeCondicao()}  ${chuva}mm  ${temp}°'),
+    );
+  }
+
+  IconData iconeClima(String condicao) {
+    switch (condicao) {
+      case 'chuva_forte':
+      case 'chuva':
+        return Icons.water_drop;
+      case 'calor':
+        return Icons.wb_sunny;
+      case 'frio':
+        return Icons.ac_unit;
+      default:
+        return Icons.cloud_outlined;
+    }
+  }
+
+  Color corClima(String condicao) {
+    switch (condicao) {
+      case 'chuva_forte':
+        return Colors.indigo;
+      case 'chuva':
+        return Colors.blue;
+      case 'calor':
+        return Colors.orange;
+      case 'frio':
+        return Colors.cyan;
+      default:
+        return Colors.blueGrey;
+    }
   }
 
   Widget montarLista() {

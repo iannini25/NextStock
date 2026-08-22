@@ -6,14 +6,17 @@ from dotenv import load_dotenv
 from models.database import db
 from models.venda_model import Venda
 from models.evento_model import Evento
+from models.clima_model import ClimaDia
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
 from controllers.evento_controller import evento_bp
 from controllers.previsao_controller import previsao_bp
+from controllers.clima_controller import clima_bp
 from controllers.compra_controller import compra_bp
 from controllers.reposicao_controller import reposicao_bp
 from controllers.erp_controller import erp_bp
+from controllers.importar_controller import importar_bp
 from controllers.painel_controller import painel_bp
 from controllers.recomendacao_controller import recomendacao_bp
 from controllers.relatorio_controller import relatorio_bp
@@ -38,9 +41,11 @@ app.register_blueprint(prod_bp)
 app.register_blueprint(venda_bp)
 app.register_blueprint(evento_bp)
 app.register_blueprint(previsao_bp)
+app.register_blueprint(clima_bp)
 app.register_blueprint(compra_bp)
 app.register_blueprint(reposicao_bp)
 app.register_blueprint(erp_bp)
+app.register_blueprint(importar_bp)
 app.register_blueprint(painel_bp)
 app.register_blueprint(recomendacao_bp)
 app.register_blueprint(relatorio_bp)
