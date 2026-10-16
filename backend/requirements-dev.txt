@@ -1,0 +1,5 @@
+# dependencias so pra desenvolvimento (testes automatizados)
+# instala:  pip install -r requirements-dev.txt
+# roda:     pytest -q   (dentro da pasta backend)
+-r requirements.txt
+pytest==9.1.1
