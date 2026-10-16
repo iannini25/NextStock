@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 
+from controllers.permissoes import exigir_admin
+
 from services.criar_categoria_service import CriarCategoriaService
 from services.listar_categorias_service import ListarCategoriasService
 from services.buscar_categoria_service import BuscarCategoriaService
@@ -55,4 +57,4 @@ cat_bp.add_url_rule("/categorias", view_func=CategoriaController.listar, methods
 cat_bp.add_url_rule("/categorias", view_func=CategoriaController.criar, methods=["POST"])
 cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.buscar, methods=["GET"])
 cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.atualizar, methods=["PUT"])
-cat_bp.add_url_rule("/categorias/<int:id>", view_func=CategoriaController.deletar, methods=["DELETE"])
+cat_bp.add_url_rule("/categorias/<int:id>", view_func=exigir_admin(CategoriaController.deletar), methods=["DELETE"])

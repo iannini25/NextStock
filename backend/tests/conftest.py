@@ -56,6 +56,12 @@ def client(admin):
     return logar(admin)
 
 
+# cliente logado como usuario comum (perfil "usuario")
+@pytest.fixture
+def client_usuario(admin):
+    return logar(criar_usuario("Carlos Caixa", "carlos@loja.com", perfil="usuario"))
+
+
 # cliente sem token nenhum
 @pytest.fixture
 def client_anonimo():

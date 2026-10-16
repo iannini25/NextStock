@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 
+from controllers.permissoes import exigir_admin
+
 from services.criar_produto_service import CriarProdutoService
 from services.listar_produtos_service import ListarProdutosService
 from services.buscar_produto_service import BuscarProdutoService
@@ -74,4 +76,4 @@ prod_bp.add_url_rule("/produtos", view_func=ProdutoController.listar, methods=["
 prod_bp.add_url_rule("/produtos", view_func=ProdutoController.criar, methods=["POST"])
 prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.buscar, methods=["GET"])
 prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.atualizar, methods=["PUT"])
-prod_bp.add_url_rule("/produtos/<int:id>", view_func=ProdutoController.deletar, methods=["DELETE"])
+prod_bp.add_url_rule("/produtos/<int:id>", view_func=exigir_admin(ProdutoController.deletar), methods=["DELETE"])

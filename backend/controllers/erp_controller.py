@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 
+from controllers.permissoes import exigir_admin
+
 from services.importar_erp_service import ImportarErpService
 
 erp_bp = Blueprint("erp", __name__)
@@ -16,4 +18,4 @@ class ErpController:
             return jsonify({"erro": str(e)}), 400
 
 
-erp_bp.add_url_rule("/erp/importar", view_func=ErpController.importar, methods=["POST"])
+erp_bp.add_url_rule("/erp/importar", view_func=exigir_admin(ErpController.importar), methods=["POST"])

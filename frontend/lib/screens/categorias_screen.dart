@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/categoria.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 import 'categoria_form.dart';
 
 class CategoriasScreen extends StatefulWidget {
@@ -103,9 +104,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(c)),
-                IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => excluir(c)),
+                if (Sessao.ehAdmin) // so admin exclui
+                  IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => excluir(c)),
               ],
             ),
           ),

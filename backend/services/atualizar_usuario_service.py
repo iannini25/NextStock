@@ -2,9 +2,24 @@ from models.usuario_model import Usuario
 from services.utils import virar_email, virar_perfil, virar_senha, virar_texto
 
 
+# o sistema nunca pode ficar sem nenhum administrador ativo (ninguem mais conseguiria administrar)
+def conferir_ultimo_admin(usuario, novo_perfil, novo_ativo):
+    deixa_de_ser_admin_ativo = usuario.perfil == "admin" and usuario.ativo and (novo_perfil != "admin" or not novo_ativo)
+    if not deixa_de_ser_admin_ativo:
+        return
+    outros = Usuario.query.filter(
+        Usuario.perfil == "admin",
+        Usuario.ativo.is_(True),
+        Usuario.id_usuario != usuario.id_usuario,
+    ).count()
+    if outros == 0:
+        raise ValueError("o sistema precisa ter pelo menos um administrador ativo")
+
+
 class AtualizarUsuarioService:
 
-    def executar(self, id, dados):
+    # atual = quem esta fazendo a alteracao (o admin logado)
+    def executar(self, id, dados, atual=None):
         usuario = Usuario.buscar_por_id(id)
         if not usuario:
             return None
@@ -24,6 +39,14 @@ class AtualizarUsuarioService:
             if not isinstance(dados["ativo"], bool):
                 raise ValueError("ativo tem que ser true ou false")
             ativo = dados["ativo"]
+
+        if atual and atual.id_usuario == usuario.id_usuario:
+            if not ativo:
+                raise ValueError("você não pode desativar o seu próprio usuário")
+            if perfil != "admin" and usuario.perfil == "admin":
+                raise ValueError("você não pode tirar o seu próprio acesso de administrador")
+        conferir_ultimo_admin(usuario, perfil, ativo)
+
         senha = dados.get("senha")
         if senha:
             usuario.definir_senha(virar_senha(senha))

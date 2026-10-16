@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/evento.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 import 'evento_form.dart';
 
 class EventosScreen extends StatefulWidget {
@@ -104,10 +105,13 @@ class _EventosScreenState extends State<EventosScreen> {
             subtitle: Text(
               '${ev.dataInicio} até ${ev.dataFim}  •  impacto: ${ev.impactoPercentual}%',
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => excluir(ev),
-            ),
+            // so admin exclui
+            trailing: Sessao.ehAdmin
+                ? IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => excluir(ev),
+                  )
+                : null,
           ),
         );
       },

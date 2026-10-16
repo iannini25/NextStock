@@ -22,31 +22,36 @@ import '../screens/usuarios_screen.dart';
 // largura minima pra usar a barra lateral fixa (senao vira menu/drawer)
 const double larguraDesktop = 900;
 
-// item do menu (icone + titulo). a ordem aqui e a mesma usada no corpo.
+// item do menu. o id escolhe a tela (nao a posicao, porque o usuario comum nao ve todos os itens)
 class ItemNav {
+  final String id;
   final IconData icone;
   final String titulo;
-  const ItemNav(this.icone, this.titulo);
+  final bool soAdmin;
+  const ItemNav(this.id, this.icone, this.titulo, {this.soAdmin = false});
 }
 
 const List<ItemNav> modulosNav = [
-  ItemNav(Icons.home, 'Início'),
-  ItemNav(Icons.inventory_2, 'Produtos'),
-  ItemNav(Icons.notifications, 'Alertas'),
-  ItemNav(Icons.smart_toy, 'Assistente'),
-  ItemNav(Icons.category, 'Categorias'),
-  ItemNav(Icons.point_of_sale, 'Vendas'),
-  ItemNav(Icons.event, 'Eventos'),
-  ItemNav(Icons.trending_up, 'Previsão'),
-  ItemNav(Icons.shopping_cart, 'Compras'),
-  ItemNav(Icons.autorenew, 'Reposição'),
-  ItemNav(Icons.dashboard, 'Painel'),
-  ItemNav(Icons.lightbulb, 'Recomendações'),
-  ItemNav(Icons.bar_chart, 'Relatórios'),
-  ItemNav(Icons.cloud_upload, 'Importar'),
-  ItemNav(Icons.business, 'Empresa'),
-  ItemNav(Icons.people, 'Usuários'),
+  ItemNav('inicio', Icons.home, 'Início'),
+  ItemNav('produtos', Icons.inventory_2, 'Produtos'),
+  ItemNav('alertas', Icons.notifications, 'Alertas'),
+  ItemNav('assistente', Icons.smart_toy, 'Assistente'),
+  ItemNav('categorias', Icons.category, 'Categorias'),
+  ItemNav('vendas', Icons.point_of_sale, 'Vendas'),
+  ItemNav('eventos', Icons.event, 'Eventos'),
+  ItemNav('previsao', Icons.trending_up, 'Previsão'),
+  ItemNav('compras', Icons.shopping_cart, 'Compras'),
+  ItemNav('reposicao', Icons.autorenew, 'Reposição'),
+  ItemNav('painel', Icons.dashboard, 'Painel'),
+  ItemNav('recomendacoes', Icons.lightbulb, 'Recomendações'),
+  ItemNav('relatorios', Icons.bar_chart, 'Relatórios'),
+  ItemNav('importar', Icons.cloud_upload, 'Importar', soAdmin: true),
+  ItemNav('empresa', Icons.business, 'Empresa'),
+  ItemNav('usuarios', Icons.people, 'Usuários', soAdmin: true),
 ];
+
+// os itens que quem esta logado pode ver
+List<ItemNav> modulosVisiveis() => modulosNav.where((m) => !m.soAdmin || Sessao.ehAdmin).toList();
 
 // casca do app: barra de cima com a marca + navegacao (lateral no desktop,
 // drawer no celular) + a tela do modulo selecionado no meio.
@@ -58,45 +63,45 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int selecionado = 0;
+  String selecionado = 'inicio';
 
-  void _selecionar(int i) => setState(() => selecionado = i);
+  void _selecionar(String id) => setState(() => selecionado = id);
 
-  // monta a tela conforme o indice do menu
+  // monta a tela conforme o item escolhido no menu
   Widget _corpo() {
     switch (selecionado) {
-      case 1:
+      case 'produtos':
         return const ProdutosScreen();
-      case 2:
+      case 'alertas':
         return const AlertasScreen();
-      case 3:
+      case 'assistente':
         return const AssistenteScreen();
-      case 4:
+      case 'categorias':
         return const CategoriasScreen();
-      case 5:
+      case 'vendas':
         return const VendasScreen();
-      case 6:
+      case 'eventos':
         return const EventosScreen();
-      case 7:
+      case 'previsao':
         return const PrevisaoScreen();
-      case 8:
+      case 'compras':
         return const ComprasScreen();
-      case 9:
+      case 'reposicao':
         return const ReposicaoScreen();
-      case 10:
+      case 'painel':
         return const PainelScreen();
-      case 11:
+      case 'recomendacoes':
         return const RecomendacoesScreen();
-      case 12:
+      case 'relatorios':
         return const RelatoriosScreen();
-      case 13:
+      case 'importar':
         return const ImportarErpScreen();
-      case 14:
+      case 'empresa':
         return const EmpresaScreen();
-      case 15:
+      case 'usuarios':
         return const UsuariosScreen();
       default:
-        return InicioScreen(aoAbrir: _selecionar);
+        return InicioScreen(modulos: modulosVisiveis(), aoAbrir: _selecionar);
     }
   }
 
@@ -259,8 +264,8 @@ class BarraTopo extends StatelessWidget {
 
 // barra lateral fixa do desktop
 class _BarraLateral extends StatelessWidget {
-  final int selecionado;
-  final ValueChanged<int> aoSelecionar;
+  final String selecionado;
+  final ValueChanged<String> aoSelecionar;
   const _BarraLateral({required this.selecionado, required this.aoSelecionar});
 
   @override
@@ -275,18 +280,19 @@ class _BarraLateral extends StatelessWidget {
 
 // lista de modulos usada tanto na lateral quanto no drawer
 class _ListaModulos extends StatelessWidget {
-  final int selecionado;
-  final ValueChanged<int> aoSelecionar;
+  final String selecionado;
+  final ValueChanged<String> aoSelecionar;
   const _ListaModulos({required this.selecionado, required this.aoSelecionar});
 
   @override
   Widget build(BuildContext context) {
+    final modulos = modulosVisiveis();
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: modulosNav.length,
+      itemCount: modulos.length,
       itemBuilder: (_, i) {
-        final m = modulosNav[i];
-        final sel = i == selecionado;
+        final m = modulos[i];
+        final sel = m.id == selecionado;
         return ListTile(
           leading: Icon(m.icone, color: sel ? corAzul : null),
           title: Text(
@@ -298,7 +304,7 @@ class _ListaModulos extends StatelessWidget {
           ),
           selected: sel,
           selectedTileColor: corAzul.withValues(alpha: 0.10),
-          onTap: () => aoSelecionar(i),
+          onTap: () => aoSelecionar(m.id),
         );
       },
     );

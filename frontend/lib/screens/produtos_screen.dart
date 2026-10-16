@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 import 'produto_form.dart';
 
 class ProdutosScreen extends StatefulWidget {
@@ -106,9 +107,10 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
-                IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => excluir(p)),
+                if (Sessao.ehAdmin) // so admin exclui
+                  IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => excluir(p)),
               ],
             ),
           ),

@@ -5,9 +5,11 @@ import '../shell/app_shell.dart';
 // tela inicial: um painel com os atalhos pros modulos. a marca fica
 // na barra de cima da casca (app_shell), entao aqui nao repete.
 class InicioScreen extends StatelessWidget {
+  // os modulos que quem esta logado pode ver
+  final List<ItemNav> modulos;
   // avisa a casca pra trocar o modulo selecionado
-  final void Function(int indice)? aoAbrir;
-  const InicioScreen({super.key, this.aoAbrir});
+  final void Function(String id)? aoAbrir;
+  const InicioScreen({super.key, required this.modulos, this.aoAbrir});
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +53,10 @@ class InicioScreen extends StatelessWidget {
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
                     childAspectRatio: 1.5,
-                    // pula o indice 0 (a propria tela inicial)
+                    // pula a propria tela inicial
                     children: [
-                      for (int i = 1; i < modulosNav.length; i++)
-                        _cartao(context, i),
+                      for (final m in modulos)
+                        if (m.id != 'inicio') _cartao(context, m),
                     ],
                   ),
                 ],
@@ -66,13 +68,12 @@ class InicioScreen extends StatelessWidget {
     );
   }
 
-  Widget _cartao(BuildContext context, int indice) {
-    final m = modulosNav[indice];
+  Widget _cartao(BuildContext context, ItemNav m) {
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => aoAbrir?.call(indice),
+        onTap: () => aoAbrir?.call(m.id),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

@@ -6,6 +6,7 @@ import 'package:nextstock/screens/usuarios_screen.dart';
 
 import 'apoio/api_falsa.dart';
 import 'apoio/dados.dart';
+import 'apoio/sessao.dart';
 import 'apoio/tela.dart';
 
 Finder iconeNoUsuario(String nome, IconData icone) {
@@ -13,6 +14,49 @@ Finder iconeNoUsuario(String nome, IconData icone) {
 }
 
 void main() {
+  // tela de admin: os testes entram como um admin (id 99) que nao aparece nas listas
+  setUp(() {
+    prepararSessao();
+    logarComo(perfil: 'admin', id: 99);
+  });
+
+  testWidgets('admin não vê o botão de desativar a si mesmo', (tester) async {
+    logarComo(perfil: 'admin', id: 1, nome: 'Ana');
+    final api = ApiFalsa({
+      '/usuarios': (_) => respostaJson([
+            usuarioJson(id: 1, nome: 'Ana', perfil: 'admin'),
+            usuarioJson(id: 2, nome: 'João'),
+          ]),
+    });
+
+    await api.usar(() async {
+      await tester.pumpWidget(const MaterialApp(home: UsuariosScreen()));
+      await tester.pumpAndSettle();
+    });
+
+    expect(iconeNoUsuario('Ana', Icons.person_off), findsNothing);
+    expect(iconeNoUsuario('João', Icons.person_off), findsOneWidget);
+  });
+
+  testWidgets('editando a si mesmo, perfil e ativo ficam travados', (tester) async {
+    usarTelaAlta(tester);
+    logarComo(perfil: 'admin', id: 1, nome: 'Ana');
+    final api = ApiFalsa({
+      '/usuarios': (_) => respostaJson([usuarioJson(id: 1, nome: 'Ana', perfil: 'admin')]),
+    });
+
+    await api.usar(() async {
+      await tester.pumpWidget(const MaterialApp(home: UsuariosScreen()));
+      await tester.pumpAndSettle();
+      await tester.tap(iconeNoUsuario('Ana', Icons.edit));
+      await tester.pumpAndSettle();
+    });
+
+    expect(find.text('você não pode mudar o seu próprio perfil'), findsOneWidget);
+    expect(find.text('você não pode desativar o seu próprio usuário'), findsOneWidget);
+    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged, isNull);
+  });
+
   testWidgets('lista os usuários com perfil e situação', (tester) async {
     final api = ApiFalsa({
       '/usuarios': (_) => respostaJson([

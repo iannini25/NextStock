@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/empresa.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 import 'setup_screen.dart';
 
 // dados da empresa. se ainda nao tem empresa, mostra a configuracao inicial no lugar.
@@ -126,28 +127,34 @@ class _EmpresaScreenState extends State<EmpresaScreen> {
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (falhou) return const Center(child: Text('Não foi possível carregar os dados da empresa.'));
+    // usuario comum so ve; quem altera e o admin
+    final podeEditar = Sessao.ehAdmin;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        campo(nome, 'Razão social *'),
-        campo(nomeFantasia, 'Nome fantasia'),
-        campo(cnpj, 'CNPJ', numero: true),
-        campo(email, 'E-mail da empresa'),
-        campo(telefone, 'Telefone'),
+        campo(nome, 'Razão social *', somenteLeitura: !podeEditar),
+        campo(nomeFantasia, 'Nome fantasia', somenteLeitura: !podeEditar),
+        campo(cnpj, 'CNPJ', numero: true, somenteLeitura: !podeEditar),
+        campo(email, 'E-mail da empresa', somenteLeitura: !podeEditar),
+        campo(telefone, 'Telefone', somenteLeitura: !podeEditar),
         const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: salvando ? null : salvar,
-          child: Text(salvando ? 'Salvando...' : 'Salvar'),
-        ),
+        if (podeEditar)
+          ElevatedButton(
+            onPressed: salvando ? null : salvar,
+            child: Text(salvando ? 'Salvando...' : 'Salvar'),
+          )
+        else
+          const Text('Só administradores alteram os dados da empresa.', textAlign: TextAlign.center),
       ],
     );
   }
 
-  Widget campo(TextEditingController c, String label, {bool numero = false}) {
+  Widget campo(TextEditingController c, String label, {bool numero = false, bool somenteLeitura = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
+        readOnly: somenteLeitura,
         keyboardType: numero ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
       ),

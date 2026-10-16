@@ -6,6 +6,7 @@ import 'package:nextstock/screens/empresa_screen.dart';
 
 import 'apoio/api_falsa.dart';
 import 'apoio/dados.dart';
+import 'apoio/sessao.dart';
 import 'apoio/tela.dart';
 
 // preenche o formulario da configuracao inicial com dados validos
@@ -19,6 +20,8 @@ Future<void> preencherSetup(WidgetTester tester, {String senha = 'senhaforte123'
 }
 
 void main() {
+  setUp(prepararSessao);
+
   testWidgets('sem empresa mostra a configuração inicial e cadastra empresa e admin', (tester) async {
     usarTelaAlta(tester);
     var configurado = false;
@@ -120,8 +123,9 @@ void main() {
     expect(find.text('Configuração inicial'), findsOneWidget);
   });
 
-  testWidgets('com empresa mostra os dados e salva as alterações', (tester) async {
+  testWidgets('com empresa mostra os dados e o admin salva as alterações', (tester) async {
     usarTelaAlta(tester);
+    logarComo(perfil: 'admin');
     Map<String, dynamic>? enviado;
     final api = ApiFalsa({
       '/setup/status': (_) => respostaJson({'configurado': true}),

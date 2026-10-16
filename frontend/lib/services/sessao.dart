@@ -14,6 +14,9 @@ class Sessao {
   // recado pra tela de login (ex.: sessao expirada)
   static String? aviso;
 
+  // o app so esconde o que nao e permitido; quem barra de verdade e a API (responde 403)
+  static bool get ehAdmin => usuario.value?.ehAdmin ?? false;
+
   // le o token salvo da ultima vez (ainda precisa conferir na API se ele vale)
   static Future<void> restaurarToken() async {
     final prefs = await SharedPreferences.getInstance();

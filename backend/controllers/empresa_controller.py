@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 
+from controllers.permissoes import exigir_admin
+
 from services.verificar_setup_service import VerificarSetupService
 from services.configurar_empresa_service import ConfigurarEmpresaService
 from services.buscar_empresa_service import BuscarEmpresaService
@@ -45,4 +47,4 @@ class EmpresaController:
 empresa_bp.add_url_rule("/setup/status", view_func=EmpresaController.status_setup, methods=["GET"])
 empresa_bp.add_url_rule("/setup", view_func=EmpresaController.configurar, methods=["POST"])
 empresa_bp.add_url_rule("/empresa", view_func=EmpresaController.buscar, methods=["GET"])
-empresa_bp.add_url_rule("/empresa", view_func=EmpresaController.atualizar, methods=["PUT"])
+empresa_bp.add_url_rule("/empresa", view_func=exigir_admin(EmpresaController.atualizar), methods=["PUT"])

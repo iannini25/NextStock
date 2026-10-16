@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 import 'usuario_form.dart';
 
 class UsuariosScreen extends StatefulWidget {
@@ -115,7 +116,8 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                   icon: const Icon(Icons.edit),
                   onPressed: () => abrirForm(u),
                 ),
-                if (u.ativo)
+                // ninguem desativa o proprio usuario (a API tambem barra)
+                if (u.ativo && u.id != Sessao.usuario.value?.id)
                   IconButton(
                     tooltip: 'Desativar',
                     icon: const Icon(Icons.person_off, color: Colors.red),

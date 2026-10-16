@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../services/api_service.dart';
+import '../services/sessao.dart';
 
 class UsuarioForm extends StatefulWidget {
   final Usuario? usuario;
@@ -20,6 +21,9 @@ class _UsuarioFormState extends State<UsuarioForm> {
   bool salvando = false;
 
   bool get editando => widget.usuario != null;
+
+  // editando o proprio usuario: nao da pra mudar o proprio perfil nem se desativar
+  bool get ehVoceMesmo => editando && widget.usuario!.id == Sessao.usuario.value?.id;
 
   @override
   void initState() {
@@ -97,12 +101,16 @@ class _UsuarioFormState extends State<UsuarioForm> {
             padding: const EdgeInsets.only(bottom: 12),
             child: DropdownButtonFormField<String>(
               initialValue: perfil,
-              decoration: const InputDecoration(labelText: 'Perfil', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                labelText: 'Perfil',
+                border: const OutlineInputBorder(),
+                helperText: ehVoceMesmo ? 'você não pode mudar o seu próprio perfil' : null,
+              ),
               items: const [
                 DropdownMenuItem(value: 'usuario', child: Text('Usuário')),
                 DropdownMenuItem(value: 'admin', child: Text('Administrador')),
               ],
-              onChanged: (v) => perfil = v ?? 'usuario',
+              onChanged: ehVoceMesmo ? null : (v) => perfil = v ?? 'usuario',
             ),
           ),
           campo(senha, editando ? 'Nova senha (em branco = manter a atual)' : 'Senha (mínimo 8 caracteres) *',
@@ -111,9 +119,11 @@ class _UsuarioFormState extends State<UsuarioForm> {
           if (editando)
             SwitchListTile(
               title: const Text('Ativo'),
-              subtitle: const Text('usuário inativo não consegue entrar no sistema'),
+              subtitle: Text(ehVoceMesmo
+                  ? 'você não pode desativar o seu próprio usuário'
+                  : 'usuário inativo não consegue entrar no sistema'),
               value: ativo,
-              onChanged: (v) => setState(() => ativo = v),
+              onChanged: ehVoceMesmo ? null : (v) => setState(() => ativo = v),
             ),
           const SizedBox(height: 16),
           ElevatedButton(

@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 
+from controllers.permissoes import exigir_admin
+
 from services.criar_evento_service import CriarEventoService
 from services.listar_eventos_service import ListarEventosService
 from services.deletar_evento_service import DeletarEventoService
@@ -30,4 +32,4 @@ class EventoController:
 
 evento_bp.add_url_rule("/eventos", view_func=EventoController.listar, methods=["GET"])
 evento_bp.add_url_rule("/eventos", view_func=EventoController.criar, methods=["POST"])
-evento_bp.add_url_rule("/eventos/<int:id>", view_func=EventoController.deletar, methods=["DELETE"])
+evento_bp.add_url_rule("/eventos/<int:id>", view_func=exigir_admin(EventoController.deletar), methods=["DELETE"])
