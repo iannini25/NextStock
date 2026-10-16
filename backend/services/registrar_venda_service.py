@@ -11,7 +11,8 @@ class RegistrarVendaService:
 
     # baixar_estoque=False so registra a venda no historico (ex.: venda que veio do ERP,
     # que ja manda o estoque atualizado). o padrao continua baixando como sempre.
-    def executar(self, dados, baixar_estoque=True):
+    # origem = de onde a venda veio (manual, planilha, erp), pro historico de movimentacoes
+    def executar(self, dados, baixar_estoque=True, origem="manual"):
         if not dados.get("id_produto"):
             raise ValueError("produto não existe")
         produto = Produto.buscar_por_id(dados.get("id_produto"))
@@ -24,16 +25,18 @@ class RegistrarVendaService:
 
         data_venda = virar_data(dados.get("data_venda")) or date.today()
 
-        # baixa nos lotes + venda gravados juntos: ou entra tudo, ou nada
+        # venda + baixa nos lotes + historico gravados juntos: ou entra tudo, ou nada
         try:
-            if baixar_estoque:
-                EstoqueLoteService().baixar(produto, quantidade)  # "estoque insuficiente" sai daqui
             venda = Venda(
                 id_produto=produto.id_produto,
                 quantidade=quantidade,
                 data_venda=data_venda,
             )
             db.session.add(venda)
+            db.session.flush()  # gera o id da venda pro historico, sem gravar ainda
+            if baixar_estoque:
+                # "estoque insuficiente" sai daqui (e a venda acima nao chega a ser gravada)
+                EstoqueLoteService(origem_movimento=origem).baixar(produto, quantidade, id_venda=venda.id_venda)
             db.session.commit()
         except Exception:
             db.session.rollback()

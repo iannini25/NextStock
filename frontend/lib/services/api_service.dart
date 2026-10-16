@@ -18,6 +18,7 @@ import '../models/usuario.dart';
 import '../models/configuracao_erp.dart';
 import '../models/sincronizacao_erp.dart';
 import '../models/lote.dart';
+import '../models/movimentacao.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -417,6 +418,33 @@ class ApiService {
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Lote.fromJson(e)).toList();
+  }
+
+  // -------- MOVIMENTACOES (historico do estoque) --------
+
+  // filtros opcionais; inicio e fim no formato aaaa-mm-dd
+  static Future<ResultadoMovimentacoes> listarMovimentacoes({
+    int? idProduto,
+    int? idLote,
+    String? tipo,
+    String? inicio,
+    String? fim,
+    int pagina = 1,
+    int limite = 50,
+  }) async {
+    final filtros = {
+      'id_produto': ?idProduto?.toString(),
+      'id_lote': ?idLote?.toString(),
+      'tipo': ?tipo,
+      'inicio': ?inicio,
+      'fim': ?fim,
+      'pagina': '$pagina',
+      'limite': '$limite',
+    };
+    final url = Uri.parse('$baseUrl/movimentacoes').replace(queryParameters: filtros);
+    final r = await http.get(url, headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ResultadoMovimentacoes.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

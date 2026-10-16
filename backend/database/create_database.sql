@@ -107,6 +107,28 @@ CREATE TABLE IF NOT EXISTS lote (
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
 
+-- historico de tudo que entra e sai do estoque (quanto, de qual lote, saldo depois, quem, quando, de onde).
+-- tipo: entrada | saldo_inicial | venda | ajuste_entrada | ajuste_saida | perda | descarte
+-- origem: manual | planilha | erp | sistema | historico
+CREATE TABLE IF NOT EXISTS movimentacao_estoque (
+    id_movimentacao INT AUTO_INCREMENT PRIMARY KEY,
+    id_produto INT NOT NULL,
+    id_lote INT,
+    tipo VARCHAR(20) NOT NULL,
+    quantidade INT NOT NULL,
+    saldo_produto_apos INT,
+    custo_unitario DECIMAL(10,2),
+    id_venda INT,
+    id_usuario INT,
+    origem VARCHAR(20) NOT NULL DEFAULT 'manual',
+    observacao VARCHAR(255),
+    data_hora DATETIME NOT NULL,
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+    FOREIGN KEY (id_lote) REFERENCES lote(id_lote),
+    FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
 -- historico de cada vez que o NextStock buscou dados no ERP
 CREATE TABLE IF NOT EXISTS sincronizacao_erp (
     id_sincronizacao INT AUTO_INCREMENT PRIMARY KEY,

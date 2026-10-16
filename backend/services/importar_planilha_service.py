@@ -245,11 +245,11 @@ class ImportarPlanilhaService:
         unidade = (_texto(item.get("unidade")) or "UN").upper()
         validade = _data(item.get("data_validade"))
 
-        estoque = EstoqueLoteService()
-        if not produto:
+        estoque = EstoqueLoteService(origem_movimento="planilha")
+        novo = produto is None
+        if novo:
             produto = Produto(nome=nome, codigo_barras=codigo, quantidade_estoque=0)
             db.session.add(produto)
-            tem_quantidade = qtd > 0
         produto.nome = nome
         produto.id_categoria = id_categoria
         produto.codigo_barras = codigo
@@ -258,8 +258,10 @@ class ImportarPlanilhaService:
         produto.estoque_minimo = minimo
         produto.unidade = unidade
         try:
-            # a quantidade da planilha vira ajuste nos lotes (sobrou = lote novo com a validade da planilha)
-            if tem_quantidade:
+            if novo:  # produto novo: a quantidade da planilha e o saldo inicial dele
+                if qtd > 0:
+                    estoque.entrada(produto, qtd, data_validade=validade, origem="importacao", tipo="saldo_inicial")
+            elif tem_quantidade:  # produto que ja existe: vira ajuste nos lotes (sobrou = lote novo)
                 estoque.ajustar_para(produto, qtd, data_validade=validade, origem="importacao")
             db.session.commit()
         except Exception:
@@ -281,7 +283,7 @@ class ImportarPlanilhaService:
             "id_produto": id_produto,
             "quantidade": quantidade,
             "data_venda": data_venda.isoformat(),
-        })
+        }, origem="planilha")
         return "ok"
 
     def _importar_evento(self, item):

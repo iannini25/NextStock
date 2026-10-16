@@ -3,6 +3,7 @@ import '../models/lote.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 import 'lote_form.dart';
+import 'movimentacoes_screen.dart';
 
 // lotes de um produto: o que tem em estoque, separado por entrada, validade e custo
 class LotesScreen extends StatefulWidget {
@@ -121,10 +122,25 @@ class _LotesScreenState extends State<LotesScreen> {
               'entrada: ${l.dataEntrada ?? "-"}  •  ${l.nomeOrigem}  •  custo: $custo',
             ),
             isThreeLine: true,
-            trailing: IconButton(
-              tooltip: 'Corrigir código ou validade',
-              icon: const Icon(Icons.edit),
-              onPressed: () => abrirForm(l),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Histórico do lote',
+                  icon: const Icon(Icons.history),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MovimentacoesScreen(idLote: l.id, titulo: 'Histórico — ${l.titulo}'),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Corrigir código ou validade',
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => abrirForm(l),
+                ),
+              ],
             ),
           ),
         );

@@ -6,6 +6,7 @@ from models.clima_model import ClimaDia
 from models.empresa_model import Empresa
 from models.evento_model import Evento
 from models.lote_model import Lote
+from models.movimentacao_estoque_model import MovimentacaoEstoque
 from models.produto_model import Produto
 from models.usuario_model import Usuario
 from models.venda_model import Venda
@@ -37,9 +38,13 @@ def criar_produto(nome="Leite Integral 1L", **campos):
     # igual ao banco de verdade: estoque fica num lote (com a validade e o custo do produto)
     quantidade = p.quantidade_estoque or 0
     if quantidade > 0:
-        db.session.add(Lote(produto=p, quantidade_inicial=quantidade, quantidade_atual=quantidade,
-                            data_entrada=date.today(), data_validade=p.data_validade,
-                            custo_unitario=p.preco_custo, origem="inicial"))
+        lote = Lote(produto=p, quantidade_inicial=quantidade, quantidade_atual=quantidade,
+                    data_entrada=date.today(), data_validade=p.data_validade,
+                    custo_unitario=p.preco_custo, origem="inicial")
+        db.session.add(lote)
+        db.session.add(MovimentacaoEstoque(produto=p, lote=lote, tipo="saldo_inicial", quantidade=quantidade,
+                                           saldo_produto_apos=quantidade, custo_unitario=p.preco_custo,
+                                           origem="sistema"))
     db.session.commit()
     return p
 

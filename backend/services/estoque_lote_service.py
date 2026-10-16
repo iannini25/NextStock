@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, datetime
 
 from models.database import db
 from models.lote_model import Lote
+from models.movimentacao_estoque_model import MovimentacaoEstoque
 from models.produto_model import Produto
 from services.utils import usuario_logado
 
@@ -22,8 +23,13 @@ def ordenar_lotes_para_saida(lotes):
 # toda mudanca de estoque passa por aqui. o estoque e a validade do produto sao derivados dos lotes:
 #   quantidade_estoque = soma dos saldos dos lotes
 #   data_validade      = menor validade entre os lotes que ainda tem saldo
-# os metodos NAO fazem commit: quem chama grava tudo junto (venda + baixa + produto num commit so)
+# e cada mudanca vira um registro em movimentacao_estoque (o historico).
+# os metodos NAO fazem commit: quem chama grava tudo junto (venda + baixa + historico num commit so)
 class EstoqueLoteService:
+
+    # origem_movimento: de onde a mudanca veio (manual, planilha, erp, sistema) - vai pro historico
+    def __init__(self, origem_movimento="manual"):
+        self.origem_movimento = origem_movimento
 
     def lotes_com_saldo(self, produto):
         self.garantir_lote_inicial(produto)
@@ -34,7 +40,7 @@ class EstoqueLoteService:
         estoque = produto.quantidade_estoque or 0
         if estoque > 0 and not produto.lotes:
             # o add e obrigatorio: ligar o lote ao produto nao poe o lote na sessao (SQLAlchemy 2)
-            db.session.add(Lote(
+            lote = Lote(
                 produto=produto,
                 data_entrada=date.today(),
                 data_validade=produto.data_validade,
@@ -42,10 +48,14 @@ class EstoqueLoteService:
                 quantidade_atual=estoque,
                 custo_unitario=produto.preco_custo,
                 origem="inicial",
-            ))
+            )
+            db.session.add(lote)
+            self.registrar(produto, lote, "saldo_inicial", estoque, origem="sistema")
 
+    # origem = de onde o LOTE veio (entrada, inicial, ajuste, importacao, erp)
+    # tipo   = como entra no historico; por padrao "saldo_inicial" pro cadastro e "entrada" pro resto
     def entrada(self, produto, quantidade, data_validade=None, codigo_lote=None, custo_unitario=None,
-                data_entrada=None, origem="entrada"):
+                data_entrada=None, origem="entrada", tipo=None, observacao=None):
         if not quantidade or quantidade <= 0:
             raise ValueError("quantidade tem que ser maior que zero")
         self.garantir_lote_inicial(produto)
@@ -63,10 +73,13 @@ class EstoqueLoteService:
         )
         db.session.add(lote)
         self.sincronizar_produto(produto)
+        tipo = tipo or ("saldo_inicial" if origem == "inicial" else "entrada")
+        self.registrar(produto, lote, tipo, quantidade, observacao=observacao)
         return lote
 
-    # tira a quantidade dos lotes na ordem de saida. devolve [(lote, quanto saiu dele)]
-    def baixar(self, produto, quantidade):
+    # tira a quantidade dos lotes na ordem de saida. devolve [(lote, quanto saiu dele)].
+    # cada lote que entrou na baixa vira um registro no historico (uma venda pode atravessar 2 lotes)
+    def baixar(self, produto, quantidade, tipo="venda", id_venda=None, observacao=None):
         lotes = ordenar_lotes_para_saida(self.lotes_com_saldo(produto))
         if quantidade > sum(l.quantidade_atual for l in lotes):
             raise ValueError("estoque insuficiente")
@@ -79,6 +92,7 @@ class EstoqueLoteService:
             lote.quantidade_atual -= sai
             falta -= sai
             consumidos.append((lote, sai))
+            self.registrar(produto, lote, tipo, sai, id_venda=id_venda, observacao=observacao)
         self.sincronizar_produto(produto)
         return consumidos
 
@@ -87,9 +101,9 @@ class EstoqueLoteService:
         atual = sum(l.quantidade_atual for l in self.lotes_com_saldo(produto))
         diferenca = (nova_quantidade or 0) - atual
         if diferenca > 0:
-            self.entrada(produto, diferenca, data_validade=data_validade, origem=origem)
+            self.entrada(produto, diferenca, data_validade=data_validade, origem=origem, tipo="ajuste_entrada")
         elif diferenca < 0:
-            self.baixar(produto, -diferenca)
+            self.baixar(produto, -diferenca, tipo="ajuste_saida")
         else:
             self.sincronizar_produto(produto)
 
@@ -99,11 +113,66 @@ class EstoqueLoteService:
         validades = [l.data_validade for l in com_saldo if l.data_validade]
         produto.data_validade = min(validades) if validades else None
 
+    # uma linha no historico, com o saldo do produto logo depois dessa mudanca
+    def registrar(self, produto, lote, tipo, quantidade, id_venda=None, observacao=None, origem=None):
+        usuario = usuario_logado()
+        db.session.add(MovimentacaoEstoque(
+            produto=produto,
+            lote=lote,
+            tipo=tipo,
+            quantidade=quantidade,
+            saldo_produto_apos=sum(l.quantidade_atual for l in produto.lotes),
+            custo_unitario=lote.custo_unitario if lote else None,
+            id_venda=id_venda,
+            id_usuario=usuario.id_usuario if usuario else None,
+            origem=origem or self.origem_movimento,
+            observacao=observacao,
+            data_hora=datetime.now(),
+        ))
+
+
+# roda quando a API sobe, ANTES do criar_lotes_iniciais: se o historico ainda esta vazio, registra o que ja
+# existia (lotes como entrada e vendas antigas, com origem "historico" e sem saldo). so roda uma vez:
+# depois que tem qualquer registro, nao faz nada. devolve quantos registros criou
+def preencher_historico():
+    if MovimentacaoEstoque.query.first():
+        return 0
+    from models.venda_model import Venda
+
+    criados = 0
+    tipos_por_origem_do_lote = {"inicial": "saldo_inicial", "ajuste": "ajuste_entrada"}
+    for lote in Lote.query.order_by(Lote.id_lote).all():
+        db.session.add(MovimentacaoEstoque(
+            id_produto=lote.id_produto,
+            id_lote=lote.id_lote,
+            tipo=tipos_por_origem_do_lote.get(lote.origem, "entrada"),
+            quantidade=lote.quantidade_inicial,
+            custo_unitario=lote.custo_unitario,
+            id_usuario=lote.id_usuario,
+            origem="historico",
+            data_hora=lote.criado_em or datetime.combine(lote.data_entrada, datetime.min.time()),
+        ))
+        criados += 1
+    for venda in Venda.query.order_by(Venda.id_venda).all():
+        db.session.add(MovimentacaoEstoque(
+            id_produto=venda.id_produto,
+            tipo="venda",
+            quantidade=venda.quantidade,
+            id_venda=venda.id_venda,
+            origem="historico",
+            observacao="venda registrada antes do histórico de movimentações",
+            data_hora=datetime.combine(venda.data_venda, datetime.min.time()),
+        ))
+        criados += 1
+    if criados:
+        db.session.commit()
+    return criados
+
 
 # roda quando a API sobe: produto antigo com estoque e sem lote ganha o "estoque inicial".
 # pode rodar quantas vezes for: quem ja tem lote nao e mexido. devolve quantos lotes criou
 def criar_lotes_iniciais():
-    servico = EstoqueLoteService()
+    servico = EstoqueLoteService(origem_movimento="sistema")
     criados = 0
     for produto in Produto.query.filter(Produto.quantidade_estoque > 0).all():
         if not produto.lotes:

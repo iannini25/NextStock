@@ -8,6 +8,7 @@ import '../screens/alertas_screen.dart';
 import '../screens/assistente_screen.dart';
 import '../screens/categorias_screen.dart';
 import '../screens/vendas_screen.dart';
+import '../screens/movimentacoes_screen.dart';
 import '../screens/eventos_screen.dart';
 import '../screens/previsao_screen.dart';
 import '../screens/compras_screen.dart';
@@ -39,6 +40,7 @@ const List<ItemNav> modulosNav = [
   ItemNav('assistente', Icons.smart_toy, 'Assistente'),
   ItemNav('categorias', Icons.category, 'Categorias'),
   ItemNav('vendas', Icons.point_of_sale, 'Vendas'),
+  ItemNav('movimentacoes', Icons.swap_vert, 'Movimentações'),
   ItemNav('eventos', Icons.event, 'Eventos'),
   ItemNav('previsao', Icons.trending_up, 'Previsão'),
   ItemNav('compras', Icons.shopping_cart, 'Compras'),
@@ -82,6 +84,8 @@ class _AppShellState extends State<AppShell> {
         return const CategoriasScreen();
       case 'vendas':
         return const VendasScreen();
+      case 'movimentacoes':
+        return const MovimentacoesScreen();
       case 'eventos':
         return const EventosScreen();
       case 'previsao':

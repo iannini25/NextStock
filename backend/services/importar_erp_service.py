@@ -139,7 +139,15 @@ class ImportarErpService:
             unidade=(item.get("unidade") or "UN").upper(),
         )
         db.session.add(produto)
-        self.gravar_estoque(produto, quantidade if quantidade > 0 else None, virar_data(item.get("data_validade")), origem)
+        try:
+            if quantidade > 0:  # produto novo: a quantidade do ERP e o saldo inicial dele
+                EstoqueLoteService(origem_movimento="erp").entrada(
+                    produto, quantidade, data_validade=virar_data(item.get("data_validade")),
+                    origem=origem, tipo="saldo_inicial")
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return "criado"
 
     # nova_quantidade None = nao mexe no estoque. grava o produto e os lotes juntos
@@ -147,7 +155,8 @@ class ImportarErpService:
     def gravar_estoque(produto, nova_quantidade, validade, origem):
         try:
             if nova_quantidade is not None:
-                EstoqueLoteService().ajustar_para(produto, nova_quantidade, data_validade=validade, origem=origem)
+                EstoqueLoteService(origem_movimento="erp").ajustar_para(
+                    produto, nova_quantidade, data_validade=validade, origem=origem)
             db.session.commit()
         except Exception:
             db.session.rollback()
@@ -177,7 +186,7 @@ class ImportarErpService:
             "id_produto": produto.id_produto,
             "quantidade": quantidade,
             "data_venda": data_venda.isoformat(),
-        }, baixar_estoque=not self.sincronizando)
+        }, baixar_estoque=not self.sincronizando, origem="erp")
 
         if self.sincronizando:
             db.session.add(ErpVendaImportada(id_externo=id_externo, id_venda=venda["id_venda"]))
