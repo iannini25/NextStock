@@ -14,6 +14,8 @@ import '../screens/painel_screen.dart';
 import '../screens/recomendacoes_screen.dart';
 import '../screens/relatorios_screen.dart';
 import '../screens/importar_erp_screen.dart';
+import '../screens/empresa_screen.dart';
+import '../screens/usuarios_screen.dart';
 
 // largura minima pra usar a barra lateral fixa (senao vira menu/drawer)
 const double larguraDesktop = 900;
@@ -40,6 +42,8 @@ const List<ItemNav> modulosNav = [
   ItemNav(Icons.lightbulb, 'Recomendações'),
   ItemNav(Icons.bar_chart, 'Relatórios'),
   ItemNav(Icons.cloud_upload, 'Importar'),
+  ItemNav(Icons.business, 'Empresa'),
+  ItemNav(Icons.people, 'Usuários'),
 ];
 
 // casca do app: barra de cima com a marca + navegacao (lateral no desktop,
@@ -85,6 +89,10 @@ class _AppShellState extends State<AppShell> {
         return const RelatoriosScreen();
       case 13:
         return const ImportarErpScreen();
+      case 14:
+        return const EmpresaScreen();
+      case 15:
+        return const UsuariosScreen();
       default:
         return InicioScreen(aoAbrir: _selecionar);
     }

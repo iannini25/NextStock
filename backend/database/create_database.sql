@@ -50,6 +50,31 @@ CREATE TABLE IF NOT EXISTS clima_dia (
     atualizado_em DATETIME
 );
 
+-- a empresa (o sistema atende uma so) e os usuarios dela.
+-- nao tem dado de exemplo: a configuracao inicial do app cadastra a empresa e o primeiro admin.
+CREATE TABLE IF NOT EXISTS empresa (
+    id_empresa INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    nome_fantasia VARCHAR(150),
+    cnpj VARCHAR(14) UNIQUE,
+    email VARCHAR(150),
+    telefone VARCHAR(20),
+    criado_em DATETIME
+);
+
+-- a senha nunca fica salva, so o hash dela. usuario nao e apagado, so desativado.
+CREATE TABLE IF NOT EXISTS usuario (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    id_empresa INT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha_hash VARCHAR(255) NOT NULL,
+    perfil VARCHAR(10) NOT NULL DEFAULT 'usuario',
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em DATETIME,
+    FOREIGN KEY (id_empresa) REFERENCES empresa(id_empresa)
+);
+
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
 

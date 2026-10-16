@@ -13,6 +13,8 @@ import '../models/recomendacao.dart';
 import '../models/relatorio.dart';
 import '../models/mensagem_chat.dart';
 import '../models/clima_dia.dart';
+import '../models/empresa.dart';
+import '../models/usuario.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
 // - Flutter Web e Desktop: http://127.0.0.1:8000
@@ -224,6 +226,62 @@ class ApiService {
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return j['resposta'] ?? '';
+  }
+
+  // -------- EMPRESA E USUARIOS --------
+
+  // true quando a empresa (e o primeiro admin) ja foram cadastrados
+  static Future<bool> setupConfigurado() async {
+    final r = await http.get(Uri.parse('$baseUrl/setup/status'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return j['configurado'] == true;
+  }
+
+  // configuracao inicial: empresa + primeiro administrador
+  static Future<void> configurarEmpresa(Empresa e, Usuario admin, String senha) async {
+    final r = await http.post(Uri.parse('$baseUrl/setup'),
+        headers: headers,
+        body: jsonEncode({'empresa': e.toJson(), 'admin': admin.toJson(senha: senha)}));
+    if (r.statusCode != 201) throw pegarErro(r);
+  }
+
+  static Future<Empresa> buscarEmpresa() async {
+    final r = await http.get(Uri.parse('$baseUrl/empresa'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    return Empresa.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  static Future<void> atualizarEmpresa(Empresa e) async {
+    final r = await http.put(Uri.parse('$baseUrl/empresa'),
+        headers: headers, body: jsonEncode(e.toJson()));
+    if (r.statusCode != 200) throw pegarErro(r);
+  }
+
+  static Future<List<Usuario>> listarUsuarios() async {
+    final r = await http.get(Uri.parse('$baseUrl/usuarios'));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => Usuario.fromJson(e)).toList();
+  }
+
+  static Future<void> criarUsuario(Usuario u, String senha) async {
+    final r = await http.post(Uri.parse('$baseUrl/usuarios'),
+        headers: headers, body: jsonEncode(u.toJson(senha: senha)));
+    if (r.statusCode != 201) throw pegarErro(r);
+  }
+
+  // senha null = mantem a senha atual
+  static Future<void> atualizarUsuario(int id, Usuario u, {String? senha}) async {
+    final r = await http.put(Uri.parse('$baseUrl/usuarios/$id'),
+        headers: headers, body: jsonEncode(u.toJson(senha: senha)));
+    if (r.statusCode != 200) throw pegarErro(r);
+  }
+
+  // a API nao apaga o usuario, so desativa
+  static Future<void> desativarUsuario(int id) async {
+    final r = await http.delete(Uri.parse('$baseUrl/usuarios/$id'));
+    if (r.statusCode != 204) throw pegarErro(r);
   }
 
   // pega a mensagem do campo "erro" que o backend manda

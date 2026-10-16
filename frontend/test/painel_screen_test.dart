@@ -3,17 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextstock/screens/painel_screen.dart';
 
 import 'apoio/api_falsa.dart';
+import 'apoio/tela.dart';
 
 void main() {
-  // tela alta pra caber os 11 indicadores sem precisar rolar
-  void telaAlta(WidgetTester tester) {
-    tester.view.physicalSize = const Size(800, 1600);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
-  }
-
   testWidgets('mostra os indicadores que vieram da API', (tester) async {
-    telaAlta(tester);
+    usarTelaAlta(tester); // cabem os 11 indicadores sem rolar
     final api = ApiFalsa({
       '/painel': (_) => respostaJson({
             'total_produtos': 12,

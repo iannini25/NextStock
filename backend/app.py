@@ -7,6 +7,8 @@ from models.database import db
 from models.venda_model import Venda
 from models.evento_model import Evento
 from models.clima_model import ClimaDia
+from models.empresa_model import Empresa
+from models.usuario_model import Usuario
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
@@ -21,6 +23,8 @@ from controllers.painel_controller import painel_bp
 from controllers.recomendacao_controller import recomendacao_bp
 from controllers.relatorio_controller import relatorio_bp
 from controllers.assistente_controller import assistente_bp
+from controllers.empresa_controller import empresa_bp
+from controllers.usuario_controller import usuario_bp
 
 load_dotenv()
 
@@ -50,6 +54,8 @@ app.register_blueprint(painel_bp)
 app.register_blueprint(recomendacao_bp)
 app.register_blueprint(relatorio_bp)
 app.register_blueprint(assistente_bp)
+app.register_blueprint(empresa_bp)
+app.register_blueprint(usuario_bp)
 
 
 @app.get("/")

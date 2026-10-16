@@ -33,6 +33,15 @@ ROTAS_EXISTENTES = {
     ("/relatorios/desempenho", "GET"),
     ("/relatorios/tendencias", "GET"),
     ("/assistente", "POST"),
+    # etapa 1: empresa e usuarios
+    ("/setup/status", "GET"),
+    ("/setup", "POST"),
+    ("/empresa", "GET"),
+    ("/empresa", "PUT"),
+    ("/usuarios", "GET"),
+    ("/usuarios", "POST"),
+    ("/usuarios/<int:id>", "PUT"),
+    ("/usuarios/<int:id>", "DELETE"),
 }
 
 

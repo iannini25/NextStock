@@ -12,6 +12,9 @@ http.Response respostaJson(Object? corpo, {int status = 200}) {
   );
 }
 
+// resposta sem corpo (ex.: o 204 do DELETE)
+http.Response respostaVazia({int status = 204}) => http.Response('', status);
+
 // API falsa pros testes de tela: cada rota (caminho sem a query) devolve uma resposta.
 // rota nao prevista responde 404 e toda requisicao fica guardada em [requisicoes].
 class ApiFalsa {

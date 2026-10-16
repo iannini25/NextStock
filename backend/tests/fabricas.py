@@ -3,8 +3,10 @@ from datetime import date, timedelta
 from models.database import db
 from models.categoria_model import Categoria
 from models.clima_model import ClimaDia
+from models.empresa_model import Empresa
 from models.evento_model import Evento
 from models.produto_model import Produto
+from models.usuario_model import Usuario
 from models.venda_model import Venda
 
 
@@ -63,3 +65,20 @@ def criar_clima(dias_daqui, condicao, temperatura=22.0, chuva_mm=0.0):
     db.session.add(c)
     db.session.commit()
     return c
+
+
+def criar_empresa(nome="Mercado Bom Preço LTDA", **campos):
+    e = Empresa(nome=nome, **campos)
+    db.session.add(e)
+    db.session.commit()
+    return e
+
+
+# cria a empresa junto se ela ainda nao existir
+def criar_usuario(nome="Maria", email="maria@loja.com", senha="senha1234", perfil="usuario", ativo=True):
+    empresa = Empresa.buscar_unica() or criar_empresa()
+    u = Usuario(id_empresa=empresa.id_empresa, nome=nome, email=email, perfil=perfil, ativo=ativo)
+    u.definir_senha(senha)
+    db.session.add(u)
+    db.session.commit()
+    return u
