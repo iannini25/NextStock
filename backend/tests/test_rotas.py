@@ -62,6 +62,9 @@ ROTAS_EXISTENTES = {
     ("/lotes/vencendo", "GET"),
     # etapa 8: historico de movimentacoes
     ("/movimentacoes", "GET"),
+    # etapa 9: ordem de saida e previa da venda
+    ("/produtos/<int:id>/ordem-saida", "GET"),
+    ("/vendas/previa", "GET"),
 }
 
 # o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)

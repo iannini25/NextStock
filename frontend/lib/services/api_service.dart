@@ -19,6 +19,7 @@ import '../models/configuracao_erp.dart';
 import '../models/sincronizacao_erp.dart';
 import '../models/lote.dart';
 import '../models/movimentacao.dart';
+import '../models/previa_venda.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -136,10 +137,21 @@ class ApiService {
     return lista.map((e) => Venda.fromJson(e)).toList();
   }
 
-  static Future<void> registrarVenda(Venda v) async {
+  // devolve de quais lotes a venda saiu (o vencimento mais proximo sai primeiro)
+  static Future<List<SaidaLote>> registrarVenda(Venda v) async {
     final r = await http.post(Uri.parse('$baseUrl/vendas'),
         headers: headers, body: jsonEncode(v.toJson()));
     if (r.statusCode != 201) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return (j['lotes_consumidos'] as List? ?? []).map((e) => SaidaLote.fromJson(e)).toList();
+  }
+
+  // de quais lotes a venda sairia, sem registrar nada
+  static Future<PreviaVenda> previaVenda(int idProduto, int quantidade) async {
+    final r = await http.get(Uri.parse('$baseUrl/vendas/previa?id_produto=$idProduto&quantidade=$quantidade'),
+        headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return PreviaVenda.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
 
   static Future<List<Evento>> listarEventos() async {

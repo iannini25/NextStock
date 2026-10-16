@@ -47,9 +47,7 @@ class MovimentacaoEstoque(db.Model):
 
     def virar_dict(self):
         nome, sinal = self.TIPOS.get(self.tipo, (self.tipo, 0))
-        lote = None
-        if self.lote:
-            lote = ("Lote " + self.lote.codigo_lote) if self.lote.codigo_lote else ("Lote #" + str(self.lote.id_lote))
+        lote = self.lote.titulo() if self.lote else None
         return {
             "id_movimentacao": self.id_movimentacao,
             "id_produto": self.id_produto,

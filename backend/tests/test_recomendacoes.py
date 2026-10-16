@@ -26,8 +26,11 @@ def test_recomendacoes_por_tipo_e_prioridade(client):
     }
 
     mensagens = {(i["produto_nome"], i["tipo"]): i["mensagem"] for i in lista}
-    assert mensagens[("Vencido", "retirar")] == "Vencido com 5 em estoque: tire da prateleira"
-    assert mensagens[("Vence logo", "promocao")] == "Vence em 2 dia(s) com 5 em estoque: faça promoção"
+    # validade agora e por lote (Etapa 9): a mensagem cita o lote e a quantidade dele
+    assert mensagens[("Vencido", "retirar")] == "Lote #1 vencido com 5 em estoque: tire da prateleira"
+    assert mensagens[("Vence logo", "promocao")] == (
+        "Lote #2 vence em 2 dia(s) com 5 em estoque: venda primeiro e faça promoção"
+    )
     assert mensagens[("No mínimo", "repor")] == "Estoque (2) no mínimo (5): repor agora"
     assert mensagens[("Excesso", "comprar_menos")] == "Estoque cobre 1000 dias de venda: compre menos"
     assert mensagens[("Demanda alta", "repor")] == (

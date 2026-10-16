@@ -1,6 +1,7 @@
 from models.database import db
 from models.produto_model import Produto
-from services.estoque_lote_service import EstoqueLoteService, ordenar_lotes_para_saida
+from services.estoque_lote_service import EstoqueLoteService
+from services.ordem_saida_service import lotes_na_ordem_de_saida
 
 
 class ListarLotesProdutoService:
@@ -14,9 +15,10 @@ class ListarLotesProdutoService:
             EstoqueLoteService(origem_movimento="sistema").garantir_lote_inicial(produto)
             db.session.commit()
 
-        com_saldo = ordenar_lotes_para_saida([l for l in produto.lotes if l.quantidade_atual > 0])
-        lotes = list(com_saldo)
+        # os com saldo vem na ordem de saida, com posicao_saida e vender_primeiro (Etapa 9)
+        lotes = lotes_na_ordem_de_saida(produto)
         if todos:
             esgotados = [l for l in produto.lotes if l.quantidade_atual <= 0]
-            lotes += sorted(esgotados, key=lambda l: (l.data_entrada, l.id_lote), reverse=True)
-        return {"produto": produto.virar_dict(), "lotes": [l.virar_dict() for l in lotes]}
+            esgotados = sorted(esgotados, key=lambda l: (l.data_entrada, l.id_lote), reverse=True)
+            lotes += [{**l.virar_dict(), "posicao_saida": None, "vender_primeiro": False} for l in esgotados]
+        return {"produto": produto.virar_dict(), "lotes": lotes}

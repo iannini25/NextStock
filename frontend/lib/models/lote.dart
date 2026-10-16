@@ -16,6 +16,8 @@ class Lote {
   double? custoUnitario;
   String origem;
   String? usuario;
+  int? posicaoSaida; // 1 = o proximo a sair numa venda
+  bool venderPrimeiro;
 
   Lote({
     required this.id,
@@ -32,6 +34,8 @@ class Lote {
     this.custoUnitario,
     this.origem = 'entrada',
     this.usuario,
+    this.posicaoSaida,
+    this.venderPrimeiro = false,
   });
 
   factory Lote.fromJson(Map<String, dynamic> j) {
@@ -50,6 +54,8 @@ class Lote {
       custoUnitario: paraDouble(j['custo_unitario']),
       origem: j['origem'] ?? 'entrada',
       usuario: j['usuario'],
+      posicaoSaida: j['posicao_saida'],
+      venderPrimeiro: j['vender_primeiro'] ?? false,
     );
   }
 

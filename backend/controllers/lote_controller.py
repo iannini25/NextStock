@@ -4,6 +4,7 @@ from services.listar_lotes_produto_service import ListarLotesProdutoService
 from services.registrar_entrada_lote_service import RegistrarEntradaLoteService
 from services.corrigir_lote_service import CorrigirLoteService
 from services.listar_lotes_vencendo_service import ListarLotesVencendoService
+from services.ordem_saida_service import OrdemSaidaService
 
 lote_bp = Blueprint("lote", __name__)
 
@@ -16,6 +17,14 @@ class LoteController:
     def listar_do_produto(id):
         todos = request.args.get("todos") in ("1", "true", "sim")
         resultado = ListarLotesProdutoService().executar(id, todos)
+        if resultado is None:
+            return jsonify({"erro": "produto não encontrado"}), 404
+        return jsonify(resultado)
+
+    # lotes com saldo na ordem em que vao sair (o primeiro bom vem com vender_primeiro=true)
+    @staticmethod
+    def ordem_saida(id):
+        resultado = OrdemSaidaService().executar(id)
         if resultado is None:
             return jsonify({"erro": "produto não encontrado"}), 404
         return jsonify(resultado)
@@ -46,6 +55,7 @@ class LoteController:
 
 
 lote_bp.add_url_rule("/produtos/<int:id>/lotes", view_func=LoteController.listar_do_produto, methods=["GET"])
+lote_bp.add_url_rule("/produtos/<int:id>/ordem-saida", view_func=LoteController.ordem_saida, methods=["GET"])
 lote_bp.add_url_rule("/lotes", view_func=LoteController.registrar_entrada, methods=["POST"])
 lote_bp.add_url_rule("/lotes/<int:id>", view_func=LoteController.corrigir, methods=["PUT"])
 lote_bp.add_url_rule("/lotes/vencendo", view_func=LoteController.listar_vencendo, methods=["GET"])

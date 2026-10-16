@@ -4,6 +4,7 @@ class Recomendacao {
   int idProduto;
   String produtoNome;
   String mensagem;
+  int? idLote; // so nas recomendacoes de validade (retirar/promocao), que sao por lote
 
   Recomendacao({
     required this.tipo,
@@ -11,6 +12,7 @@ class Recomendacao {
     required this.idProduto,
     required this.produtoNome,
     required this.mensagem,
+    this.idLote,
   });
 
   factory Recomendacao.fromJson(Map<String, dynamic> j) {
@@ -20,6 +22,7 @@ class Recomendacao {
       idProduto: j['id_produto'] ?? 0,
       produtoNome: j['produto_nome'] ?? '',
       mensagem: j['mensagem'] ?? '',
+      idLote: j['id_lote'],
     );
   }
 }

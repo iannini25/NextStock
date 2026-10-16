@@ -37,6 +37,10 @@ class Lote(db.Model):
     def buscar_por_id(id):
         return db.session.get(Lote, id)
 
+    # "Lote L-12" (com codigo) ou "Lote #3"
+    def titulo(self):
+        return ("Lote " + self.codigo_lote) if self.codigo_lote else ("Lote #" + str(self.id_lote))
+
     def dias_para_vencer(self):
         if not self.data_validade:
             return None
@@ -46,6 +50,7 @@ class Lote(db.Model):
         dias = self.dias_para_vencer()
         return {
             "id_lote": self.id_lote,
+            "titulo": self.titulo(),
             "id_produto": self.id_produto,
             "produto_nome": self.produto.nome if self.produto else None,
             "unidade": self.produto.unidade if self.produto else None,

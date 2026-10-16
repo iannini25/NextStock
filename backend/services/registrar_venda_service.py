@@ -4,6 +4,7 @@ from models.database import db
 from models.produto_model import Produto
 from models.venda_model import Venda
 from services.estoque_lote_service import EstoqueLoteService
+from services.previa_venda_service import saida_do_lote
 from services.utils import inteiro, virar_data
 
 
@@ -34,11 +35,16 @@ class RegistrarVendaService:
             )
             db.session.add(venda)
             db.session.flush()  # gera o id da venda pro historico, sem gravar ainda
+            consumidos = []
             if baixar_estoque:
                 # "estoque insuficiente" sai daqui (e a venda acima nao chega a ser gravada)
-                EstoqueLoteService(origem_movimento=origem).baixar(produto, quantidade, id_venda=venda.id_venda)
+                consumidos = EstoqueLoteService(origem_movimento=origem).baixar(
+                    produto, quantidade, id_venda=venda.id_venda)
             db.session.commit()
         except Exception:
             db.session.rollback()
             raise
-        return venda.virar_dict()
+        resposta = venda.virar_dict()
+        # de quais lotes a venda saiu (vazio quando nao baixa estoque)
+        resposta["lotes_consumidos"] = [saida_do_lote(lote, sai) for lote, sai in consumidos]
+        return resposta

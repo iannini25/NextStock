@@ -7,17 +7,35 @@ from models.produto_model import Produto
 from services.utils import usuario_logado
 
 
-# ordem de saida dos lotes (regra unica do sistema; a Etapa 9 mostra essa ordem pro usuario):
+# ordem de saida dos lotes (PVPS: primeiro que vence, primeiro que sai). regra unica do sistema:
 #   1. vence primeiro, sai primeiro
-#   2. lote sem validade sai por ultimo
-#   3. empate: o que entrou antes sai antes
+#   2. lote sem validade sai depois dos que tem validade
+#   3. empate: o que entrou antes sai antes (PEPS)
+#   4. lote JA VENCIDO vai pro fim da fila: vencido e pra retirar/descartar, nao pra vender.
+#      so sai numa venda se nao sobrar mais nada (e a previa da venda avisa)
 def ordenar_lotes_para_saida(lotes):
+    hoje = date.today()
     return sorted(lotes, key=lambda l: (
+        l.data_validade is not None and l.data_validade < hoje,
         l.data_validade is None,
         l.data_validade or date.max,
         l.data_entrada or date.min,
         l.id_lote or 0,
     ))
+
+
+# de quais lotes (e quanto de cada) sairia `quantidade`, sem mexer em nada.
+# devolve ([(lote, quanto sai)], quanto falta). a baixa de verdade e a previa da venda usam esta mesma conta
+def planejar_saida(lotes, quantidade):
+    plano = []
+    falta = quantidade
+    for lote in ordenar_lotes_para_saida([l for l in lotes if l.quantidade_atual > 0]):
+        if falta == 0:
+            break
+        sai = min(falta, lote.quantidade_atual)
+        plano.append((lote, sai))
+        falta -= sai
+    return plano, falta
 
 
 # toda mudanca de estoque passa por aqui. o estoque e a validade do produto sao derivados dos lotes:
@@ -80,21 +98,14 @@ class EstoqueLoteService:
     # tira a quantidade dos lotes na ordem de saida. devolve [(lote, quanto saiu dele)].
     # cada lote que entrou na baixa vira um registro no historico (uma venda pode atravessar 2 lotes)
     def baixar(self, produto, quantidade, tipo="venda", id_venda=None, observacao=None):
-        lotes = ordenar_lotes_para_saida(self.lotes_com_saldo(produto))
-        if quantidade > sum(l.quantidade_atual for l in lotes):
+        plano, falta = planejar_saida(self.lotes_com_saldo(produto), quantidade)
+        if falta > 0:
             raise ValueError("estoque insuficiente")
-        consumidos = []
-        falta = quantidade
-        for lote in lotes:
-            if falta == 0:
-                break
-            sai = min(falta, lote.quantidade_atual)
+        for lote, sai in plano:
             lote.quantidade_atual -= sai
-            falta -= sai
-            consumidos.append((lote, sai))
             self.registrar(produto, lote, tipo, sai, id_venda=id_venda, observacao=observacao)
         self.sincronizar_produto(produto)
-        return consumidos
+        return plano
 
     # deixa o estoque do produto em `nova_quantidade`: sobrando, cria um lote de ajuste; faltando, baixa
     def ajustar_para(self, produto, nova_quantidade, data_validade=None, origem="ajuste"):

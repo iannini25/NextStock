@@ -74,7 +74,8 @@ class _RecomendacoesScreenState extends State<RecomendacoesScreen> {
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: ListTile(
-            leading: Icon(Icons.lightbulb, color: corPrioridade(r.prioridade)),
+            // recomendacao de um lote especifico (validade) ganha o icone de lote
+            leading: Icon(r.idLote != null ? Icons.inventory : Icons.lightbulb, color: corPrioridade(r.prioridade)),
             title: Text(r.produtoNome),
             subtitle: Text(r.mensagem),
             trailing: Text(r.prioridade),

@@ -59,6 +59,14 @@ class _LotesScreenState extends State<LotesScreen> {
     if (salvou == true) carregar();
   }
 
+  Widget selo(String texto, Color cor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: cor, borderRadius: BorderRadius.circular(10)),
+      child: Text(texto, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+    );
+  }
+
   Color corValidade(Lote l) {
     final d = l.diasParaVencer;
     if (l.esgotado) return Colors.grey;
@@ -116,9 +124,21 @@ class _LotesScreenState extends State<LotesScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: ListTile(
             leading: Icon(Icons.inventory, color: corValidade(l)),
-            title: Text('${l.titulo}  •  ${l.quantidadeAtual} de ${l.quantidadeInicial} ${l.unidade ?? ""}'),
+            title: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('${l.titulo}  •  ${l.quantidadeAtual} de ${l.quantidadeInicial} ${l.unidade ?? ""}'),
+                // o proximo lote a sair numa venda (vence primeiro e ainda esta bom)
+                if (l.venderPrimeiro) selo('VENDER PRIMEIRO', Colors.green),
+                // vencido e pra tirar da prateleira, nao pra vender
+                if (l.vencido && !l.esgotado) selo('RETIRAR', Colors.red),
+              ],
+            ),
             subtitle: Text(
-              '${l.esgotado ? "ESGOTADO" : l.textoValidade}${l.dataValidade != null ? " (${l.dataValidade})" : ""}\n'
+              '${l.esgotado ? "ESGOTADO" : l.textoValidade}${l.dataValidade != null ? " (${l.dataValidade})" : ""}'
+              '${l.posicaoSaida != null ? "  •  ${l.posicaoSaida}º na fila de saída" : ""}\n'
               'entrada: ${l.dataEntrada ?? "-"}  •  ${l.nomeOrigem}  •  custo: $custo',
             ),
             isThreeLine: true,
