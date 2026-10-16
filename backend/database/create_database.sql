@@ -79,10 +79,16 @@ CREATE TABLE IF NOT EXISTS usuario (
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
 
 -- dados de exemplo
-INSERT INTO categoria (nome, descricao) VALUES
-('Hortifruti', 'Frutas, legumes e verduras'),
-('Laticínios', 'Leite, queijos e derivados'),
-('Padaria', 'Pães e produtos de panificação');
+-- cada categoria so entra se ainda nao existir (rodar o script de novo nao duplica)
+INSERT INTO categoria (nome, descricao)
+SELECT 'Hortifruti', 'Frutas, legumes e verduras' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM categoria WHERE nome = 'Hortifruti');
+INSERT INTO categoria (nome, descricao)
+SELECT 'Laticínios', 'Leite, queijos e derivados' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM categoria WHERE nome = 'Laticínios');
+INSERT INTO categoria (nome, descricao)
+SELECT 'Padaria', 'Pães e produtos de panificação' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM categoria WHERE nome = 'Padaria');
 
 -- as validades sao calculadas a partir de hoje pra tela de alerta sempre ter o que mostrar
 INSERT INTO produto (id_categoria, nome, codigo_barras, preco_custo, preco_venda, quantidade_estoque, estoque_minimo, unidade, data_validade) VALUES

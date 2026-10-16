@@ -7,8 +7,13 @@ class AtualizarCategoriaService:
         c = Categoria.buscar_por_id(id)
         if not c:
             return None
-        if not dados.get("nome"):
+        nome = str(dados.get("nome") or "").strip()
+        if not nome:
             raise ValueError("nome é obrigatório")
+        # so da problema se o nome for de OUTRA categoria
+        outra = Categoria.buscar_por_nome(nome)
+        if outra and outra.id_categoria != c.id_categoria:
+            raise ValueError("já existe categoria com esse nome")
 
-        c.atualizar(dados["nome"], dados.get("descricao"))
+        c.atualizar(nome, dados.get("descricao"))
         return c.virar_dict()

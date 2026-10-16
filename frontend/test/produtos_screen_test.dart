@@ -27,7 +27,8 @@ void main() {
     expect(find.textContaining('estoque: 10 UN (mín: 2)'), findsWidgets);
     expect(find.textContaining('validade: 2026-12-01'), findsOneWidget);
 
-    final req = api.requisicoes.single;
+    // sem filtro nenhum a chamada continua igual a de antes
+    final req = api.chamadas('/produtos').single;
     expect(req.method, 'GET');
     expect(req.url.toString(), 'http://127.0.0.1:8000/produtos');
   });

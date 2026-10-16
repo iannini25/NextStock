@@ -76,8 +76,15 @@ class ApiService {
 
   // -------- PRODUTOS --------
 
-  static Future<List<Produto>> listarProdutos() async {
-    final r = await http.get(Uri.parse('$baseUrl/produtos'), headers: autorizacao);
+  // filtros opcionais; sem nenhum, traz todos os produtos (como a tela de vendas usa)
+  static Future<List<Produto>> listarProdutos({String? busca, int? idCategoria, String? situacao}) async {
+    final filtros = {
+      if (busca != null && busca.trim().isNotEmpty) 'busca': busca.trim(),
+      'id_categoria': ?idCategoria?.toString(),
+      'situacao': ?situacao,
+    };
+    final url = Uri.parse('$baseUrl/produtos').replace(queryParameters: filtros.isEmpty ? null : filtros);
+    final r = await http.get(url, headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Produto.fromJson(e)).toList();

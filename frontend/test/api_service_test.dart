@@ -38,6 +38,19 @@ void main() {
     }
   });
 
+  test('listarProdutos sem filtro chama /produtos puro e com filtro manda só o que foi preenchido', () async {
+    final api = ApiFalsa({'/produtos': (_) => respostaJson([])});
+    await api.usar(() async {
+      await ApiService.listarProdutos();
+      await ApiService.listarProdutos(busca: '  ');
+      await ApiService.listarProdutos(busca: ' pão francês ', idCategoria: 3, situacao: 'vencendo');
+    });
+
+    expect(api.requisicoes[0].url.toString(), endsWith('/produtos'));
+    expect(api.requisicoes[1].url.toString(), endsWith('/produtos'));
+    expect(api.requisicoes[2].url.queryParameters, {'busca': 'pão francês', 'id_categoria': '3', 'situacao': 'vencendo'});
+  });
+
   test('sem login as chamadas vão sem token', () async {
     final api = ApiFalsa({'/setup/status': (_) => respostaJson({'configurado': true})});
     await api.usar(() => ApiService.setupConfigurado());

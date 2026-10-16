@@ -1,8 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../models/categoria.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 import '../services/sessao.dart';
 import 'produto_form.dart';
+
+// filtros de situacao (valor que vai pra API -> texto do chip)
+const Map<String, String> situacoesFiltro = {
+  'baixo_estoque': 'Baixo estoque',
+  'sem_estoque': 'Sem estoque',
+  'vencendo': 'Vence em até 7 dias',
+  'vencido': 'Vencidos',
+};
 
 class ProdutosScreen extends StatefulWidget {
   const ProdutosScreen({super.key});
@@ -13,28 +24,77 @@ class ProdutosScreen extends StatefulWidget {
 
 class _ProdutosScreenState extends State<ProdutosScreen> {
   List<Produto> produtos = [];
+  List<Categoria> categorias = [];
   bool carregando = true;
+
+  // filtros
+  final busca = TextEditingController();
+  int? categoriaId;
+  String? situacao;
+  Timer? esperaDigitacao;
+  int pedidoAtual = 0; // so a resposta do ultimo pedido vale (evita lista velha chegando depois)
+
+  bool get temFiltro => busca.text.trim().isNotEmpty || categoriaId != null || situacao != null;
 
   @override
   void initState() {
     super.initState();
     carregar();
+    carregarCategorias();
+  }
+
+  @override
+  void dispose() {
+    esperaDigitacao?.cancel();
+    busca.dispose();
+    super.dispose();
   }
 
   Future<void> carregar() async {
+    final pedido = ++pedidoAtual;
     setState(() => carregando = true);
     try {
-      final lista = await ApiService.listarProdutos();
-      if (!mounted) return;
+      final lista = await ApiService.listarProdutos(
+        busca: busca.text,
+        idCategoria: categoriaId,
+        situacao: situacao,
+      );
+      if (!mounted || pedido != pedidoAtual) return;
       setState(() {
         produtos = lista;
         carregando = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || pedido != pedidoAtual) return;
       setState(() => carregando = false);
       mostrarErro(e);
     }
+  }
+
+  // as categorias so servem pro filtro: se falhar, a lista de produtos continua funcionando
+  Future<void> carregarCategorias() async {
+    try {
+      final lista = await ApiService.listarCategorias();
+      if (!mounted) return;
+      setState(() => categorias = lista);
+    } catch (_) {}
+  }
+
+  // espera a pessoa parar de digitar um pouco antes de buscar
+  void digitou(String _) {
+    esperaDigitacao?.cancel();
+    esperaDigitacao = Timer(const Duration(milliseconds: 400), carregar);
+    setState(() {}); // atualiza o botao de limpar
+  }
+
+  void limparFiltros() {
+    esperaDigitacao?.cancel();
+    busca.clear();
+    setState(() {
+      categoriaId = null;
+      situacao = null;
+    });
+    carregar();
   }
 
   void mostrarErro(Object e) {
@@ -83,13 +143,90 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
         onPressed: () => abrirForm(),
         child: const Icon(Icons.add),
       ),
-      body: montarCorpo(),
+      body: Column(
+        children: [
+          montarFiltros(),
+          Expanded(child: montarCorpo()),
+        ],
+      ),
+    );
+  }
+
+  Widget montarFiltros() {
+    // se a categoria escolhida sumiu da lista, fica "todas"
+    final categoriaValida = categorias.any((c) => c.id == categoriaId) ? categoriaId : null;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: busca,
+            onChanged: digitou,
+            decoration: InputDecoration(
+              labelText: 'Buscar por nome ou código de barras',
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+              isDense: true,
+              suffixIcon: busca.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Limpar busca',
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        busca.clear();
+                        digitou('');
+                      },
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              DropdownButton<int?>(
+                value: categoriaValida,
+                hint: const Text('Todas as categorias'),
+                items: [
+                  const DropdownMenuItem<int?>(value: null, child: Text('Todas as categorias')),
+                  ...categorias.map((c) => DropdownMenuItem<int?>(value: c.id, child: Text(c.nome))),
+                ],
+                onChanged: (v) {
+                  setState(() => categoriaId = v);
+                  carregar();
+                },
+              ),
+              for (final s in situacoesFiltro.entries)
+                ChoiceChip(
+                  label: Text(s.value),
+                  selected: situacao == s.key,
+                  onSelected: (marcado) {
+                    setState(() => situacao = marcado ? s.key : null);
+                    carregar();
+                  },
+                ),
+              if (temFiltro)
+                TextButton.icon(
+                  onPressed: limparFiltros,
+                  icon: const Icon(Icons.filter_alt_off),
+                  label: const Text('Limpar filtros'),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
-    if (produtos.isEmpty) return const Center(child: Text('Nenhum produto cadastrado.'));
+    if (produtos.isEmpty) {
+      return Center(
+        child: Text(temFiltro ? 'Nenhum produto encontrado com esses filtros.' : 'Nenhum produto cadastrado.'),
+      );
+    }
     return ListView.builder(
       itemCount: produtos.length,
       itemBuilder: (_, i) {

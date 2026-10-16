@@ -30,6 +30,11 @@ class Categoria(db.Model):
     def buscar_por_id(id):
         return Categoria.query.get(id)
 
+    # nome igual sem ligar pra maiuscula/minuscula e espacos nas pontas
+    @staticmethod
+    def buscar_por_nome(nome):
+        return Categoria.query.filter(db.func.lower(Categoria.nome) == nome.strip().lower()).first()
+
     def virar_dict(self):
         return {
             "id_categoria": self.id_categoria,

@@ -17,9 +17,14 @@ prod_bp = Blueprint("prod", __name__)
 # regra de negocio nenhuma aqui dentro.
 class ProdutoController:
 
+    # /produtos?busca=leite&id_categoria=2&situacao=baixo_estoque (tudo opcional)
     @staticmethod
     def listar():
-        return jsonify(ListarProdutosService().executar())
+        try:
+            filtros = {chave: request.args.get(chave) for chave in ("busca", "id_categoria", "situacao")}
+            return jsonify(ListarProdutosService().executar(filtros))
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
     @staticmethod
     def criar():

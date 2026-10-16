@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:nextstock/screens/login_screen.dart';
 import 'package:nextstock/screens/produto_form.dart';
 import 'package:nextstock/screens/setup_screen.dart';
@@ -16,7 +17,14 @@ import 'apoio/tela.dart';
 
 final ana = usuarioJson(id: 1, nome: 'Ana Admin', email: 'ana@loja.com', perfil: 'admin');
 
-// API falsa: so a senha 'senha1234' da Ana entra, e so o token 'tok-valido' abre as rotas
+// token que a API falsa aceita. trocar no meio do teste simula a sessao vencendo no servidor
+var tokenAceito = 'tok-valido';
+
+http.Response protegida(http.Request req, Object corpo) => req.headers['Authorization'] == 'Bearer $tokenAceito'
+    ? respostaJson(corpo)
+    : respostaJson({'erro': 'sua sessão expirou, entre de novo'}, status: 401);
+
+// API falsa: so a senha 'senha1234' da Ana entra, e so o token aceito abre as rotas
 ApiFalsa montarApi({bool configurado = true}) {
   return ApiFalsa({
     '/setup/status': (_) => respostaJson({'configurado': configurado}),
@@ -27,13 +35,9 @@ ApiFalsa montarApi({bool configurado = true}) {
       }
       return respostaJson({'erro': 'e-mail ou senha inválidos'}, status: 401);
     },
-    '/auth/me': (req) => req.headers['Authorization'] == 'Bearer tok-valido'
-        ? respostaJson({'usuario': ana, 'empresa': empresaJson()})
-        : respostaJson({'erro': 'sua sessão expirou, entre de novo'}, status: 401),
-    '/produtos': (req) => req.headers['Authorization'] == 'Bearer tok-valido'
-        ? respostaJson([])
-        : respostaJson({'erro': 'faça login para continuar'}, status: 401),
-    '/categorias': (_) => respostaJson({'erro': 'sua sessão expirou, entre de novo'}, status: 401),
+    '/auth/me': (req) => protegida(req, {'usuario': ana, 'empresa': empresaJson()}),
+    '/produtos': (req) => protegida(req, []),
+    '/categorias': (req) => protegida(req, []),
   });
 }
 
@@ -50,7 +54,10 @@ Future<void> abrirPeloMenu(WidgetTester tester, String item) async {
 }
 
 void main() {
-  setUp(prepararSessao);
+  setUp(() {
+    prepararSessao();
+    tokenAceito = 'tok-valido';
+  });
 
   testWidgets('sem empresa abre a configuração inicial', (tester) async {
     final api = montarApi(configurado: false);
@@ -177,6 +184,7 @@ void main() {
     await api.usar(() async {
       await abrirApp(tester);
       await abrirPeloMenu(tester, 'Produtos');
+      tokenAceito = 'outro'; // a sessao venceu no servidor
       // o formulario de produto busca as categorias e a API responde 401
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();

@@ -17,6 +17,35 @@ def test_cria_e_lista(client):
     assert client.get("/categorias").get_json() == [criada]
 
 
+def test_nao_cria_categoria_com_nome_repetido(client):
+    criar_categoria("Hortifruti")
+    for nome in ["Hortifruti", "hortifruti", "  HORTIFRUTI  "]:
+        r = client.post("/categorias", json={"nome": nome})
+        assert r.status_code == 400
+        assert r.get_json() == {"erro": "já existe categoria com esse nome"}
+    assert len(client.get("/categorias").get_json()) == 1
+
+
+def test_cria_tirando_espacos_do_nome(client):
+    r = client.post("/categorias", json={"nome": "  Bebidas  "})
+    assert r.get_json()["nome"] == "Bebidas"
+
+
+def test_nao_renomeia_para_nome_de_outra_categoria(client):
+    criar_categoria("Hortifruti")
+    padaria = criar_categoria("Padaria")
+    r = client.put(f"/categorias/{padaria.id_categoria}", json={"nome": "HORTIFRUTI"})
+    assert r.status_code == 400
+    assert r.get_json() == {"erro": "já existe categoria com esse nome"}
+
+
+def test_edita_mantendo_o_proprio_nome(client):
+    padaria = criar_categoria("Padaria")
+    r = client.put(f"/categorias/{padaria.id_categoria}", json={"nome": "Padaria", "descricao": "pães"})
+    assert r.status_code == 200
+    assert r.get_json()["descricao"] == "pães"
+
+
 def test_cria_sem_nome(client):
     r = client.post("/categorias", json={"descricao": "sem nome"})
     assert r.status_code == 400
