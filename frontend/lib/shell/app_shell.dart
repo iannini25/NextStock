@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../models/alerta.dart';
 import '../models/usuario.dart';
+import '../services/api_service.dart';
 import '../services/sessao.dart';
 import '../screens/inicio_screen.dart';
 import '../screens/produtos_screen.dart';
@@ -59,6 +63,9 @@ const List<ItemNav> modulosNav = [
 // os itens que quem esta logado pode ver
 List<ItemNav> modulosVisiveis() => modulosNav.where((m) => !m.soAdmin || Sessao.ehAdmin).toList();
 
+// de quanto em quanto tempo o selo de alertas do menu se atualiza sozinho
+const Duration intervaloAlertas = Duration(minutes: 5);
+
 // casca do app: barra de cima com a marca + navegacao (lateral no desktop,
 // drawer no celular) + a tela do modulo selecionado no meio.
 class AppShell extends StatefulWidget {
@@ -70,8 +77,38 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   String selecionado = 'inicio';
+  ResumoAlertas? alertas; // selo do item Alertas (null = ainda nao carregou ou deu erro)
+  Timer? _relogio;
 
-  void _selecionar(String id) => setState(() => selecionado = id);
+  @override
+  void initState() {
+    super.initState();
+    _atualizarAlertas();
+    // aviso proativo: pergunta de novo a cada 5 min. cancelado no dispose (sair do app / logout)
+    _relogio = Timer.periodic(intervaloAlertas, (_) => _atualizarAlertas());
+  }
+
+  @override
+  void dispose() {
+    _relogio?.cancel();
+    super.dispose();
+  }
+
+  // erro aqui nao atrapalha o uso do app: o selo so some.
+  // 401 (sessao expirou) ja e tratado no ApiService, que volta pro login
+  Future<void> _atualizarAlertas() async {
+    try {
+      final r = await ApiService.resumoAlertas();
+      if (mounted) setState(() => alertas = r);
+    } catch (_) {
+      if (mounted) setState(() => alertas = null);
+    }
+  }
+
+  void _selecionar(String id) {
+    setState(() => selecionado = id);
+    if (id == 'alertas') _atualizarAlertas(); // o selo bate com o que a tela mostra
+  }
 
   // monta a tela conforme o item escolhido no menu
   Widget _corpo() {
@@ -138,7 +175,7 @@ class _AppShellState extends State<AppShell> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _BarraLateral(selecionado: selecionado, aoSelecionar: _selecionar),
+                _BarraLateral(selecionado: selecionado, alertas: alertas, aoSelecionar: _selecionar),
                 const VerticalDivider(width: 1),
                 Expanded(child: _corpo()),
               ],
@@ -156,6 +193,7 @@ class _AppShellState extends State<AppShell> {
         child: SafeArea(
           child: _ListaModulos(
             selecionado: selecionado,
+            alertas: alertas,
             aoSelecionar: (i) {
               Navigator.pop(context);
               _selecionar(i);
@@ -168,6 +206,7 @@ class _AppShellState extends State<AppShell> {
           Builder(
             builder: (ctx) => BarraTopo(
               aoAbrirMenu: () => Scaffold.of(ctx).openDrawer(),
+              alertas: alertas?.total ?? 0, // no celular o menu fica fechado: o selo vai no botao dele
             ),
           ),
           Expanded(child: _corpo()),
@@ -182,7 +221,8 @@ class _AppShellState extends State<AppShell> {
 // escurece e a logo vira branca pra nao sumir.
 class BarraTopo extends StatelessWidget {
   final VoidCallback? aoAbrirMenu;
-  const BarraTopo({super.key, this.aoAbrirMenu});
+  final int alertas; // total de alertas, aparece como selo no botao do menu
+  const BarraTopo({super.key, this.aoAbrirMenu, this.alertas = 0});
 
   Widget _marca(bool escuro, String asset, double altura) {
     final imagem = Image.asset(asset, height: altura);
@@ -215,7 +255,11 @@ class BarraTopo extends StatelessWidget {
               children: [
                 if (aoAbrirMenu != null)
                   IconButton(
-                    icon: Icon(Icons.menu, color: corIcone),
+                    icon: Badge(
+                      isLabelVisible: alertas > 0,
+                      label: Text('$alertas'),
+                      child: Icon(Icons.menu, color: corIcone),
+                    ),
                     onPressed: aoAbrirMenu,
                   )
                 else
@@ -277,15 +321,16 @@ class BarraTopo extends StatelessWidget {
 // barra lateral fixa do desktop
 class _BarraLateral extends StatelessWidget {
   final String selecionado;
+  final ResumoAlertas? alertas;
   final ValueChanged<String> aoSelecionar;
-  const _BarraLateral({required this.selecionado, required this.aoSelecionar});
+  const _BarraLateral({required this.selecionado, this.alertas, required this.aoSelecionar});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 240,
       color: Theme.of(context).colorScheme.surface,
-      child: _ListaModulos(selecionado: selecionado, aoSelecionar: aoSelecionar),
+      child: _ListaModulos(selecionado: selecionado, alertas: alertas, aoSelecionar: aoSelecionar),
     );
   }
 }
@@ -293,8 +338,22 @@ class _BarraLateral extends StatelessWidget {
 // lista de modulos usada tanto na lateral quanto no drawer
 class _ListaModulos extends StatelessWidget {
   final String selecionado;
+  final ResumoAlertas? alertas;
   final ValueChanged<String> aoSelecionar;
-  const _ListaModulos({required this.selecionado, required this.aoSelecionar});
+  const _ListaModulos({required this.selecionado, this.alertas, required this.aoSelecionar});
+
+  // selo com o total no item Alertas: vermelho se tem alerta de prioridade alta
+  Widget? _selo(ItemNav m) {
+    final a = alertas;
+    if (m.id != 'alertas' || a == null || a.total == 0) return null;
+    return Tooltip(
+      message: a.descricao,
+      child: Badge(
+        label: Text('${a.total}'),
+        backgroundColor: a.prioridadeAlta > 0 ? Colors.red : Colors.orange,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -314,6 +373,7 @@ class _ListaModulos extends StatelessWidget {
               fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
+          trailing: _selo(m),
           selected: sel,
           selectedTileColor: corAzul.withValues(alpha: 0.10),
           onTap: () => aoSelecionar(m.id),

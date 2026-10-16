@@ -71,6 +71,9 @@ ROTAS_EXISTENTES = {
     ("/perdas/resumo", "GET"),
     # etapa 11: curva ABC
     ("/relatorios/curva-abc", "GET"),
+    # etapa 12: alertas de excesso e resumo pro selo do menu
+    ("/alertas/excesso", "GET"),
+    ("/alertas/resumo", "GET"),
 }
 
 # o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)

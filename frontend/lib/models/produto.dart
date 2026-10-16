@@ -11,6 +11,8 @@ class Produto {
   String? unidade;
   String? validade; // aaaa-mm-dd
   String? motivo; // so leitura, vem nos alertas de risco
+  String? prioridade; // so leitura, vem nos alertas de risco (alta, media, baixa)
+  String? classeAbc; // so leitura, vem nos alertas de risco
 
   Produto({
     this.id,
@@ -25,6 +27,8 @@ class Produto {
     this.unidade,
     this.validade,
     this.motivo,
+    this.prioridade,
+    this.classeAbc,
   });
 
   factory Produto.fromJson(Map<String, dynamic> j) {
@@ -41,6 +45,8 @@ class Produto {
       unidade: j['unidade'],
       validade: j['data_validade'],
       motivo: j['motivo'],
+      prioridade: j['prioridade'],
+      classeAbc: j['classe_abc'],
     );
   }
 

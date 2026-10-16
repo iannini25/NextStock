@@ -36,6 +36,7 @@ from controllers.auth_controller import auth_bp, exigir_login
 from controllers.lote_controller import lote_bp
 from controllers.movimentacao_controller import movimentacao_bp
 from controllers.perda_controller import perda_bp
+from controllers.alerta_controller import alerta_bp
 
 load_dotenv()
 
@@ -74,6 +75,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(lote_bp)
 app.register_blueprint(movimentacao_bp)
 app.register_blueprint(perda_bp)
+app.register_blueprint(alerta_bp)
 
 
 @app.get("/")

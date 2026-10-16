@@ -21,6 +21,7 @@ import '../models/lote.dart';
 import '../models/movimentacao.dart';
 import '../models/previa_venda.dart';
 import '../models/perda.dart';
+import '../models/alerta.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -503,6 +504,23 @@ class ApiService {
     final r = await http.get(Uri.parse('$baseUrl/perdas/resumo?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return ResumoPerdas.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // -------- ALERTAS --------
+
+  // diasCobertura: estoque que cobre mais que isso (em dias de venda) e excesso
+  static Future<List<AlertaExcesso>> listarAlertasExcesso({int diasCobertura = 30}) async {
+    final r = await http.get(Uri.parse('$baseUrl/alertas/excesso?dias_cobertura=$diasCobertura'),
+        headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => AlertaExcesso.fromJson(e)).toList();
+  }
+
+  static Future<ResumoAlertas> resumoAlertas() async {
+    final r = await http.get(Uri.parse('$baseUrl/alertas/resumo'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ResumoAlertas.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

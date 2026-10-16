@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../models/alerta.dart';
 import '../models/clima_dia.dart';
 import '../models/lote.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 
-// Tela dos alertas. Tem dois modos: o que ta vencendo e o que ta acabando.
+// Tela dos alertas. Tem tres modos: o que ta vencendo, o que vai faltar e o que esta sobrando (excesso).
 class AlertasScreen extends StatefulWidget {
   const AlertasScreen({super.key});
 
@@ -13,10 +14,24 @@ class AlertasScreen extends StatefulWidget {
   State<AlertasScreen> createState() => _AlertasScreenState();
 }
 
+// cor de cada prioridade (usada nos selos de Vai faltar e Excesso)
+Color corPrioridade(String? prioridade) {
+  switch (prioridade) {
+    case 'alta':
+      return Colors.red;
+    case 'media':
+      return Colors.orange;
+    default:
+      return Colors.blueGrey;
+  }
+}
+
 class _AlertasScreenState extends State<AlertasScreen> {
-  bool modoVencimento = true; // false = risco de ruptura
+  String modo = 'vencendo'; // vencendo | falta | excesso
   int dias = 7;
+  int diasCobertura = 30; // no modo excesso: estoque que cobre mais que isso e demais
   List<Produto> lista = [];
+  List<AlertaExcesso> excessos = [];
   Map<int, List<Lote>> lotesPorProduto = {}; // lotes vencendo de cada produto
   List<ClimaDia> climaDias = [];
   String cidade = '';
@@ -29,14 +44,23 @@ class _AlertasScreenState extends State<AlertasScreen> {
     carregar();
   }
 
+  bool get modoVencimento => modo == 'vencendo';
+  bool get modoExcesso => modo == 'excesso';
+
   Future<void> carregar() async {
     setState(() => carregando = true);
     try {
-      final futuroProdutos = modoVencimento
-          ? ApiService.listarProdutosVencendo(dias)
-          : ApiService.listarProdutosEmRisco();
+      final futuroProdutos = modoExcesso
+          ? Future.value(<Produto>[])
+          : modoVencimento
+              ? ApiService.listarProdutosVencendo(dias)
+              : ApiService.listarProdutosEmRisco();
+      final futuroExcesso = modoExcesso
+          ? ApiService.listarAlertasExcesso(diasCobertura: diasCobertura)
+          : Future.value(<AlertaExcesso>[]);
       final futuroClima = ApiService.listarClima();
       final r = await futuroProdutos;
+      final ex = await futuroExcesso;
       final clima = await futuroClima;
       // no modo vencendo, mostra embaixo de cada produto quais lotes estao vencendo.
       // se essa parte falhar, a lista de produtos aparece do mesmo jeito
@@ -55,6 +79,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
       final base = DateTime(hoje.year, hoje.month, hoje.day);
       setState(() {
         lista = r;
+        excessos = ex;
         lotesPorProduto = porProduto;
         cidade = clima.cidade;
         avisoClima = clima.aviso;
@@ -80,8 +105,8 @@ class _AlertasScreenState extends State<AlertasScreen> {
     );
   }
 
-  void trocarModo(bool vencimento) {
-    setState(() => modoVencimento = vencimento);
+  void trocarModo(String novo) {
+    setState(() => modo = novo);
     carregar();
   }
 
@@ -98,6 +123,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
         children: [
           montarBotoes(),
           if (modoVencimento) montarFiltroDias(),
+          if (modoExcesso) montarFiltroCobertura(),
           montarClima(),
           Expanded(child: montarLista()),
         ],
@@ -112,7 +138,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => trocarModo(true),
+              onPressed: () => trocarModo('vencendo'),
               icon: const Icon(Icons.event_busy, size: 18),
               label: const Text('Vencendo'),
               style: estiloBotao(modoVencimento),
@@ -121,11 +147,43 @@ class _AlertasScreenState extends State<AlertasScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => trocarModo(false),
+              onPressed: () => trocarModo('falta'),
               icon: const Icon(Icons.trending_down, size: 18),
               label: const Text('Vai faltar'),
-              style: estiloBotao(!modoVencimento),
+              style: estiloBotao(modo == 'falta'),
             ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => trocarModo('excesso'),
+              icon: const Icon(Icons.inventory, size: 18),
+              label: const Text('Excesso'),
+              style: estiloBotao(modoExcesso),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget montarFiltroCobertura() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          const Flexible(child: Text('Estoque ideal: até')),
+          const SizedBox(width: 12),
+          DropdownButton<int>(
+            value: diasCobertura,
+            items: const [15, 30, 60, 90]
+                .map((d) => DropdownMenuItem(value: d, child: Text('$d dias de venda')))
+                .toList(),
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => diasCobertura = v);
+              carregar();
+            },
           ),
         ],
       ),
@@ -174,7 +232,9 @@ class _AlertasScreenState extends State<AlertasScreen> {
           Text(
             modoVencimento
                 ? 'calor antecipa perda; chuva costuma reduzir saída'
-                : 'a lista de risco já usa a demanda prevista com esse clima',
+                : modoExcesso
+                    ? 'o excesso é calculado com a venda prevista para esse clima'
+                    : 'a lista de risco já usa a demanda prevista com esse clima',
             style: const TextStyle(fontSize: 12),
           ),
           if (avisoClima != null && avisoClima!.isNotEmpty)
@@ -236,6 +296,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
 
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
+    if (modoExcesso) return montarListaExcesso();
     if (lista.isEmpty) {
       return Center(
         child: Text(modoVencimento
@@ -258,9 +319,82 @@ class _AlertasScreenState extends State<AlertasScreen> {
             subtitle: Text(
               modoVencimento ? textoVencimento(p) : textoRisco(p),
             ),
+            trailing: !modoVencimento && p.prioridade != null
+                ? seloPrioridade(p.prioridade!, classe: p.classeAbc)
+                : null,
           ),
         );
       },
+    );
+  }
+
+  Widget montarListaExcesso() {
+    if (excessos.isEmpty) {
+      return const Center(child: Text('Nenhum produto com estoque sobrando.'));
+    }
+    final total = excessos.fold<double>(0, (s, a) => s + a.valorEmRisco);
+    return ListView.builder(
+      itemCount: excessos.length + 1,
+      itemBuilder: (_, i) {
+        if (i == 0) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: Text(
+              '${excessos.length} alerta(s)  •  R\$ ${total.toStringAsFixed(2)} em risco',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          );
+        }
+        final a = excessos[i - 1];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: ListTile(
+            leading: Icon(
+              a.perecivel ? Icons.hourglass_bottom : Icons.inventory,
+              color: corPrioridade(a.prioridade),
+            ),
+            title: Text(a.produtoNome),
+            subtitle: Text(textoExcesso(a)),
+            trailing: seloPrioridade(a.prioridade, classe: a.classeAbc),
+            isThreeLine: true,
+          ),
+        );
+      },
+    );
+  }
+
+  String textoExcesso(AlertaExcesso a) {
+    final un = a.unidade ?? 'UN';
+    var texto = '${a.nomeTipo}: ${a.quantidadeEmRisco} $un  •  R\$ ${a.valorEmRisco.toStringAsFixed(2)} em risco';
+    texto += '\n${a.mensagem}';
+    return texto;
+  }
+
+  // selo "Alta / Média / Baixa" com a classe ABC embaixo
+  Widget seloPrioridade(String prioridade, {String? classe}) {
+    final cor = corPrioridade(prioridade);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: cor.withValues(alpha: 0.12),
+            border: Border.all(color: cor),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            nomesPrioridade[prioridade] ?? prioridade,
+            style: TextStyle(color: cor, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ),
+        if (classe != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text('classe $classe', style: const TextStyle(fontSize: 11)),
+          ),
+      ],
     );
   }
 
