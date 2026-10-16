@@ -6,6 +6,10 @@ os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["SECRET_KEY"] = "chave-so-dos-testes"
 
+from cryptography.fernet import Fernet  # noqa: E402
+
+os.environ["ERP_CHAVE_CRIPTOGRAFIA"] = Fernet.generate_key().decode()
+
 import urllib.request  # noqa: E402
 
 import pytest  # noqa: E402

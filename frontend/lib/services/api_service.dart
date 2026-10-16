@@ -15,6 +15,7 @@ import '../models/mensagem_chat.dart';
 import '../models/clima_dia.dart';
 import '../models/empresa.dart';
 import '../models/usuario.dart';
+import '../models/configuracao_erp.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -313,6 +314,34 @@ class ApiService {
   static Future<void> desativarUsuario(int id) async {
     final r = await http.delete(Uri.parse('$baseUrl/usuarios/$id'), headers: autorizacao);
     if (r.statusCode != 204) throw pegarErro(r);
+  }
+
+  // -------- INTEGRACAO COM ERP --------
+
+  static Future<ConfiguracaoErp> buscarConfiguracaoErp() async {
+    final r = await http.get(Uri.parse('$baseUrl/erp/configuracao'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ConfiguracaoErp.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // chaveApi em branco = mantem a chave que ja esta salva
+  static Future<ConfiguracaoErp> salvarConfiguracaoErp({
+    required String provedor,
+    required String urlBase,
+    required String chaveApi,
+    required bool ativo,
+  }) async {
+    final r = await http.put(Uri.parse('$baseUrl/erp/configuracao'),
+        headers: headers,
+        body: jsonEncode({'provedor': provedor, 'url_base': urlBase, 'chave_api': chaveApi, 'ativo': ativo}));
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ConfiguracaoErp.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  static Future<ConfiguracaoErp> removerChaveErp() async {
+    final r = await http.delete(Uri.parse('$baseUrl/erp/configuracao/chave'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ConfiguracaoErp.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

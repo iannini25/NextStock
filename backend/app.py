@@ -9,6 +9,7 @@ from models.evento_model import Evento
 from models.clima_model import ClimaDia
 from models.empresa_model import Empresa
 from models.usuario_model import Usuario
+from models.configuracao_erp_model import ConfiguracaoErp
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp

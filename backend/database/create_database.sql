@@ -75,6 +75,20 @@ CREATE TABLE IF NOT EXISTS usuario (
     FOREIGN KEY (id_empresa) REFERENCES empresa(id_empresa)
 );
 
+-- integracao com o ERP. a chave da API fica criptografada (nunca em texto puro).
+CREATE TABLE IF NOT EXISTS configuracao_erp (
+    id_configuracao INT AUTO_INCREMENT PRIMARY KEY,
+    id_empresa INT NOT NULL UNIQUE,
+    provedor VARCHAR(30) NOT NULL DEFAULT 'generico',
+    url_base VARCHAR(255) NOT NULL,
+    chave_criptografada TEXT,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    atualizado_em DATETIME,
+    atualizado_por INT,
+    FOREIGN KEY (id_empresa) REFERENCES empresa(id_empresa),
+    FOREIGN KEY (atualizado_por) REFERENCES usuario(id_usuario)
+);
+
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
 

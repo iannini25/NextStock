@@ -47,6 +47,10 @@ ROTAS_EXISTENTES = {
     # etapa 2: login
     ("/auth/login", "POST"),
     ("/auth/me", "GET"),
+    # etapa 5: chave do ERP
+    ("/erp/configuracao", "GET"),
+    ("/erp/configuracao", "PUT"),
+    ("/erp/configuracao/chave", "DELETE"),
 }
 
 # o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)

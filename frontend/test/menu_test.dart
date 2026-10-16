@@ -39,8 +39,8 @@ void main() {
 
   Finder itemDoMenu(String titulo) => find.widgetWithText(ListTile, titulo);
 
-  test('só Importar e Usuários são itens de administrador', () {
-    expect(modulosNav.where((m) => m.soAdmin).map((m) => m.titulo), ['Importar', 'Usuários']);
+  test('só Importar, Integração ERP e Usuários são itens de administrador', () {
+    expect(modulosNav.where((m) => m.soAdmin).map((m) => m.titulo), ['Importar', 'Integração ERP', 'Usuários']);
     expect(modulosNav.map((m) => m.id).toSet(), hasLength(modulosNav.length)); // ids nao repetem
   });
 
@@ -71,6 +71,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
     expect(itemDoMenu('Importar'), findsNothing);
+    expect(itemDoMenu('Integração ERP'), findsNothing);
     expect(itemDoMenu('Usuários'), findsNothing);
     expect(itemDoMenu('Relatórios'), findsOneWidget);
     expect(itemDoMenu('Empresa'), findsOneWidget);
