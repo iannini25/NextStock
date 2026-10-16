@@ -16,6 +16,7 @@ import '../models/clima_dia.dart';
 import '../models/empresa.dart';
 import '../models/usuario.dart';
 import '../models/configuracao_erp.dart';
+import '../models/sincronizacao_erp.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -342,6 +343,27 @@ class ApiService {
     final r = await http.delete(Uri.parse('$baseUrl/erp/configuracao/chave'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return ConfiguracaoErp.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // usa a configuracao salva; devolve a mensagem de sucesso (erro vira Exception com a mensagem da API)
+  static Future<String> testarConexaoErp() async {
+    final r = await http.post(Uri.parse('$baseUrl/erp/testar-conexao'), headers: headers);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return j['mensagem'] ?? 'Conexão com o ERP funcionando';
+  }
+
+  static Future<SincronizacaoErp> sincronizarErp() async {
+    final r = await http.post(Uri.parse('$baseUrl/erp/sincronizar'), headers: headers);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return SincronizacaoErp.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  static Future<List<SincronizacaoErp>> listarSincronizacoesErp() async {
+    final r = await http.get(Uri.parse('$baseUrl/erp/sincronizacoes'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => SincronizacaoErp.fromJson(e)).toList();
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:nextstock/screens/integracao_erp_screen.dart';
 
 import 'apoio/api_falsa.dart';
@@ -21,6 +22,33 @@ Map<String, dynamic> configJson({bool configurado = true, bool comChave = true, 
       'atualizado_por': configurado ? 'Ana' : null,
     };
 
+// a tela tambem carrega o historico de sincronizacoes; por padrao ele vem vazio
+ApiFalsa apiCom(Map<String, http.Response Function(http.Request)> rotas) {
+  return ApiFalsa({'/erp/sincronizacoes': (_) => respostaJson([]), ...rotas});
+}
+
+Map<String, dynamic> sincJson({
+  int id = 1,
+  String status = 'sucesso',
+  int criados = 2,
+  int atualizados = 1,
+  int vendas = 10,
+  int repetidas = 0,
+  List<String> erros = const [],
+}) =>
+    {
+      'id_sincronizacao': id,
+      'iniciado_em': '2026-10-16T14:30:00',
+      'finalizado_em': '2026-10-16T14:30:02',
+      'status': status,
+      'produtos_criados': criados,
+      'produtos_atualizados': atualizados,
+      'vendas_importadas': vendas,
+      'vendas_ja_importadas': repetidas,
+      'erros': erros,
+      'usuario': 'Ana',
+    };
+
 const rotuloChaveNova = 'Chave da API *';
 const rotuloTrocarChave = 'Nova chave da API (em branco = manter a atual)';
 
@@ -38,7 +66,7 @@ void main() {
 
   testWidgets('primeira configuração: manda URL e chave e mostra a chave mascarada', (tester) async {
     Map<String, dynamic>? enviado;
-    final api = ApiFalsa({
+    final api = apiCom({
       '/erp/configuracao': (req) {
         if (req.method == 'PUT') {
           enviado = jsonDecode(req.body) as Map<String, dynamic>;
@@ -72,7 +100,7 @@ void main() {
   });
 
   testWidgets('a chave digitada fica escondida até tocar no olho', (tester) async {
-    final api = ApiFalsa({'/erp/configuracao': (_) => respostaJson(configJson(configurado: false, comChave: false))});
+    final api = apiCom({'/erp/configuracao': (_) => respostaJson(configJson(configurado: false, comChave: false))});
 
     await api.usar(() async {
       await abrir(tester);
@@ -85,7 +113,7 @@ void main() {
   });
 
   testWidgets('sem chave salva, salvar sem digitar a chave é barrado no app', (tester) async {
-    final api = ApiFalsa({'/erp/configuracao': (_) => respostaJson(configJson(configurado: false, comChave: false))});
+    final api = apiCom({'/erp/configuracao': (_) => respostaJson(configJson(configurado: false, comChave: false))});
 
     await api.usar(() async {
       await abrir(tester);
@@ -100,7 +128,7 @@ void main() {
 
   testWidgets('com chave salva, trocar só a URL manda a chave em branco (mantém a atual)', (tester) async {
     Map<String, dynamic>? enviado;
-    final api = ApiFalsa({
+    final api = apiCom({
       '/erp/configuracao': (req) {
         if (req.method == 'PUT') enviado = jsonDecode(req.body) as Map<String, dynamic>;
         return respostaJson(configJson());
@@ -120,7 +148,7 @@ void main() {
   });
 
   testWidgets('remover chave pede confirmação e chama a API', (tester) async {
-    final api = ApiFalsa({
+    final api = apiCom({
       '/erp/configuracao': (_) => respostaJson(configJson()),
       '/erp/configuracao/chave': (_) => respostaJson(configJson(comChave: false)),
     });
@@ -139,7 +167,7 @@ void main() {
   });
 
   testWidgets('erro da API (ex.: falta a chave de criptografia no servidor) aparece', (tester) async {
-    final api = ApiFalsa({
+    final api = apiCom({
       '/erp/configuracao': (req) => req.method == 'PUT'
           ? respostaJson({'erro': 'configure a ERP_CHAVE_CRIPTOGRAFIA no .env da API'}, status: 500)
           : respostaJson(configJson(configurado: false, comChave: false)),
@@ -157,7 +185,7 @@ void main() {
   });
 
   testWidgets('aviso da API (chave que não abre mais) aparece na situação', (tester) async {
-    final api = ApiFalsa({
+    final api = apiCom({
       '/erp/configuracao': (_) => respostaJson({
             ...configJson(),
             'chave_mascarada': null,

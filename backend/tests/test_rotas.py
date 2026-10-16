@@ -51,6 +51,10 @@ ROTAS_EXISTENTES = {
     ("/erp/configuracao", "GET"),
     ("/erp/configuracao", "PUT"),
     ("/erp/configuracao/chave", "DELETE"),
+    # etapa 6: sincronizacao com o ERP
+    ("/erp/testar-conexao", "POST"),
+    ("/erp/sincronizar", "POST"),
+    ("/erp/sincronizacoes", "GET"),
 }
 
 # o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)

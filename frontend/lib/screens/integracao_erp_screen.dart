@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/configuracao_erp.dart';
+import '../models/sincronizacao_erp.dart';
 import '../services/api_service.dart';
 
 // configuracao da integracao com o ERP (so admin). a chave fica criptografada na API e so aparece mascarada.
@@ -19,6 +20,9 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
   bool mostrarChave = false;
   bool carregando = true;
   bool salvando = false;
+  List<SincronizacaoErp> historico = [];
+  bool testando = false;
+  bool sincronizando = false;
 
   @override
   void initState() {
@@ -45,9 +49,11 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
     setState(() => carregando = true);
     try {
       final c = await ApiService.buscarConfiguracaoErp();
+      final h = await ApiService.listarSincronizacoesErp();
       if (!mounted) return;
       setState(() {
         preencher(c);
+        historico = h;
         carregando = false;
       });
     } catch (e) {
@@ -55,6 +61,42 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
       setState(() => carregando = false);
       mostrarErro(e);
     }
+  }
+
+  Future<void> carregarHistorico() async {
+    try {
+      final h = await ApiService.listarSincronizacoesErp();
+      if (!mounted) return;
+      setState(() => historico = h);
+    } catch (e) {
+      mostrarErro(e);
+    }
+  }
+
+  Future<void> testarConexao() async {
+    setState(() => testando = true);
+    try {
+      final msg = await ApiService.testarConexaoErp();
+      if (!mounted) return;
+      avisar(msg);
+    } catch (e) {
+      mostrarErro(e);
+    }
+    if (mounted) setState(() => testando = false);
+  }
+
+  Future<void> sincronizar() async {
+    setState(() => sincronizando = true);
+    try {
+      final s = await ApiService.sincronizarErp();
+      if (!mounted) return;
+      avisar('Sincronização: ${s.nomeStatus.toLowerCase()} — ${s.resumo}');
+    } catch (e) {
+      mostrarErro(e); // a falha tambem fica no historico
+    }
+    if (!mounted) return;
+    setState(() => sincronizando = false);
+    carregarHistorico();
   }
 
   void mostrarErro(Object e) {
@@ -201,7 +243,82 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
             label: const Text('Remover chave', style: TextStyle(color: Colors.red)),
           ),
         ],
+        const Divider(height: 32),
+        montarSincronizacao(c),
       ],
+    );
+  }
+
+  // botoes de testar/sincronizar + historico
+  Widget montarSincronizacao(ConfiguracaoErp c) {
+    final pronto = c.configurado && c.possuiChave;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Sincronização', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 4),
+        Text(
+          pronto
+              ? 'Usa a configuração salva acima. Busca no ERP os produtos e as vendas que mudaram desde a última sincronização.'
+              : 'Salve a URL e a chave do ERP pra poder testar e sincronizar.',
+          style: const TextStyle(fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: pronto && !testando ? testarConexao : null,
+              icon: const Icon(Icons.wifi_tethering),
+              label: Text(testando ? 'Testando...' : 'Testar conexão'),
+            ),
+            ElevatedButton.icon(
+              onPressed: pronto && !sincronizando ? sincronizar : null,
+              icon: sincronizando
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.sync),
+              label: Text(sincronizando ? 'Sincronizando...' : 'Sincronizar agora'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        if (historico.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('Nenhuma sincronização ainda.'),
+          )
+        else
+          for (final s in historico) montarItemHistorico(s),
+      ],
+    );
+  }
+
+  Widget montarItemHistorico(SincronizacaoErp s) {
+    final (icone, cor) = switch (s.status) {
+      'sucesso' => (Icons.check_circle, Colors.green),
+      'parcial' => (Icons.warning_amber, Colors.orange),
+      'em_andamento' => (Icons.hourglass_top, Colors.blueGrey),
+      _ => (Icons.error, Colors.red),
+    };
+    const maxErros = 3;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: Icon(icone, color: cor),
+        title: Text('${s.quando}  •  ${s.nomeStatus}'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (s.status != 'erro') Text(s.resumo),
+            for (final erro in s.erros.take(maxErros)) Text(erro, style: const TextStyle(color: Colors.red)),
+            if (s.erros.length > maxErros) Text('e mais ${s.erros.length - maxErros} erro(s)'),
+            if (s.usuario != null) Text('por ${s.usuario}', style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
     );
   }
 

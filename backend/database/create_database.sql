@@ -89,6 +89,29 @@ CREATE TABLE IF NOT EXISTS configuracao_erp (
     FOREIGN KEY (atualizado_por) REFERENCES usuario(id_usuario)
 );
 
+-- historico de cada vez que o NextStock buscou dados no ERP
+CREATE TABLE IF NOT EXISTS sincronizacao_erp (
+    id_sincronizacao INT AUTO_INCREMENT PRIMARY KEY,
+    iniciado_em DATETIME NOT NULL,
+    finalizado_em DATETIME,
+    status VARCHAR(20) NOT NULL DEFAULT 'em_andamento',
+    produtos_criados INT NOT NULL DEFAULT 0,
+    produtos_atualizados INT NOT NULL DEFAULT 0,
+    vendas_importadas INT NOT NULL DEFAULT 0,
+    vendas_ja_importadas INT NOT NULL DEFAULT 0,
+    erros TEXT,
+    id_usuario INT,
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+-- vendas que ja vieram do ERP (pelo id do ERP): sincronizar de novo nao duplica
+CREATE TABLE IF NOT EXISTS erp_venda_importada (
+    id_externo VARCHAR(100) PRIMARY KEY,
+    id_venda INT NOT NULL,
+    importado_em DATETIME NOT NULL,
+    FOREIGN KEY (id_venda) REFERENCES venda(id_venda)
+);
+
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
 

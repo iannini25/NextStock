@@ -7,7 +7,9 @@ from services.utils import inteiro, virar_data
 
 class RegistrarVendaService:
 
-    def executar(self, dados):
+    # baixar_estoque=False so registra a venda no historico (ex.: venda que veio do ERP,
+    # que ja manda o estoque atualizado). o padrao continua baixando como sempre.
+    def executar(self, dados, baixar_estoque=True):
         if not dados.get("id_produto"):
             raise ValueError("produto não existe")
         produto = Produto.buscar_por_id(dados.get("id_produto"))
@@ -19,13 +21,14 @@ class RegistrarVendaService:
             raise ValueError("quantidade tem que ser maior que zero")
 
         estoque = produto.quantidade_estoque or 0
-        if quantidade > estoque:
+        if baixar_estoque and quantidade > estoque:
             raise ValueError("estoque insuficiente")
 
         data_venda = virar_data(dados.get("data_venda")) or date.today()
 
-        produto.quantidade_estoque = estoque - quantidade
-        produto.salvar()
+        if baixar_estoque:
+            produto.quantidade_estoque = estoque - quantidade
+            produto.salvar()
 
         venda = Venda(
             id_produto=produto.id_produto,

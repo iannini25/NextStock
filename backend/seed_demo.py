@@ -9,12 +9,14 @@ from models.categoria_model import Categoria
 from models.produto_model import Produto
 from models.venda_model import Venda
 from models.evento_model import Evento
+from models.erp_venda_importada_model import ErpVendaImportada
 from services.registrar_venda_service import RegistrarVendaService
 
 hoje = date.today()
 
 
 def limpar():
+    ErpVendaImportada.query.delete()  # aponta pras vendas, sai antes delas
     Venda.query.delete()
     Produto.query.delete()
     Evento.query.delete()

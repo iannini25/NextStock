@@ -160,7 +160,8 @@ NextStock/
 ## Como rodar
 
 Precisa de **Python 3.10+**, **MySQL** e o **Flutter SDK** instalados. São 3 partes: a API, o
-proxy e o app. Cada um roda num terminal.
+proxy e o app. Cada um roda num terminal. Pra testar a integração com ERP sem ter um ERP de verdade,
+tem também um ERP simulado opcional (seção 4).
 
 ### 1. Backend (a API)
 
@@ -179,6 +180,7 @@ mysql -u root -p < database/create_database.sql
 
 # configura a conexao: copia o modelo e poe a senha do seu mysql no .env
 copy .env.example .env       # linux/mac: cp .env.example .env
+
 
 # sobe a api
 python app.py
@@ -218,6 +220,90 @@ flutter run
 Escolha o dispositivo (Chrome, Windows, Android...). Pra rodar no Chrome direto:
 `flutter run -d chrome`.
 
+
 > **Endereço:** no arquivo `frontend/lib/services/api_service.dart` tem a constante `baseUrl`, que
 > aponta pro **proxy**. Deixe `http://127.0.0.1:8000` pra web e desktop. Se for rodar no **emulador
 > Android**, troque pra `http://10.0.2.2:8000` (é assim que o emulador enxerga o localhost do PC).
+
+### 4. ERP simulado (opcional, pra testar a integração com ERP)
+
+O `tools/erp_simulado/erp_simulado.py` é um ERP de mentira, feito em Flask, que responde do mesmo
+jeito que o NextStock espera de um ERP de verdade. Ele já vem com **5 produtos** (arroz, feijão,
+café, queijo e refrigerante) e **20 dias de vendas**, então dá pra testar o botão "Sincronizar
+agora" do começo ao fim. Ele serve só pra desenvolvimento e teste.
+
+**Antes, uma vez só: a chave de criptografia no `.env`**
+
+A chave da API do ERP fica salva criptografada no banco. Pra isso, o `backend/.env` precisa da
+`ERP_CHAVE_CRIPTOGRAFIA`, um texto aleatório de pelo menos 32 caracteres, diferente da `SECRET_KEY`.
+Gere um com:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Cole o resultado no `backend/.env`:
+
+```
+ERP_CHAVE_CRIPTOGRAFIA=<o texto gerado>
+```
+
+Depois **reinicie a API**, porque ela só lê o `.env` quando sobe. Guarde essa chave: se ela mudar,
+a chave do ERP salva antes precisa ser cadastrada de novo.
+
+**Subir o ERP simulado**
+
+Com a API e o proxy rodando, em outro terminal, **na raiz do projeto**:
+
+```bash
+python tools/erp_simulado/erp_simulado.py
+```
+
+Ele sobe em `http://127.0.0.1:5001` e mostra a chave dele no terminal. Não precisa instalar nada
+além do que o backend já usa.
+
+**Configurar no app** (entre com um usuário **administrador**)
+
+1. Abra **Integração ERP** no menu.
+2. Preencha:
+   - **URL da API do ERP:** `http://127.0.0.1:5001`
+   - **Chave da API:** `chave-do-erp-simulado-123`
+3. Clique em **Salvar** e depois em **Testar conexão**. Deve aparecer "Conexão com o ERP funcionando".
+4. Clique em **Sincronizar agora**. Os 5 produtos e as vendas entram no NextStock, e o resultado
+   aparece no **Histórico**, logo abaixo.
+
+**O que dá pra testar com ele**
+
+| Teste | Como fazer | O que deve acontecer |
+|---|---|---|
+| Chave errada | Salvar outra chave e testar a conexão | "o ERP recusou a chave da API" |
+| Sincronizar de novo | Clicar em "Sincronizar agora" mais uma vez | 0 vendas novas (nada duplica) |
+| Venda nova no ERP | Rodar o comando abaixo e sincronizar | Entra só 1 venda e o estoque do arroz cai |
+| ERP fora do ar | Fechar o simulado (Ctrl+C) e sincronizar | Erro "Ele está no ar?", registrado no histórico como "Falhou" |
+| Integração desligada | Desligar "Integração ativa", salvar e sincronizar | "a integração com o ERP está desligada" |
+
+Para registrar uma venda nova no ERP simulado (PowerShell):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:5001/simular/venda -Headers @{Authorization='Bearer chave-do-erp-simulado-123'}
+```
+
+No Linux/Mac:
+
+```bash
+curl -X POST http://127.0.0.1:5001/simular/venda -H "Authorization: Bearer chave-do-erp-simulado-123"
+```
+
+Dá pra escolher o produto e a quantidade mandando um JSON, por exemplo
+`{"codigo_barras": "7899000000028", "quantidade": 3}`.
+
+> **Bom saber**
+> - Os dados do simulado ficam só na memória: fechou e abriu de novo, ele volta ao estado
+>   inicial. O que já foi sincronizado continua no banco do NextStock.
+> - As vendas sincronizadas entram no banco de verdade e passam a contar no painel, nos
+>   relatórios e na previsão.
+> - Dá pra mudar a chave e a porta do simulado com as variáveis `ERP_SIMULADO_CHAVE` e
+>   `ERP_SIMULADO_PORTA`.
+> - Pra ligar um ERP de verdade, é só ele seguir o mesmo formato (rotas `/status`, `/produtos` e
+>   `/vendas`, autenticação `Authorization: Bearer <chave>`, descrito no começo do
+>   `erp_simulado.py`) ou criar um conector novo em `backend/services/erp/`.
