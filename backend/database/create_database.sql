@@ -89,6 +89,24 @@ CREATE TABLE IF NOT EXISTS configuracao_erp (
     FOREIGN KEY (atualizado_por) REFERENCES usuario(id_usuario)
 );
 
+-- cada entrada de mercadoria vira um lote com quantidade, validade e custo proprios.
+-- o estoque do produto e a soma dos lotes (a API cria o "estoque inicial" dos produtos antigos ao subir)
+CREATE TABLE IF NOT EXISTS lote (
+    id_lote INT AUTO_INCREMENT PRIMARY KEY,
+    id_produto INT NOT NULL,
+    codigo_lote VARCHAR(50),
+    data_entrada DATE NOT NULL,
+    data_validade DATE,
+    quantidade_inicial INT NOT NULL,
+    quantidade_atual INT NOT NULL,
+    custo_unitario DECIMAL(10,2),
+    origem VARCHAR(20) NOT NULL DEFAULT 'entrada',
+    id_usuario INT,
+    criado_em DATETIME,
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
 -- historico de cada vez que o NextStock buscou dados no ERP
 CREATE TABLE IF NOT EXISTS sincronizacao_erp (
     id_sincronizacao INT AUTO_INCREMENT PRIMARY KEY,

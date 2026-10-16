@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/clima_dia.dart';
+import '../models/lote.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 
@@ -16,6 +17,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
   bool modoVencimento = true; // false = risco de ruptura
   int dias = 7;
   List<Produto> lista = [];
+  Map<int, List<Lote>> lotesPorProduto = {}; // lotes vencendo de cada produto
   List<ClimaDia> climaDias = [];
   String cidade = '';
   String? avisoClima;
@@ -36,11 +38,24 @@ class _AlertasScreenState extends State<AlertasScreen> {
       final futuroClima = ApiService.listarClima();
       final r = await futuroProdutos;
       final clima = await futuroClima;
+      // no modo vencendo, mostra embaixo de cada produto quais lotes estao vencendo.
+      // se essa parte falhar, a lista de produtos aparece do mesmo jeito
+      var porProduto = <int, List<Lote>>{};
+      if (modoVencimento) {
+        try {
+          for (final l in await ApiService.listarLotesVencendo(dias)) {
+            porProduto.putIfAbsent(l.idProduto, () => []).add(l);
+          }
+        } catch (_) {
+          porProduto = {};
+        }
+      }
       if (!mounted) return;
       final hoje = DateTime.now();
       final base = DateTime(hoje.year, hoje.month, hoje.day);
       setState(() {
         lista = r;
+        lotesPorProduto = porProduto;
         cidade = clima.cidade;
         avisoClima = clima.aviso;
         climaDias = clima.dias.where((d) {
@@ -242,7 +257,6 @@ class _AlertasScreenState extends State<AlertasScreen> {
             title: Text(p.nome),
             subtitle: Text(
               modoVencimento ? textoVencimento(p) : textoRisco(p),
-              maxLines: 3,
             ),
           ),
         );
@@ -252,10 +266,21 @@ class _AlertasScreenState extends State<AlertasScreen> {
 
   String textoVencimento(Produto p) {
     final d = p.diasParaVencer();
-    if (d == null) return 'validade: -';
-    if (d < 0) return 'VENCIDO há ${-d} dia(s)  •  ${p.validade}';
-    if (d == 0) return 'vence HOJE  •  ${p.validade}';
-    return 'vence em $d dia(s)  •  ${p.validade}';
+    String texto;
+    if (d == null) {
+      texto = 'validade: -';
+    } else if (d < 0) {
+      texto = 'VENCIDO há ${-d} dia(s)  •  ${p.validade}';
+    } else if (d == 0) {
+      texto = 'vence HOJE  •  ${p.validade}';
+    } else {
+      texto = 'vence em $d dia(s)  •  ${p.validade}';
+    }
+    // quais lotes (e quanto de cada) estao vencendo
+    for (final l in lotesPorProduto[p.id] ?? <Lote>[]) {
+      texto += '\n${l.titulo}: ${l.quantidadeAtual} ${l.unidade ?? ""} — ${l.textoValidade}';
+    }
+    return texto;
   }
 
   String textoRisco(Produto p) {

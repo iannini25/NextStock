@@ -4,6 +4,7 @@ from models.database import db
 from models.produto_model import Produto
 from models.categoria_model import Categoria
 from models.erp_venda_importada_model import ErpVendaImportada
+from services.estoque_lote_service import EstoqueLoteService
 from services.registrar_venda_service import RegistrarVendaService
 from services.utils import numero, inteiro, virar_data
 
@@ -85,51 +86,72 @@ class ImportarErpService:
                 categoria.salvar()
             id_categoria = categoria.id_categoria
 
+        origem = "erp" if self.sincronizando else "importacao"
         produto = Produto.buscar_por_codigo(codigo)
         if produto and self.sincronizando:
             # so troca o que o ERP mandou
             def campo(chave, converter, atual):
                 return converter(item.get(chave)) if chave in item else atual
 
-            produto.atualizar(
-                nome,
-                id_categoria if "categoria" in item else produto.id_categoria,
-                codigo,
-                campo("preco_custo", numero, produto.preco_custo),
-                numero(item.get("preco_venda")),
-                campo("quantidade_estoque", lambda v: inteiro(v) or 0, produto.quantidade_estoque),
-                campo("estoque_minimo", lambda v: inteiro(v) or 0, produto.estoque_minimo),
-                campo("unidade", lambda v: (v or "UN").upper(), produto.unidade),
-                campo("data_validade", virar_data, produto.data_validade),
-            )
+            custo = campo("preco_custo", numero, produto.preco_custo)
+            venda = numero(item.get("preco_venda"))
+            minimo = campo("estoque_minimo", lambda v: inteiro(v) or 0, produto.estoque_minimo)
+            unidade = campo("unidade", lambda v: (v or "UN").upper(), produto.unidade)
+            validade = virar_data(item.get("data_validade"))
+            produto.nome = nome
+            produto.id_categoria = id_categoria if "categoria" in item else produto.id_categoria
+            produto.codigo_barras = codigo
+            produto.preco_custo = custo
+            produto.preco_venda = venda
+            produto.estoque_minimo = minimo
+            produto.unidade = unidade
+            # o ERP manda o estoque atual: a diferenca vira ajuste nos lotes
+            nova_quantidade = None
+            if "quantidade_estoque" in item:
+                nova_quantidade = inteiro(item.get("quantidade_estoque")) or 0
+            self.gravar_estoque(produto, nova_quantidade, validade, origem)
             return "atualizado"
         if produto:
-            produto.atualizar(
-                nome,
-                id_categoria,
-                codigo,
-                numero(item.get("preco_custo")),
-                numero(item.get("preco_venda")),
-                inteiro(item.get("quantidade_estoque")) or 0,
-                inteiro(item.get("estoque_minimo")) or 0,
-                (item.get("unidade") or "UN").upper(),
-                virar_data(item.get("data_validade")),
-            )
+            custo = numero(item.get("preco_custo"))
+            venda = numero(item.get("preco_venda"))
+            quantidade = inteiro(item.get("quantidade_estoque")) or 0
+            minimo = inteiro(item.get("estoque_minimo")) or 0
+            validade = virar_data(item.get("data_validade"))
+            produto.nome = nome
+            produto.id_categoria = id_categoria
+            produto.codigo_barras = codigo
+            produto.preco_custo = custo
+            produto.preco_venda = venda
+            produto.estoque_minimo = minimo
+            produto.unidade = (item.get("unidade") or "UN").upper()
+            self.gravar_estoque(produto, quantidade, validade, origem)
             return "atualizado"
 
+        quantidade = inteiro(item.get("quantidade_estoque")) or 0
         produto = Produto(
             nome=nome,
             id_categoria=id_categoria,
             codigo_barras=codigo,
             preco_custo=numero(item.get("preco_custo")),
             preco_venda=numero(item.get("preco_venda")),
-            quantidade_estoque=inteiro(item.get("quantidade_estoque")) or 0,
+            quantidade_estoque=0,
             estoque_minimo=inteiro(item.get("estoque_minimo")) or 0,
             unidade=(item.get("unidade") or "UN").upper(),
-            data_validade=virar_data(item.get("data_validade")),
         )
-        produto.salvar()
+        db.session.add(produto)
+        self.gravar_estoque(produto, quantidade if quantidade > 0 else None, virar_data(item.get("data_validade")), origem)
         return "criado"
+
+    # nova_quantidade None = nao mexe no estoque. grava o produto e os lotes juntos
+    @staticmethod
+    def gravar_estoque(produto, nova_quantidade, validade, origem):
+        try:
+            if nova_quantidade is not None:
+                EstoqueLoteService().ajustar_para(produto, nova_quantidade, data_validade=validade, origem=origem)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
 
     def importar_venda(self, item):
         if not isinstance(item, dict):

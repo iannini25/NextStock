@@ -12,6 +12,8 @@ from models.usuario_model import Usuario
 from models.configuracao_erp_model import ConfiguracaoErp
 from models.sincronizacao_erp_model import SincronizacaoErp
 from models.erp_venda_importada_model import ErpVendaImportada
+from models.lote_model import Lote
+from services.estoque_lote_service import criar_lotes_iniciais
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
@@ -29,6 +31,7 @@ from controllers.assistente_controller import assistente_bp
 from controllers.empresa_controller import empresa_bp
 from controllers.usuario_controller import usuario_bp
 from controllers.auth_controller import auth_bp, exigir_login
+from controllers.lote_controller import lote_bp
 
 load_dotenv()
 
@@ -64,6 +67,7 @@ app.register_blueprint(assistente_bp)
 app.register_blueprint(empresa_bp)
 app.register_blueprint(usuario_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(lote_bp)
 
 
 @app.get("/")
@@ -74,6 +78,10 @@ def home():
 # cria as tabelas se nao existir
 with app.app_context():
     db.create_all()
+    # produto antigo com estoque e sem lote ganha o "estoque inicial" (so na primeira vez)
+    lotes_criados = criar_lotes_iniciais()
+    if lotes_criados:
+        print(f"lotes: {lotes_criados} produto(s) ganharam o lote de estoque inicial")
 
 
 if __name__ == "__main__":

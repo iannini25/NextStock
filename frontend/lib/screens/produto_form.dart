@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/produto.dart';
 import '../models/categoria.dart';
 import '../services/api_service.dart';
+import 'lotes_screen.dart';
 
 class ProdutoForm extends StatefulWidget {
   final Produto? produto;
@@ -68,19 +69,36 @@ class _ProdutoFormState extends State<ProdutoForm> {
     );
   }
 
+  // na edicao, quantidade e validade sao dos lotes: abre a tela de lotes e atualiza os campos na volta
+  Future<void> gerenciarLotes() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => LotesScreen(produto: widget.produto!)));
+    try {
+      final atual = await ApiService.buscarProduto(widget.produto!.id!);
+      if (!mounted) return;
+      setState(() {
+        qtd.text = atual.quantidade?.toString() ?? '0';
+        validade.text = atual.validade ?? '';
+      });
+    } catch (e) {
+      mostrarErro(e);
+    }
+  }
+
   Future<void> salvar() async {
     setState(() => salvando = true);
-    // monta o produto com o que foi digitado
+    final editando = widget.produto != null;
+    // monta o produto com o que foi digitado.
+    // na edicao nao manda quantidade nem validade: assim a API mantem o estoque dos lotes como esta
     final p = Produto(
       nome: nome.text,
       idCategoria: categoriaId,
       codigoBarras: codigo.text.isEmpty ? null : codigo.text,
       precoCusto: double.tryParse(custo.text.replaceAll(',', '.')),
       precoVenda: double.tryParse(venda.text.replaceAll(',', '.')),
-      quantidade: int.tryParse(qtd.text),
+      quantidade: editando ? null : int.tryParse(qtd.text),
       estoqueMinimo: int.tryParse(minimo.text),
       unidade: unidade.text.isEmpty ? 'UN' : unidade.text,
-      validade: validade.text.isEmpty ? null : validade.text,
+      validade: editando || validade.text.isEmpty ? null : validade.text,
     );
     try {
       if (widget.produto == null) {
@@ -110,10 +128,24 @@ class _ProdutoFormState extends State<ProdutoForm> {
           campo(codigo, 'Código de barras'),
           campo(custo, 'Preço de custo', numero: true),
           campo(venda, 'Preço de venda *', numero: true),
-          campo(qtd, 'Quantidade em estoque', numero: true),
+          if (editando) ...[
+            // com lotes, o estoque e a validade vem das entradas e das vendas
+            campo(qtd, 'Quantidade em estoque', numero: true, somenteLeitura: true),
+            campo(validade, 'Próxima validade (do lote que vence antes)', somenteLeitura: true),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: OutlinedButton.icon(
+                onPressed: gerenciarLotes,
+                icon: const Icon(Icons.inventory),
+                label: const Text('Gerenciar lotes (entradas e validades)'),
+              ),
+            ),
+          ] else ...[
+            campo(qtd, 'Quantidade em estoque', numero: true),
+            campo(validade, 'Validade (aaaa-mm-dd)'),
+          ],
           campo(minimo, 'Estoque mínimo (pra alertar antes de faltar)', numero: true),
           campo(unidade, 'Unidade'),
-          campo(validade, 'Validade (aaaa-mm-dd)'),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: salvando ? null : salvar,
@@ -151,11 +183,13 @@ class _ProdutoFormState extends State<ProdutoForm> {
   }
 
   // ajuda a montar cada campo de texto
-  Widget campo(TextEditingController c, String label, {bool numero = false}) {
+  Widget campo(TextEditingController c, String label, {bool numero = false, bool somenteLeitura = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
+        readOnly: somenteLeitura,
+        enabled: !somenteLeitura,
         keyboardType: numero ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
       ),

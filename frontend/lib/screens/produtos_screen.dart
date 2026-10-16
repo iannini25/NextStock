@@ -6,6 +6,7 @@ import '../models/produto.dart';
 import '../services/api_service.dart';
 import '../services/sessao.dart';
 import 'produto_form.dart';
+import 'lotes_screen.dart';
 
 // filtros de situacao (valor que vai pra API -> texto do chip)
 const Map<String, String> situacoesFiltro = {
@@ -112,6 +113,12 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
       MaterialPageRoute(builder: (_) => ProdutoForm(produto: p)),
     );
     if (salvou == true) carregar();
+  }
+
+  // entradas e correcoes nos lotes mudam o estoque: recarrega sempre na volta
+  Future<void> abrirLotes(Produto p) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => LotesScreen(produto: p)));
+    if (mounted) carregar();
   }
 
   Future<void> excluir(Produto p) async {
@@ -244,6 +251,7 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
+                IconButton(tooltip: 'Lotes', icon: const Icon(Icons.inventory), onPressed: () => abrirLotes(p)),
                 if (Sessao.ehAdmin) // so admin exclui
                   IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),

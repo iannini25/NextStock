@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from models.produto_model import Produto
 from repositories.produto_repository import ProdutoRepository
 from repositories.venda_repository import VendaRepository
+from repositories.lote_repository import LoteRepository
 from services.listar_produtos_em_risco_service import ListarProdutosEmRiscoService
 
 
@@ -11,6 +12,7 @@ class MontarPainelService:
     def __init__(self):
         self.repo_produto = ProdutoRepository()
         self.repo_venda = VendaRepository()
+        self.repo_lote = LoteRepository()
 
     def executar(self):
         hoje = date.today()
@@ -27,9 +29,11 @@ class MontarPainelService:
             itens_em_estoque += qtd
             valor_estoque += qtd * float(p.preco_custo or 0)
 
+        # so o que esta vencido de verdade: os lotes vencidos com saldo (um produto pode ter lote bom e lote vencido)
         valor_vencido = 0
-        for p in vencidos:
-            valor_vencido += (p.quantidade_estoque or 0) * float(p.preco_custo or 0)
+        for lote in self.repo_lote.listar_vencidos_com_saldo():
+            custo = lote.custo_unitario if lote.custo_unitario is not None else lote.produto.preco_custo
+            valor_vencido += lote.quantidade_atual * float(custo or 0)
 
         produtos_vencendo = len(vencendo) - len(vencidos)
         if produtos_vencendo < 0:

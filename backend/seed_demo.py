@@ -10,6 +10,8 @@ from models.produto_model import Produto
 from models.venda_model import Venda
 from models.evento_model import Evento
 from models.erp_venda_importada_model import ErpVendaImportada
+from models.lote_model import Lote
+from services.estoque_lote_service import criar_lotes_iniciais
 from services.registrar_venda_service import RegistrarVendaService
 
 hoje = date.today()
@@ -18,6 +20,7 @@ hoje = date.today()
 def limpar():
     ErpVendaImportada.query.delete()  # aponta pras vendas, sai antes delas
     Venda.query.delete()
+    Lote.query.delete()  # aponta pros produtos, sai antes deles
     Produto.query.delete()
     Evento.query.delete()
     Categoria.query.delete()
@@ -68,6 +71,7 @@ def criar():
         impacto_percentual=25,
     ))
     db.session.commit()
+    criar_lotes_iniciais()  # o estoque dos produtos de demonstracao vira o primeiro lote
 
     RegistrarVendaService().executar({
         "id_produto": banana.id_produto,

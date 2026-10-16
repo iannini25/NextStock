@@ -4,9 +4,11 @@ from io import BytesIO, StringIO
 
 from openpyxl import Workbook, load_workbook
 
+from models.database import db
 from models.categoria_model import Categoria
 from models.evento_model import Evento
 from models.produto_model import Produto
+from services.estoque_lote_service import EstoqueLoteService
 from services.registrar_venda_service import RegistrarVendaService
 from services.utils import inteiro, numero, virar_data
 
@@ -236,36 +238,33 @@ class ImportarPlanilhaService:
         codigo = _texto(item.get("codigo_barras")) or None
         produto = Produto.buscar_por_codigo(codigo) if codigo else None
         custo = _numero(item.get("preco_custo"))
+        # planilha sem a coluna de quantidade: produto que ja existe fica com o estoque que tem
+        tem_quantidade = "quantidade_estoque" in item
         qtd = inteiro(_texto(item.get("quantidade_estoque"))) or 0
         minimo = inteiro(_texto(item.get("estoque_minimo"))) or 0
         unidade = (_texto(item.get("unidade")) or "UN").upper()
         validade = _data(item.get("data_validade"))
 
-        if produto:
-            produto.atualizar(
-                nome,
-                id_categoria,
-                codigo,
-                custo,
-                preco_venda,
-                qtd,
-                minimo,
-                unidade,
-                validade,
-            )
-            return "ok"
-
-        Produto(
-            nome=nome,
-            id_categoria=id_categoria,
-            codigo_barras=codigo,
-            preco_custo=custo,
-            preco_venda=preco_venda,
-            quantidade_estoque=qtd,
-            estoque_minimo=minimo,
-            unidade=unidade,
-            data_validade=validade,
-        ).salvar()
+        estoque = EstoqueLoteService()
+        if not produto:
+            produto = Produto(nome=nome, codigo_barras=codigo, quantidade_estoque=0)
+            db.session.add(produto)
+            tem_quantidade = qtd > 0
+        produto.nome = nome
+        produto.id_categoria = id_categoria
+        produto.codigo_barras = codigo
+        produto.preco_custo = custo
+        produto.preco_venda = preco_venda
+        produto.estoque_minimo = minimo
+        produto.unidade = unidade
+        try:
+            # a quantidade da planilha vira ajuste nos lotes (sobrou = lote novo com a validade da planilha)
+            if tem_quantidade:
+                estoque.ajustar_para(produto, qtd, data_validade=validade, origem="importacao")
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return "ok"
 
     def _importar_venda(self, item):

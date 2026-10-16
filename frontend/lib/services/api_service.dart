@@ -17,6 +17,7 @@ import '../models/empresa.dart';
 import '../models/usuario.dart';
 import '../models/configuracao_erp.dart';
 import '../models/sincronizacao_erp.dart';
+import '../models/lote.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -364,6 +365,58 @@ class ApiService {
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => SincronizacaoErp.fromJson(e)).toList();
+  }
+
+  // -------- LOTES --------
+
+  static Future<Produto> buscarProduto(int id) async {
+    final r = await http.get(Uri.parse('$baseUrl/produtos/$id'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return Produto.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // lotes com saldo na ordem de saida; todos=true inclui os esgotados
+  static Future<ResultadoLotes> listarLotes(int idProduto, {bool todos = false}) async {
+    final url = Uri.parse('$baseUrl/produtos/$idProduto/lotes').replace(queryParameters: todos ? {'todos': '1'} : null);
+    final r = await http.get(url, headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ResultadoLotes.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // entrada de mercadoria (cria um lote)
+  static Future<void> registrarEntrada({
+    required int idProduto,
+    required int quantidade,
+    String? dataValidade,
+    String? codigoLote,
+    double? custoUnitario,
+    String? dataEntrada,
+  }) async {
+    final r = await http.post(Uri.parse('$baseUrl/lotes'),
+        headers: headers,
+        body: jsonEncode({
+          'id_produto': idProduto,
+          'quantidade': quantidade,
+          'data_validade': dataValidade,
+          'codigo_lote': codigoLote,
+          'custo_unitario': custoUnitario,
+          'data_entrada': dataEntrada,
+        }));
+    if (r.statusCode != 201) throw pegarErro(r);
+  }
+
+  // corrige codigo e validade (a quantidade nao muda por aqui)
+  static Future<void> corrigirLote(int id, {String? codigoLote, String? dataValidade}) async {
+    final r = await http.put(Uri.parse('$baseUrl/lotes/$id'),
+        headers: headers, body: jsonEncode({'codigo_lote': codigoLote, 'data_validade': dataValidade}));
+    if (r.statusCode != 200) throw pegarErro(r);
+  }
+
+  static Future<List<Lote>> listarLotesVencendo(int dias) async {
+    final r = await http.get(Uri.parse('$baseUrl/lotes/vencendo?dias=$dias'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => Lote.fromJson(e)).toList();
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

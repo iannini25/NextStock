@@ -1,5 +1,7 @@
+from models.database import db
 from models.produto_model import Produto
 from models.categoria_model import Categoria
+from services.estoque_lote_service import EstoqueLoteService
 from services.utils import numero, inteiro, virar_data
 
 
@@ -21,16 +23,22 @@ class CriarProdutoService:
         if cat and not Categoria.buscar_por_id(cat):
             raise ValueError("categoria não existe")
 
+        quantidade = inteiro(dados.get("quantidade_estoque")) or 0
+        validade = virar_data(dados.get("data_validade"))
+
         p = Produto(
             nome=dados["nome"],
             id_categoria=cat,
             codigo_barras=cod,
             preco_custo=numero(dados.get("preco_custo")),
             preco_venda=numero(dados.get("preco_venda")),
-            quantidade_estoque=inteiro(dados.get("quantidade_estoque")) or 0,
+            quantidade_estoque=0,
             estoque_minimo=inteiro(dados.get("estoque_minimo")) or 0,
             unidade=(dados.get("unidade") or "UN").upper(),
-            data_validade=virar_data(dados.get("data_validade")),
         )
-        p.salvar()
+        db.session.add(p)
+        # a quantidade e a validade do cadastro viram o primeiro lote do produto
+        if quantidade > 0:
+            EstoqueLoteService().entrada(p, quantidade, data_validade=validade, origem="inicial")
+        db.session.commit()
         return p.virar_dict()

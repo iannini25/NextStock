@@ -1,7 +1,9 @@
 from datetime import date
 
+from models.database import db
 from models.produto_model import Produto
 from models.venda_model import Venda
+from services.estoque_lote_service import EstoqueLoteService
 from services.utils import inteiro, virar_data
 
 
@@ -20,20 +22,20 @@ class RegistrarVendaService:
         if not quantidade:
             raise ValueError("quantidade tem que ser maior que zero")
 
-        estoque = produto.quantidade_estoque or 0
-        if baixar_estoque and quantidade > estoque:
-            raise ValueError("estoque insuficiente")
-
         data_venda = virar_data(dados.get("data_venda")) or date.today()
 
-        if baixar_estoque:
-            produto.quantidade_estoque = estoque - quantidade
-            produto.salvar()
-
-        venda = Venda(
-            id_produto=produto.id_produto,
-            quantidade=quantidade,
-            data_venda=data_venda,
-        )
-        venda.salvar()
+        # baixa nos lotes + venda gravados juntos: ou entra tudo, ou nada
+        try:
+            if baixar_estoque:
+                EstoqueLoteService().baixar(produto, quantidade)  # "estoque insuficiente" sai daqui
+            venda = Venda(
+                id_produto=produto.id_produto,
+                quantidade=quantidade,
+                data_venda=data_venda,
+            )
+            db.session.add(venda)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
         return venda.virar_dict()

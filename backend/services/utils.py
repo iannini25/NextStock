@@ -1,6 +1,13 @@
 import re
 from datetime import date
 
+from flask import g, has_request_context
+
+
+# quem esta logado na requisicao atual (None fora de uma requisicao, ex.: scripts e migracao)
+def usuario_logado():
+    return g.get("usuario") if has_request_context() else None
+
 
 # vira numero, se vier vazio devolve None
 def numero(v):

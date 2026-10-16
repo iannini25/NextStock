@@ -10,5 +10,5 @@ class DeletarProdutoService:
             return False
         if Venda.query.filter_by(id_produto=id).first():
             raise ValueError("não dá para apagar: esse produto tem vendas registradas")
-        p.deletar()
+        p.deletar()  # os lotes do produto saem junto
         return True
