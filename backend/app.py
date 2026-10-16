@@ -25,6 +25,7 @@ from controllers.relatorio_controller import relatorio_bp
 from controllers.assistente_controller import assistente_bp
 from controllers.empresa_controller import empresa_bp
 from controllers.usuario_controller import usuario_bp
+from controllers.auth_controller import auth_bp, exigir_login
 
 load_dotenv()
 
@@ -39,6 +40,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
+
+# toda rota exige login, menos as publicas (ver controllers/auth_controller.py)
+app.before_request(exigir_login)
 
 app.register_blueprint(cat_bp)
 app.register_blueprint(prod_bp)
@@ -56,6 +60,7 @@ app.register_blueprint(relatorio_bp)
 app.register_blueprint(assistente_bp)
 app.register_blueprint(empresa_bp)
 app.register_blueprint(usuario_bp)
+app.register_blueprint(auth_bp)
 
 
 @app.get("/")

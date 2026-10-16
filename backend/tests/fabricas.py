@@ -74,11 +74,23 @@ def criar_empresa(nome="Mercado Bom Preço LTDA", **campos):
     return e
 
 
+SENHA_PADRAO = "senha1234"
+_hash_senha_padrao = None
+
+
 # cria a empresa junto se ela ainda nao existir
-def criar_usuario(nome="Maria", email="maria@loja.com", senha="senha1234", perfil="usuario", ativo=True):
+def criar_usuario(nome="Maria", email="maria@loja.com", senha=SENHA_PADRAO, perfil="usuario", ativo=True):
+    global _hash_senha_padrao
     empresa = Empresa.buscar_unica() or criar_empresa()
     u = Usuario(id_empresa=empresa.id_empresa, nome=nome, email=email, perfil=perfil, ativo=ativo)
-    u.definir_senha(senha)
+    if senha == SENHA_PADRAO:
+        # gerar hash e lento de proposito; a senha padrao e calculada uma vez so pra suite toda
+        if _hash_senha_padrao is None:
+            u.definir_senha(senha)
+            _hash_senha_padrao = u.senha_hash
+        u.senha_hash = _hash_senha_padrao
+    else:
+        u.definir_senha(senha)
     db.session.add(u)
     db.session.commit()
     return u

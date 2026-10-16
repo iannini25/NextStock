@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'shell/app_shell.dart';
+import 'shell/entrada.dart';
 
 // cores da marca
 const corNavy = Color(0xFF122540);
@@ -45,7 +45,8 @@ class App extends StatelessWidget {
           // anima a troca de tema (claro/escuro) pra nao dar um pulo seco
           themeAnimationDuration: const Duration(milliseconds: 280),
           themeAnimationCurve: Curves.easeInOut,
-          home: const AppShell(),
+          // decide entre configuracao inicial, login e o app
+          home: const Entrada(),
         );
       },
     );

@@ -4,7 +4,6 @@ import pytest
 
 from models.empresa_model import Empresa
 from models.usuario_model import Usuario
-from tests.fabricas import criar_empresa
 
 SETUP = {
     "empresa": {
@@ -26,14 +25,17 @@ def setup_com(**mudancas):
     return dados
 
 
-def test_status_antes_e_depois_da_configuracao(client):
-    assert client.get("/setup/status").get_json() == {"configurado": False}
-    assert client.post("/setup", json=SETUP).status_code == 201
-    assert client.get("/setup/status").get_json() == {"configurado": True}
+# a configuracao inicial acontece antes de existir qualquer usuario, entao e sem login
 
 
-def test_configuracao_cria_empresa_e_admin(client):
-    r = client.post("/setup", json=SETUP)
+def test_status_antes_e_depois_da_configuracao(client_anonimo):
+    assert client_anonimo.get("/setup/status").get_json() == {"configurado": False}
+    assert client_anonimo.post("/setup", json=SETUP).status_code == 201
+    assert client_anonimo.get("/setup/status").get_json() == {"configurado": True}
+
+
+def test_configuracao_cria_empresa_e_admin(client_anonimo):
+    r = client_anonimo.post("/setup", json=SETUP)
     assert r.status_code == 201
     corpo = r.get_json()
 
@@ -57,18 +59,24 @@ def test_configuracao_cria_empresa_e_admin(client):
     assert not salvo.conferir_senha("outra-senha")
 
 
-def test_admin_da_configuracao_sempre_e_admin(client):
-    r = client.post("/setup", json=setup_com(admin__perfil="usuario"))
+def test_admin_da_configuracao_sempre_e_admin(client_anonimo):
+    r = client_anonimo.post("/setup", json=setup_com(admin__perfil="usuario"))
     assert r.get_json()["admin"]["perfil"] == "admin"
 
 
 def test_configuracao_so_uma_vez(client):
-    client.post("/setup", json=SETUP)
+    # ja existe empresa (criada junto com o admin logado): repetir a configuracao da 409
     r = client.post("/setup", json=setup_com(admin__email="outro@loja.com"))
     assert r.status_code == 409
     assert r.get_json() == {"erro": "a empresa já foi configurada"}
     assert Empresa.query.count() == 1
     assert Usuario.query.count() == 1
+
+
+def test_configuracao_depois_de_pronta_exige_login(client_anonimo, admin):
+    r = client_anonimo.post("/setup", json=setup_com(admin__email="invasor@loja.com"))
+    assert r.status_code == 401
+    assert Usuario.buscar_por_email("invasor@loja.com") is None
 
 
 @pytest.mark.parametrize("dados, erro", [
@@ -82,30 +90,26 @@ def test_configuracao_so_uma_vez(client):
     (setup_com(admin__senha="1234567"), "senha tem que ter pelo menos 8 caracteres"),
     ({"empresa": SETUP["empresa"]}, "mande os dados da empresa e do administrador"),
 ])
-def test_configuracao_invalida_nao_grava_nada(client, dados, erro):
-    r = client.post("/setup", json=dados)
+def test_configuracao_invalida_nao_grava_nada(client_anonimo, dados, erro):
+    r = client_anonimo.post("/setup", json=dados)
     assert r.status_code == 400
     assert r.get_json() == {"erro": erro}
     assert Empresa.query.count() == 0
     assert Usuario.query.count() == 0
 
 
-def test_busca_empresa_antes_da_configuracao(client):
-    r = client.get("/empresa")
-    assert r.status_code == 404
-    assert r.get_json() == {"erro": "empresa ainda não configurada"}
+def test_dados_da_empresa_exigem_login(client_anonimo, admin):
+    assert client_anonimo.get("/empresa").status_code == 401
+    assert client_anonimo.put("/empresa", json={"nome": "X"}).status_code == 401
 
 
 def test_busca_empresa(client):
-    criar_empresa("Padaria Pão Quente", cnpj="11222333000144")
     r = client.get("/empresa")
     assert r.status_code == 200
-    assert r.get_json()["nome"] == "Padaria Pão Quente"
-    assert r.get_json()["cnpj"] == "11222333000144"
+    assert r.get_json()["nome"] == "Mercado Bom Preço LTDA"
 
 
 def test_atualiza_empresa(client):
-    criar_empresa("Nome antigo", nome_fantasia="Antiga", telefone="1111")
     r = client.put("/empresa", json={"nome": "Nome novo", "cnpj": "11.222.333/0001-44", "telefone": ""})
     assert r.status_code == 200
     empresa = r.get_json()
@@ -113,15 +117,10 @@ def test_atualiza_empresa(client):
     assert empresa["cnpj"] == "11222333000144"
     assert empresa["nome_fantasia"] is None  # campo nao enviado fica vazio (a tela manda o form inteiro)
     assert empresa["telefone"] is None
+    assert client.get("/empresa").get_json()["nome"] == "Nome novo"
 
 
 def test_atualiza_empresa_invalida(client):
-    criar_empresa()
     r = client.put("/empresa", json={"nome": ""})
     assert r.status_code == 400
     assert r.get_json() == {"erro": "nome da empresa é obrigatório"}
-
-
-def test_atualiza_empresa_antes_da_configuracao(client):
-    r = client.put("/empresa", json={"nome": "X"})
-    assert r.status_code == 404

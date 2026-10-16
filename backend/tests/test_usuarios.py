@@ -1,25 +1,25 @@
 import pytest
 
 from models.usuario_model import Usuario
-from tests.fabricas import criar_empresa, criar_usuario
+from tests.fabricas import criar_usuario
+
+# o client dos testes ja esta logado como "Admin" (admin@loja.com), entao ele sempre aparece na lista
 
 NOVO = {"nome": "João Caixa", "email": "Joao@Loja.com", "senha": "senha1234"}
 
 
-def test_lista_vazia(client):
+def test_usuarios_exigem_login(client_anonimo, admin):
+    assert client_anonimo.get("/usuarios").status_code == 401
+    assert client_anonimo.post("/usuarios", json=NOVO).status_code == 401
+
+
+def test_lista_so_o_admin_logado(client, admin):
     r = client.get("/usuarios")
     assert r.status_code == 200
-    assert r.get_json() == []
+    assert r.get_json() == [admin.virar_dict()]
 
 
-def test_criar_exige_empresa_configurada(client):
-    r = client.post("/usuarios", json=NOVO)
-    assert r.status_code == 400
-    assert r.get_json() == {"erro": "configure a empresa antes de cadastrar usuários"}
-
-
-def test_cria_usuario_com_perfil_padrao(client):
-    empresa = criar_empresa()
+def test_cria_usuario_com_perfil_padrao(client, admin):
     r = client.post("/usuarios", json=NOVO)
     assert r.status_code == 201
     u = r.get_json()
@@ -27,7 +27,7 @@ def test_cria_usuario_com_perfil_padrao(client):
     assert u["email"] == "joao@loja.com"
     assert u["perfil"] == "usuario"
     assert u["ativo"] is True
-    assert u["id_empresa"] == empresa.id_empresa
+    assert u["id_empresa"] == admin.id_empresa
     assert "senha" not in u and "senha_hash" not in u
     salvo = Usuario.buscar_por_email("joao@loja.com")
     assert salvo.senha_hash != "senha1234"
@@ -35,7 +35,6 @@ def test_cria_usuario_com_perfil_padrao(client):
 
 
 def test_cria_admin(client):
-    criar_empresa()
     r = client.post("/usuarios", json={**NOVO, "perfil": "admin"})
     assert r.get_json()["perfil"] == "admin"
 
@@ -49,11 +48,10 @@ def test_cria_admin(client):
     ({"perfil": "gerente"}, "perfil tem que ser admin ou usuario"),
 ])
 def test_cria_usuario_invalido(client, mudanca, erro):
-    criar_empresa()
     r = client.post("/usuarios", json={**NOVO, **mudanca})
     assert r.status_code == 400
     assert r.get_json() == {"erro": erro}
-    assert Usuario.query.count() == 0
+    assert Usuario.query.count() == 1  # so o admin logado
 
 
 def test_email_repetido_mesmo_com_maiusculas(client):
@@ -67,7 +65,7 @@ def test_lista_em_ordem_de_nome_sem_senha(client):
     criar_usuario("Zeca", "zeca@loja.com")
     criar_usuario("Ana", "ana@loja.com", perfil="admin")
     lista = client.get("/usuarios").get_json()
-    assert [u["nome"] for u in lista] == ["Ana", "Zeca"]
+    assert [u["nome"] for u in lista] == ["Admin", "Ana", "Zeca"]
     assert all("senha_hash" not in u for u in lista)
 
 
@@ -138,9 +136,9 @@ def test_desativa_sem_apagar_e_reativa(client):
     u = criar_usuario("Maria")
     assert client.delete(f"/usuarios/{u.id_usuario}").status_code == 204
 
-    lista = client.get("/usuarios").get_json()
-    assert len(lista) == 1
-    assert lista[0]["ativo"] is False
+    maria = [x for x in client.get("/usuarios").get_json() if x["nome"] == "Maria"]
+    assert len(maria) == 1
+    assert maria[0]["ativo"] is False
 
     r = client.put(f"/usuarios/{u.id_usuario}", json={"nome": "Maria", "email": u.email, "ativo": True})
     assert r.get_json()["ativo"] is True

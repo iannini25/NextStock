@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../models/usuario.dart';
+import '../services/sessao.dart';
 import '../screens/inicio_screen.dart';
 import '../screens/produtos_screen.dart';
 import '../screens/alertas_screen.dart';
@@ -205,6 +207,32 @@ class BarraTopo extends StatelessWidget {
                 const SizedBox(width: 10),
                 _marca(escuro, 'assets/nome.png', 30),
                 const Spacer(),
+                // quem esta logado + botao de sair (o nome encolhe com reticencias em tela pequena)
+                Flexible(
+                  child: ValueListenableBuilder<Usuario?>(
+                    valueListenable: Sessao.usuario,
+                    builder: (_, usuario, _) {
+                      if (usuario == null) return const SizedBox.shrink();
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              usuario.nome,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: corIcone, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Sair',
+                            icon: Icon(Icons.logout, color: corIcone),
+                            onPressed: () => Sessao.sair(),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: modoTema,
                   builder: (_, modo, _) {

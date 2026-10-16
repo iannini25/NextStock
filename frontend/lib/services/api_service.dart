@@ -15,6 +15,7 @@ import '../models/mensagem_chat.dart';
 import '../models/clima_dia.dart';
 import '../models/empresa.dart';
 import '../models/usuario.dart';
+import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
 // - Flutter Web e Desktop: http://127.0.0.1:8000
@@ -23,12 +24,34 @@ import '../models/usuario.dart';
 const String baseUrl = 'http://127.0.0.1:8000';
 
 class ApiService {
-  static const headers = {'Content-Type': 'application/json'};
+  // toda chamada leva o token de quem esta logado (a API recusa sem ele)
+  static Map<String, String> get autorizacao =>
+      Sessao.token == null ? {} : {'Authorization': 'Bearer ${Sessao.token}'};
+
+  static Map<String, String> get headers => {'Content-Type': 'application/json', ...autorizacao};
+
+  // -------- LOGIN --------
+
+  static Future<({String token, Usuario usuario})> login(String email, String senha) async {
+    final r = await http.post(Uri.parse('$baseUrl/auth/login'),
+        headers: headers, body: jsonEncode({'email': email, 'senha': senha}));
+    if (r.statusCode != 200) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return (token: j['token'] as String, usuario: Usuario.fromJson(j['usuario']));
+  }
+
+  // confere se o token salvo ainda vale e devolve quem esta logado
+  static Future<Usuario> usuarioAtual() async {
+    final r = await http.get(Uri.parse('$baseUrl/auth/me'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    return Usuario.fromJson(j['usuario']);
+  }
 
   // -------- CATEGORIAS --------
 
   static Future<List<Categoria>> listarCategorias() async {
-    final r = await http.get(Uri.parse('$baseUrl/categorias'));
+    final r = await http.get(Uri.parse('$baseUrl/categorias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Categoria.fromJson(e)).toList();
@@ -47,14 +70,14 @@ class ApiService {
   }
 
   static Future<void> deletarCategoria(int id) async {
-    final r = await http.delete(Uri.parse('$baseUrl/categorias/$id'));
+    final r = await http.delete(Uri.parse('$baseUrl/categorias/$id'), headers: autorizacao);
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
   // -------- PRODUTOS --------
 
   static Future<List<Produto>> listarProdutos() async {
-    final r = await http.get(Uri.parse('$baseUrl/produtos'));
+    final r = await http.get(Uri.parse('$baseUrl/produtos'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Produto.fromJson(e)).toList();
@@ -73,7 +96,7 @@ class ApiService {
   }
 
   static Future<void> deletarProduto(int id) async {
-    final r = await http.delete(Uri.parse('$baseUrl/produtos/$id'));
+    final r = await http.delete(Uri.parse('$baseUrl/produtos/$id'), headers: autorizacao);
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
@@ -81,7 +104,7 @@ class ApiService {
 
   // produtos que vencem daqui a X dias
   static Future<List<Produto>> listarProdutosVencendo(int dias) async {
-    final r = await http.get(Uri.parse('$baseUrl/produtos/vencendo?dias=$dias'));
+    final r = await http.get(Uri.parse('$baseUrl/produtos/vencendo?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Produto.fromJson(e)).toList();
@@ -89,14 +112,14 @@ class ApiService {
 
   // produtos com estoque no limite (risco de faltar)
   static Future<List<Produto>> listarProdutosEmRisco() async {
-    final r = await http.get(Uri.parse('$baseUrl/produtos/risco-ruptura'));
+    final r = await http.get(Uri.parse('$baseUrl/produtos/risco-ruptura'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Produto.fromJson(e)).toList();
   }
 
   static Future<List<Venda>> listarVendas(int dias) async {
-    final r = await http.get(Uri.parse('$baseUrl/vendas?dias=$dias'));
+    final r = await http.get(Uri.parse('$baseUrl/vendas?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Venda.fromJson(e)).toList();
@@ -109,7 +132,7 @@ class ApiService {
   }
 
   static Future<List<Evento>> listarEventos() async {
-    final r = await http.get(Uri.parse('$baseUrl/eventos'));
+    final r = await http.get(Uri.parse('$baseUrl/eventos'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Evento.fromJson(e)).toList();
@@ -122,40 +145,40 @@ class ApiService {
   }
 
   static Future<void> deletarEvento(int id) async {
-    final r = await http.delete(Uri.parse('$baseUrl/eventos/$id'));
+    final r = await http.delete(Uri.parse('$baseUrl/eventos/$id'), headers: autorizacao);
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
   static Future<ResultadoPrevisao> preverDemanda(int dias, String clima) async {
-    final r = await http.get(Uri.parse('$baseUrl/previsao?dias=$dias&clima=$clima'));
+    final r = await http.get(Uri.parse('$baseUrl/previsao?dias=$dias&clima=$clima'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return ResultadoPrevisao.fromJson(j);
   }
 
   static Future<List<SugestaoCompra>> sugerirCompras(int dias, String clima) async {
-    final r = await http.get(Uri.parse('$baseUrl/compras/sugestoes?dias=$dias&clima=$clima'));
+    final r = await http.get(Uri.parse('$baseUrl/compras/sugestoes?dias=$dias&clima=$clima'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => SugestaoCompra.fromJson(e)).toList();
   }
 
   static Future<List<Reposicao>> listarReposicao() async {
-    final r = await http.get(Uri.parse('$baseUrl/reposicao'));
+    final r = await http.get(Uri.parse('$baseUrl/reposicao'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Reposicao.fromJson(e)).toList();
   }
 
   static Future<ResultadoClima> listarClima() async {
-    final r = await http.get(Uri.parse('$baseUrl/clima'));
+    final r = await http.get(Uri.parse('$baseUrl/clima'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return ResultadoClima.fromJson(j);
   }
 
   static Future<List<int>> baixarModelo(String modulo) async {
-    final r = await http.get(Uri.parse('$baseUrl/importar/modelo?modulo=$modulo'));
+    final r = await http.get(Uri.parse('$baseUrl/importar/modelo?modulo=$modulo'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return r.bodyBytes;
   }
@@ -169,6 +192,7 @@ class ApiService {
       'POST',
       Uri.parse('$baseUrl/importar?modulo=$modulo'),
     );
+    req.headers.addAll(autorizacao);
     req.files.add(http.MultipartFile.fromBytes(
       'arquivo',
       bytes,
@@ -182,35 +206,35 @@ class ApiService {
   }
 
   static Future<Painel> montarPainel() async {
-    final r = await http.get(Uri.parse('$baseUrl/painel'));
+    final r = await http.get(Uri.parse('$baseUrl/painel'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return Painel.fromJson(j);
   }
 
   static Future<List<Recomendacao>> listarRecomendacoes() async {
-    final r = await http.get(Uri.parse('$baseUrl/recomendacoes'));
+    final r = await http.get(Uri.parse('$baseUrl/recomendacoes'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Recomendacao.fromJson(e)).toList();
   }
 
   static Future<RelatorioConsumo> relatorioConsumo(int dias) async {
-    final r = await http.get(Uri.parse('$baseUrl/relatorios/consumo?dias=$dias'));
+    final r = await http.get(Uri.parse('$baseUrl/relatorios/consumo?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return RelatorioConsumo.fromJson(j);
   }
 
   static Future<RelatorioDesempenho> relatorioDesempenho(int dias) async {
-    final r = await http.get(Uri.parse('$baseUrl/relatorios/desempenho?dias=$dias'));
+    final r = await http.get(Uri.parse('$baseUrl/relatorios/desempenho?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return RelatorioDesempenho.fromJson(j);
   }
 
   static Future<List<Tendencia>> relatorioTendencias(int dias) async {
-    final r = await http.get(Uri.parse('$baseUrl/relatorios/tendencias?dias=$dias'));
+    final r = await http.get(Uri.parse('$baseUrl/relatorios/tendencias?dias=$dias'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Tendencia.fromJson(e)).toList();
@@ -232,7 +256,7 @@ class ApiService {
 
   // true quando a empresa (e o primeiro admin) ja foram cadastrados
   static Future<bool> setupConfigurado() async {
-    final r = await http.get(Uri.parse('$baseUrl/setup/status'));
+    final r = await http.get(Uri.parse('$baseUrl/setup/status'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return j['configurado'] == true;
@@ -247,7 +271,7 @@ class ApiService {
   }
 
   static Future<Empresa> buscarEmpresa() async {
-    final r = await http.get(Uri.parse('$baseUrl/empresa'));
+    final r = await http.get(Uri.parse('$baseUrl/empresa'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return Empresa.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
@@ -259,7 +283,7 @@ class ApiService {
   }
 
   static Future<List<Usuario>> listarUsuarios() async {
-    final r = await http.get(Uri.parse('$baseUrl/usuarios'));
+    final r = await http.get(Uri.parse('$baseUrl/usuarios'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
     return lista.map((e) => Usuario.fromJson(e)).toList();
@@ -280,12 +304,14 @@ class ApiService {
 
   // a API nao apaga o usuario, so desativa
   static Future<void> desativarUsuario(int id) async {
-    final r = await http.delete(Uri.parse('$baseUrl/usuarios/$id'));
+    final r = await http.delete(Uri.parse('$baseUrl/usuarios/$id'), headers: autorizacao);
     if (r.statusCode != 204) throw pegarErro(r);
   }
 
-  // pega a mensagem do campo "erro" que o backend manda
+  // pega a mensagem do campo "erro" que o backend manda.
+  // 401 com alguem logado = sessao expirou: limpa a sessao e o app volta pro login
   static Exception pegarErro(http.Response r) {
+    if (r.statusCode == 401) Sessao.expirou();
     try {
       final j = jsonDecode(utf8.decode(r.bodyBytes));
       return Exception(j['erro'] ?? 'Erro na API');

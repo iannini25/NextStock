@@ -1,3 +1,5 @@
+import pytest
+
 from app import app as flask_app
 
 # todas as rotas que existem hoje. as etapas novas podem acrescentar rotas, mas nenhuma destas pode sumir.
@@ -42,18 +44,36 @@ ROTAS_EXISTENTES = {
     ("/usuarios", "POST"),
     ("/usuarios/<int:id>", "PUT"),
     ("/usuarios/<int:id>", "DELETE"),
+    # etapa 2: login
+    ("/auth/login", "POST"),
+    ("/auth/me", "GET"),
 }
+
+# o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)
+ROTAS_PUBLICAS = {("/", "GET"), ("/auth/login", "POST"), ("/setup/status", "GET")}
+
+
+def rotas_registradas():
+    for regra in flask_app.url_map.iter_rules():
+        if regra.endpoint == "static":
+            continue
+        for metodo in sorted(regra.methods - {"HEAD", "OPTIONS"}):
+            yield regra.rule, metodo
 
 
 def test_todas_as_rotas_atuais_continuam_registradas():
-    registradas = set()
-    for regra in flask_app.url_map.iter_rules():
-        for metodo in regra.methods - {"HEAD", "OPTIONS"}:
-            registradas.add((regra.rule, metodo))
-    assert ROTAS_EXISTENTES - registradas == set()
+    assert ROTAS_EXISTENTES - set(rotas_registradas()) == set()
 
 
-def test_home(client):
-    r = client.get("/")
+def test_home_sem_login(client_anonimo):
+    r = client_anonimo.get("/")
     assert r.status_code == 200
     assert r.get_json() == {"msg": "API do NextStock rodando"}
+
+
+# percorre TODAS as rotas registradas (inclusive as que forem criadas nas proximas etapas)
+@pytest.mark.parametrize("rota, metodo", sorted(set(rotas_registradas()) - ROTAS_PUBLICAS))
+def test_toda_rota_nao_publica_exige_login(client_anonimo, admin, rota, metodo):
+    url = rota.replace("<int:id>", "1")
+    r = client_anonimo.open(url, method=metodo, json={})
+    assert r.status_code == 401, f"{metodo} {rota} respondeu {r.status_code} sem login"
