@@ -15,6 +15,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   RelatorioConsumo? consumo;
   RelatorioDesempenho? desempenho;
   List<Tendencia> tendencias = [];
+  CurvaAbc? curvaAbc;
+  String criterioAbc = 'faturamento';
   bool carregando = true;
 
   @override
@@ -30,6 +32,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
         consumo = await ApiService.relatorioConsumo(dias);
       } else if (tipo == 'desempenho') {
         desempenho = await ApiService.relatorioDesempenho(dias);
+      } else if (tipo == 'curva_abc') {
+        curvaAbc = await ApiService.relatorioCurvaAbc(dias, criterioAbc);
       } else {
         tendencias = await ApiService.relatorioTendencias(dias);
       }
@@ -71,7 +75,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   Widget montarFiltros() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           const Text('Relatório:'),
           const SizedBox(width: 8),
@@ -81,6 +86,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
               DropdownMenuItem(value: 'consumo', child: Text('Consumo')),
               DropdownMenuItem(value: 'desempenho', child: Text('Desempenho')),
               DropdownMenuItem(value: 'tendencias', child: Text('Tendências')),
+              DropdownMenuItem(value: 'curva_abc', child: Text('Curva ABC')),
             ],
             onChanged: (v) {
               if (v == null) return;
@@ -102,6 +108,24 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
               carregar();
             },
           ),
+          // a curva pode ser pelo dinheiro (faturamento) ou pelas unidades vendidas
+          if (tipo == 'curva_abc') ...[
+            const SizedBox(width: 16),
+            const Text('Por:'),
+            const SizedBox(width: 8),
+            DropdownButton<String>(
+              value: criterioAbc,
+              items: const [
+                DropdownMenuItem(value: 'faturamento', child: Text('Faturamento')),
+                DropdownMenuItem(value: 'quantidade', child: Text('Quantidade')),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => criterioAbc = v);
+                carregar();
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -113,6 +137,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       return montarConsumo();
     } else if (tipo == 'desempenho') {
       return montarDesempenho();
+    } else if (tipo == 'curva_abc') {
+      return montarCurvaAbc();
     } else {
       return montarTendencias();
     }
@@ -216,6 +242,60 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
         );
       },
     );
+  }
+
+  static const coresAbc = {'A': Colors.green, 'B': Colors.orange, 'C': Colors.grey};
+
+  Widget montarCurvaAbc() {
+    final r = curvaAbc;
+    if (r == null || r.itens.isEmpty) {
+      return const Center(child: Text('Nenhum produto pra classificar.'));
+    }
+    final porFaturamento = r.criterio == 'faturamento';
+    final itens = <Widget>[
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        child: Text(
+          porFaturamento
+              ? 'A = produtos que fazem os primeiros 80% do faturamento • B = até 95% • C = o resto'
+              : 'A = produtos que fazem as primeiras 80% das unidades vendidas • B = até 95% • C = o resto',
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final c in ['A', 'B', 'C'])
+              Chip(
+                avatar: CircleAvatar(backgroundColor: coresAbc[c], child: Text(c, style: const TextStyle(color: Colors.white))),
+                label: Text('${r.resumo[c]!.produtos} produto(s) • '
+                    '${r.resumo[c]!.percentualValor.toStringAsFixed(1)}% do ${porFaturamento ? "faturamento" : "volume"}'),
+              ),
+          ],
+        ),
+      ),
+    ];
+    for (final item in r.itens) {
+      final valor = porFaturamento ? 'R\$ ${item.faturamento.toStringAsFixed(2)}' : '${item.quantidadeVendida} vendidos';
+      itens.add(Card(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: coresAbc[item.classe],
+            child: Text(item.classe, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+          title: Text('${item.posicao}º  ${item.produtoNome}'),
+          subtitle: Text(
+            '$valor  •  ${item.percentual.toStringAsFixed(1)}% do total  •  '
+            'acumulado ${item.percentualAcumulado.toStringAsFixed(1)}%',
+          ),
+        ),
+      ));
+    }
+    return ListView(children: itens);
   }
 
   Icon iconeTendencia(String tendencia) {

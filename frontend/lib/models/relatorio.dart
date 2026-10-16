@@ -121,6 +121,82 @@ class RelatorioDesempenho {
   }
 }
 
+// um produto na curva ABC
+class ItemAbc {
+  int posicao;
+  int idProduto;
+  String produtoNome;
+  String? categoriaNome;
+  int quantidadeVendida;
+  double faturamento;
+  double valor; // faturamento ou quantidade, conforme o criterio
+  double percentual;
+  double percentualAcumulado;
+  String classe; // A, B ou C
+
+  ItemAbc({
+    required this.posicao,
+    required this.idProduto,
+    required this.produtoNome,
+    this.categoriaNome,
+    required this.quantidadeVendida,
+    required this.faturamento,
+    required this.valor,
+    required this.percentual,
+    required this.percentualAcumulado,
+    required this.classe,
+  });
+
+  factory ItemAbc.fromJson(Map<String, dynamic> j) {
+    return ItemAbc(
+      posicao: j['posicao'] ?? 0,
+      idProduto: j['id_produto'] ?? 0,
+      produtoNome: j['produto_nome'] ?? '',
+      categoriaNome: j['categoria_nome'],
+      quantidadeVendida: j['quantidade_vendida'] ?? 0,
+      faturamento: paraDouble(j['faturamento']) ?? 0,
+      valor: paraDouble(j['valor']) ?? 0,
+      percentual: paraDouble(j['percentual']) ?? 0,
+      percentualAcumulado: paraDouble(j['percentual_acumulado']) ?? 0,
+      classe: j['classe'] ?? 'C',
+    );
+  }
+}
+
+// resumo de uma classe: quantos produtos e quanto do total
+class ResumoClasseAbc {
+  int produtos;
+  double percentualValor;
+
+  ResumoClasseAbc({required this.produtos, required this.percentualValor});
+
+  factory ResumoClasseAbc.fromJson(Map<String, dynamic>? j) {
+    return ResumoClasseAbc(
+      produtos: j?['produtos'] ?? 0,
+      percentualValor: paraDouble(j?['percentual_valor']) ?? 0,
+    );
+  }
+}
+
+class CurvaAbc {
+  String criterio;
+  double total;
+  Map<String, ResumoClasseAbc> resumo; // "A", "B", "C"
+  List<ItemAbc> itens;
+
+  CurvaAbc({required this.criterio, required this.total, required this.resumo, required this.itens});
+
+  factory CurvaAbc.fromJson(Map<String, dynamic> j) {
+    final resumo = j['resumo'] as Map<String, dynamic>? ?? {};
+    return CurvaAbc(
+      criterio: j['criterio'] ?? 'faturamento',
+      total: paraDouble(j['total']) ?? 0,
+      resumo: {for (final c in ['A', 'B', 'C']) c: ResumoClasseAbc.fromJson(resumo[c] as Map<String, dynamic>?)},
+      itens: (j['itens'] as List? ?? []).map((e) => ItemAbc.fromJson(e)).toList(),
+    );
+  }
+}
+
 class Tendencia {
   int idProduto;
   String produtoNome;

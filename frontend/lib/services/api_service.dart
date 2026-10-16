@@ -264,6 +264,14 @@ class ApiService {
     return lista.map((e) => Tendencia.fromJson(e)).toList();
   }
 
+  // criterio: 'faturamento' ou 'quantidade'
+  static Future<CurvaAbc> relatorioCurvaAbc(int dias, String criterio) async {
+    final r = await http.get(Uri.parse('$baseUrl/relatorios/curva-abc?dias=$dias&criterio=$criterio'),
+        headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return CurvaAbc.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
   static Future<String> perguntarAssistente(String pergunta, List<MensagemChat> historico) async {
     final r = await http.post(Uri.parse('$baseUrl/assistente'),
         headers: headers,
