@@ -12,6 +12,9 @@ CHAVES = {
     "faturamento_30_dias",
     "percentual_desperdicio",
     "giro_estoque",
+    # etapa 10: perdas registradas (campos novos; os de cima continuam iguais)
+    "valor_perdas_30_dias",
+    "quantidade_perdas_30_dias",
 }
 
 

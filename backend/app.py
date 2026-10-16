@@ -14,6 +14,7 @@ from models.sincronizacao_erp_model import SincronizacaoErp
 from models.erp_venda_importada_model import ErpVendaImportada
 from models.lote_model import Lote
 from models.movimentacao_estoque_model import MovimentacaoEstoque
+from models.perda_model import Perda
 from services.estoque_lote_service import criar_lotes_iniciais, preencher_historico
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
@@ -34,6 +35,7 @@ from controllers.usuario_controller import usuario_bp
 from controllers.auth_controller import auth_bp, exigir_login
 from controllers.lote_controller import lote_bp
 from controllers.movimentacao_controller import movimentacao_bp
+from controllers.perda_controller import perda_bp
 
 load_dotenv()
 
@@ -71,6 +73,7 @@ app.register_blueprint(usuario_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(lote_bp)
 app.register_blueprint(movimentacao_bp)
+app.register_blueprint(perda_bp)
 
 
 @app.get("/")

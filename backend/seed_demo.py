@@ -12,6 +12,7 @@ from models.evento_model import Evento
 from models.erp_venda_importada_model import ErpVendaImportada
 from models.lote_model import Lote
 from models.movimentacao_estoque_model import MovimentacaoEstoque
+from models.perda_model import Perda
 from services.estoque_lote_service import criar_lotes_iniciais
 from services.registrar_venda_service import RegistrarVendaService
 
@@ -19,6 +20,7 @@ hoje = date.today()
 
 
 def limpar():
+    Perda.query.delete()  # aponta pra produtos, lotes e historico: sai antes de todos
     MovimentacaoEstoque.query.delete()  # aponta pra produtos, lotes e vendas: sai primeiro
     ErpVendaImportada.query.delete()  # aponta pras vendas, sai antes delas
     Venda.query.delete()

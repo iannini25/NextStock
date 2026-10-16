@@ -20,6 +20,7 @@ import '../models/sincronizacao_erp.dart';
 import '../models/lote.dart';
 import '../models/movimentacao.dart';
 import '../models/previa_venda.dart';
+import '../models/perda.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -457,6 +458,43 @@ class ApiService {
     final r = await http.get(url, headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return ResultadoMovimentacoes.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // -------- PERDAS E DESCARTES --------
+
+  // devolve o aviso da API (ex.: produto sem custo cadastrado), ou null
+  static Future<String?> registrarPerda({
+    required int idLote,
+    required int quantidade,
+    required String tipo,
+    required String motivo,
+    String? observacao,
+  }) async {
+    final r = await http.post(Uri.parse('$baseUrl/perdas'),
+        headers: headers,
+        body: jsonEncode({
+          'id_lote': idLote,
+          'quantidade': quantidade,
+          'tipo': tipo,
+          'motivo': motivo,
+          'observacao': observacao,
+        }));
+    if (r.statusCode != 201) throw pegarErro(r);
+    return jsonDecode(utf8.decode(r.bodyBytes))['aviso'];
+  }
+
+  // inicio no formato aaaa-mm-dd
+  static Future<ListaPerdas> listarPerdas({String? inicio}) async {
+    final url = Uri.parse('$baseUrl/perdas').replace(queryParameters: inicio == null ? null : {'inicio': inicio});
+    final r = await http.get(url, headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ListaPerdas.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  static Future<ResumoPerdas> resumoPerdas(int dias) async {
+    final r = await http.get(Uri.parse('$baseUrl/perdas/resumo?dias=$dias'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return ResumoPerdas.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

@@ -12,6 +12,8 @@ class Painel {
   double faturamento30Dias;
   double percentualDesperdicio;
   double giroEstoque;
+  double valorPerdas30Dias; // perdas e descartes registrados
+  int quantidadePerdas30Dias;
 
   Painel({
     required this.totalProdutos,
@@ -25,6 +27,8 @@ class Painel {
     required this.faturamento30Dias,
     required this.percentualDesperdicio,
     required this.giroEstoque,
+    this.valorPerdas30Dias = 0,
+    this.quantidadePerdas30Dias = 0,
   });
 
   factory Painel.fromJson(Map<String, dynamic> j) {
@@ -40,6 +44,8 @@ class Painel {
       faturamento30Dias: paraDouble(j['faturamento_30_dias']) ?? 0,
       percentualDesperdicio: paraDouble(j['percentual_desperdicio']) ?? 0,
       giroEstoque: paraDouble(j['giro_estoque']) ?? 0,
+      valorPerdas30Dias: paraDouble(j['valor_perdas_30_dias']) ?? 0,
+      quantidadePerdas30Dias: j['quantidade_perdas_30_dias'] ?? 0,
     );
   }
 }

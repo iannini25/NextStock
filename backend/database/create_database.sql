@@ -129,6 +129,27 @@ CREATE TABLE IF NOT EXISTS movimentacao_estoque (
     FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
 );
 
+-- perda ou descarte de mercadoria, sempre de um lote, com o valor perdido (quantidade x custo do lote)
+-- tipo: perda | descarte    motivo: vencimento | avaria | temperatura | furto | outro
+CREATE TABLE IF NOT EXISTS perda (
+    id_perda INT AUTO_INCREMENT PRIMARY KEY,
+    id_produto INT NOT NULL,
+    id_lote INT NOT NULL,
+    tipo VARCHAR(10) NOT NULL,
+    motivo VARCHAR(20) NOT NULL,
+    quantidade INT NOT NULL,
+    custo_unitario DECIMAL(10,2),
+    valor_total DECIMAL(12,2) NOT NULL DEFAULT 0,
+    observacao VARCHAR(255),
+    id_usuario INT,
+    data_registro DATETIME NOT NULL,
+    id_movimentacao INT,
+    FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+    FOREIGN KEY (id_lote) REFERENCES lote(id_lote),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario),
+    FOREIGN KEY (id_movimentacao) REFERENCES movimentacao_estoque(id_movimentacao)
+);
+
 -- historico de cada vez que o NextStock buscou dados no ERP
 CREATE TABLE IF NOT EXISTS sincronizacao_erp (
     id_sincronizacao INT AUTO_INCREMENT PRIMARY KEY,

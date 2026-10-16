@@ -107,6 +107,18 @@ class EstoqueLoteService:
         self.sincronizar_produto(produto)
         return plano
 
+    # tira de UM lote escolhido (perda/descarte: sai do lote que estragou, nao pela fila de saida).
+    # devolve o registro do historico
+    def baixar_do_lote(self, lote, quantidade, tipo, observacao=None):
+        if not quantidade or quantidade <= 0:
+            raise ValueError("quantidade tem que ser maior que zero")
+        if quantidade > lote.quantidade_atual:
+            raise ValueError(f"o lote só tem {lote.quantidade_atual} em estoque")
+        lote.quantidade_atual -= quantidade
+        movimentacao = self.registrar(lote.produto, lote, tipo, quantidade, observacao=observacao)
+        self.sincronizar_produto(lote.produto)
+        return movimentacao
+
     # deixa o estoque do produto em `nova_quantidade`: sobrando, cria um lote de ajuste; faltando, baixa
     def ajustar_para(self, produto, nova_quantidade, data_validade=None, origem="ajuste"):
         atual = sum(l.quantidade_atual for l in self.lotes_com_saldo(produto))
@@ -127,7 +139,7 @@ class EstoqueLoteService:
     # uma linha no historico, com o saldo do produto logo depois dessa mudanca
     def registrar(self, produto, lote, tipo, quantidade, id_venda=None, observacao=None, origem=None):
         usuario = usuario_logado()
-        db.session.add(MovimentacaoEstoque(
+        movimentacao = MovimentacaoEstoque(
             produto=produto,
             lote=lote,
             tipo=tipo,
@@ -139,7 +151,9 @@ class EstoqueLoteService:
             origem=origem or self.origem_movimento,
             observacao=observacao,
             data_hora=datetime.now(),
-        ))
+        )
+        db.session.add(movimentacao)
+        return movimentacao
 
 
 # roda quando a API sobe, ANTES do criar_lotes_iniciais: se o historico ainda esta vazio, registra o que ja

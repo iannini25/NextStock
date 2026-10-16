@@ -4,6 +4,7 @@ import '../models/produto.dart';
 import '../services/api_service.dart';
 import 'lote_form.dart';
 import 'movimentacoes_screen.dart';
+import 'perda_form.dart';
 
 // lotes de um produto: o que tem em estoque, separado por entrada, validade e custo
 class LotesScreen extends StatefulWidget {
@@ -55,6 +56,16 @@ class _LotesScreenState extends State<LotesScreen> {
     final salvou = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => LoteForm(produto: produto, lote: lote)),
+    );
+    if (salvou == true) carregar();
+  }
+
+  Future<void> descartar(Lote l) async {
+    final salvou = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PerdaForm(produto: produto, lote: l, tipoInicial: 'descarte', motivoInicial: 'vencimento'),
+      ),
     );
     if (salvou == true) carregar();
   }
@@ -145,6 +156,13 @@ class _LotesScreenState extends State<LotesScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // atalho: lote vencido com saldo -> registrar o descarte (ja com o lote e o motivo)
+                if (l.vencido && !l.esgotado)
+                  IconButton(
+                    tooltip: 'Descartar',
+                    icon: const Icon(Icons.delete_sweep, color: Colors.red),
+                    onPressed: () => descartar(l),
+                  ),
                 IconButton(
                   tooltip: 'Histórico do lote',
                   icon: const Icon(Icons.history),

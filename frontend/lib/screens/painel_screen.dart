@@ -78,6 +78,10 @@ class _PainelScreenState extends State<PainelScreen> {
         montarIndicador('Faturamento em 30 dias', 'R\$ ${p.faturamento30Dias.toStringAsFixed(2)}'),
         montarIndicador('Desperdício', '${p.percentualDesperdicio.toStringAsFixed(2)}%'),
         montarIndicador('Giro de estoque', p.giroEstoque.toStringAsFixed(2)),
+        // perdas e descartes registrados: o prejuizo fica no historico mesmo depois de jogar o produto fora
+        montarIndicador('Perdas registradas (30 dias)', 'R\$ ${p.valorPerdas30Dias.toStringAsFixed(2)}',
+            cor: p.valorPerdas30Dias > 0 ? Colors.red : null),
+        montarIndicador('Itens perdidos (30 dias)', '${p.quantidadePerdas30Dias}'),
       ],
     );
   }

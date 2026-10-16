@@ -1,5 +1,6 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
+from models.perda_model import Perda
 from models.produto_model import Produto
 from repositories.produto_repository import ProdutoRepository
 from repositories.venda_repository import VendaRepository
@@ -54,6 +55,9 @@ class MontarPainelService:
         if itens_em_estoque > 0:
             giro_estoque = vendas_30_dias / itens_em_estoque
 
+        # perdas e descartes registrados (historico: nao some quando o estoque zera, como o valor_vencido)
+        perdas = Perda.query.filter(Perda.data_registro >= datetime.now() - timedelta(days=30)).all()
+
         return {
             "total_produtos": len(produtos),
             "itens_em_estoque": itens_em_estoque,
@@ -66,4 +70,6 @@ class MontarPainelService:
             "faturamento_30_dias": round(faturamento_30_dias, 2),
             "percentual_desperdicio": round(percentual_desperdicio, 2),
             "giro_estoque": round(giro_estoque, 2),
+            "valor_perdas_30_dias": round(sum(float(p.valor_total or 0) for p in perdas), 2),
+            "quantidade_perdas_30_dias": sum(p.quantidade for p in perdas),
         }
