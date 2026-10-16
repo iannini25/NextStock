@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/alerta.dart';
+import '../models/armazenamento.dart';
 import '../models/clima_dia.dart';
 import '../models/lote.dart';
 import '../models/produto.dart';
@@ -8,7 +9,9 @@ import '../services/api_service.dart';
 
 // Tela dos alertas. Tem tres modos: o que ta vencendo, o que vai faltar e o que esta sobrando (excesso).
 class AlertasScreen extends StatefulWidget {
-  const AlertasScreen({super.key});
+  // abre a tela de Armazenamento (pelo aviso de temperatura no topo)
+  final VoidCallback? aoAbrirArmazenamento;
+  const AlertasScreen({super.key, this.aoAbrirArmazenamento});
 
   @override
   State<AlertasScreen> createState() => _AlertasScreenState();
@@ -32,6 +35,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
   int diasCobertura = 30; // no modo excesso: estoque que cobre mais que isso e demais
   List<Produto> lista = [];
   List<AlertaExcesso> excessos = [];
+  List<LocalArmazenamento> temperatura = []; // locais fora da faixa ou sem leitura (aviso no topo)
   Map<int, List<Lote>> lotesPorProduto = {}; // lotes vencendo de cada produto
   List<ClimaDia> climaDias = [];
   String cidade = '';
@@ -42,6 +46,17 @@ class _AlertasScreenState extends State<AlertasScreen> {
   void initState() {
     super.initState();
     carregar();
+    carregarTemperatura();
+  }
+
+  // aviso de temperatura no topo. se der erro, so nao aparece (nao atrapalha os alertas)
+  Future<void> carregarTemperatura() async {
+    try {
+      final r = await ApiService.alertasTemperatura();
+      if (mounted) setState(() => temperatura = r);
+    } catch (_) {
+      if (mounted) setState(() => temperatura = []);
+    }
   }
 
   bool get modoVencimento => modo == 'vencendo';
@@ -116,11 +131,18 @@ class _AlertasScreenState extends State<AlertasScreen> {
       appBar: AppBar(
         title: const Text('Alertas'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              carregar();
+              carregarTemperatura();
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
+          if (temperatura.isNotEmpty) montarAvisoTemperatura(),
           montarBotoes(),
           if (modoVencimento) montarFiltroDias(),
           if (modoExcesso) montarFiltroCobertura(),
@@ -163,6 +185,23 @@ class _AlertasScreenState extends State<AlertasScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget montarAvisoTemperatura() {
+    final fora = temperatura.where((l) => l.status == 'fora_da_faixa').length;
+    final cor = fora > 0 ? Colors.red : Colors.orange;
+    return Card(
+      color: cor.withValues(alpha: 0.10),
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: ListTile(
+        leading: Icon(Icons.thermostat, color: cor),
+        title: Text('${temperatura.length} local(is) com problema de temperatura'),
+        subtitle: Text(temperatura.map((l) => l.mensagem).join('\n')),
+        trailing: widget.aoAbrirArmazenamento == null
+            ? null
+            : TextButton(onPressed: widget.aoAbrirArmazenamento, child: const Text('Ver')),
       ),
     );
   }

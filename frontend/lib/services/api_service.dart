@@ -22,6 +22,7 @@ import '../models/movimentacao.dart';
 import '../models/previa_venda.dart';
 import '../models/perda.dart';
 import '../models/alerta.dart';
+import '../models/armazenamento.dart';
 import 'sessao.dart';
 
 // Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
@@ -521,6 +522,76 @@ class ApiService {
     final r = await http.get(Uri.parse('$baseUrl/alertas/resumo'), headers: autorizacao);
     if (r.statusCode != 200) throw pegarErro(r);
     return ResumoAlertas.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // -------- ARMAZENAMENTO E TEMPERATURA --------
+
+  // todos = inclui os locais desativados
+  static Future<List<LocalArmazenamento>> listarLocais({bool todos = false}) async {
+    final r = await http.get(Uri.parse('$baseUrl/locais-armazenamento${todos ? '?todos=1' : ''}'),
+        headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => LocalArmazenamento.fromJson(e)).toList();
+  }
+
+  // o local com a situacao e os produtos guardados nele
+  static Future<LocalArmazenamento> buscarLocal(int id) async {
+    final r = await http.get(Uri.parse('$baseUrl/locais-armazenamento/$id'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    return LocalArmazenamento.fromJson(jsonDecode(utf8.decode(r.bodyBytes)));
+  }
+
+  // id null = cria. ativo so vai na edicao (pra reativar)
+  static Future<void> salvarLocal({
+    int? id,
+    required String nome,
+    required String tipo,
+    double? tempMin,
+    double? tempMax,
+    bool? ativo,
+  }) async {
+    final corpo = jsonEncode({
+      'nome': nome,
+      'tipo': tipo,
+      'temp_min': tempMin,
+      'temp_max': tempMax,
+      'ativo': ?ativo,
+    });
+    final r = id == null
+        ? await http.post(Uri.parse('$baseUrl/locais-armazenamento'), headers: headers, body: corpo)
+        : await http.put(Uri.parse('$baseUrl/locais-armazenamento/$id'), headers: headers, body: corpo);
+    if (r.statusCode != (id == null ? 201 : 200)) throw pegarErro(r);
+  }
+
+  // a API nao apaga o local, so desativa
+  static Future<void> desativarLocal(int id) async {
+    final r = await http.delete(Uri.parse('$baseUrl/locais-armazenamento/$id'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+  }
+
+  static Future<List<LeituraTemperatura>> listarLeituras(int idLocal, {int limite = 50}) async {
+    final r = await http.get(Uri.parse('$baseUrl/locais-armazenamento/$idLocal/leituras?limite=$limite'),
+        headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => LeituraTemperatura.fromJson(e)).toList();
+  }
+
+  // devolve como o local ficou depois da leitura (pra avisar se saiu da faixa)
+  static Future<LocalArmazenamento> registrarLeitura(int idLocal, double temperatura, {double? umidade}) async {
+    final r = await http.post(Uri.parse('$baseUrl/locais-armazenamento/$idLocal/leituras'),
+        headers: headers, body: jsonEncode({'temperatura': temperatura, 'umidade': umidade}));
+    if (r.statusCode != 201) throw pegarErro(r);
+    return LocalArmazenamento.fromJson(jsonDecode(utf8.decode(r.bodyBytes))['local']);
+  }
+
+  // locais fora da faixa ou sem leitura recente, com os produtos e o valor em risco
+  static Future<List<LocalArmazenamento>> alertasTemperatura() async {
+    final r = await http.get(Uri.parse('$baseUrl/armazenamento/alertas'), headers: autorizacao);
+    if (r.statusCode != 200) throw pegarErro(r);
+    final lista = jsonDecode(utf8.decode(r.bodyBytes)) as List;
+    return lista.map((e) => LocalArmazenamento.fromJson(e)).toList();
   }
 
   // pega a mensagem do campo "erro" que o backend manda.

@@ -69,6 +69,7 @@ class ResumoAlertas {
   int vencendo;
   int falta;
   int excesso;
+  int temperatura; // locais fora da faixa ou sem leitura
   int total;
   int prioridadeAlta;
 
@@ -76,6 +77,7 @@ class ResumoAlertas {
     required this.vencendo,
     required this.falta,
     required this.excesso,
+    this.temperatura = 0,
     required this.total,
     required this.prioridadeAlta,
   });
@@ -85,10 +87,12 @@ class ResumoAlertas {
       vencendo: j['vencendo'] ?? 0,
       falta: j['falta'] ?? 0,
       excesso: j['excesso'] ?? 0,
+      temperatura: j['temperatura'] ?? 0,
       total: j['total'] ?? 0,
       prioridadeAlta: j['prioridade_alta'] ?? 0,
     );
   }
 
-  String get descricao => '$vencendo vencendo • $falta vai faltar • $excesso excesso';
+  String get descricao =>
+      '$vencendo vencendo • $falta vai faltar • $excesso excesso${temperatura > 0 ? ' • $temperatura temperatura' : ''}';
 }

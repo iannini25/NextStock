@@ -2,6 +2,7 @@ from models.database import db
 from models.produto_model import Produto
 from models.categoria_model import Categoria
 from services.estoque_lote_service import EstoqueLoteService
+from services.situacao_local import virar_local
 from services.utils import numero, inteiro, virar_data
 
 
@@ -25,6 +26,7 @@ class CriarProdutoService:
 
         quantidade = inteiro(dados.get("quantidade_estoque")) or 0
         validade = virar_data(dados.get("data_validade"))
+        id_local = virar_local(dados.get("id_local_armazenamento"))  # opcional
 
         p = Produto(
             nome=dados["nome"],
@@ -35,6 +37,7 @@ class CriarProdutoService:
             quantidade_estoque=0,
             estoque_minimo=inteiro(dados.get("estoque_minimo")) or 0,
             unidade=(dados.get("unidade") or "UN").upper(),
+            id_local_armazenamento=id_local,
         )
         db.session.add(p)
         # a quantidade e a validade do cadastro viram o primeiro lote do produto

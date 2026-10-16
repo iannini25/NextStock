@@ -13,6 +13,11 @@ class Produto {
   String? motivo; // so leitura, vem nos alertas de risco
   String? prioridade; // so leitura, vem nos alertas de risco (alta, media, baixa)
   String? classeAbc; // so leitura, vem nos alertas de risco
+  int? idLocal; // local de armazenamento (opcional)
+  String? localNome; // so leitura
+  // so manda o local pra API quando o formulario conseguiu carregar a lista de locais.
+  // sem o campo, a API mantem o local que o produto ja tinha
+  bool enviarLocal;
 
   Produto({
     this.id,
@@ -29,6 +34,9 @@ class Produto {
     this.motivo,
     this.prioridade,
     this.classeAbc,
+    this.idLocal,
+    this.localNome,
+    this.enviarLocal = false,
   });
 
   factory Produto.fromJson(Map<String, dynamic> j) {
@@ -47,6 +55,8 @@ class Produto {
       motivo: j['motivo'],
       prioridade: j['prioridade'],
       classeAbc: j['classe_abc'],
+      idLocal: j['id_local_armazenamento'],
+      localNome: j['local_armazenamento'],
     );
   }
 
@@ -62,6 +72,7 @@ class Produto {
       'estoque_minimo': estoqueMinimo,
       'unidade': unidade,
       'data_validade': validade,
+      if (enviarLocal) 'id_local_armazenamento': idLocal,
     };
   }
 

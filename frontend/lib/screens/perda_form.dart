@@ -4,8 +4,8 @@ import '../models/perda.dart';
 import '../models/produto.dart';
 import '../services/api_service.dart';
 
-// registra uma perda ou um descarte de um lote. abre vazio (escolhe produto e lote)
-// ou ja com o lote escolhido (atalho "Descartar" de um lote vencido)
+// registra uma perda ou um descarte de um lote. abre vazio (escolhe produto e lote),
+// com o produto escolhido (atalho do armazenamento) ou ja com o lote (atalho "Descartar" de um lote vencido)
 class PerdaForm extends StatefulWidget {
   final Produto? produto;
   final Lote? lote;
@@ -54,6 +54,8 @@ class _PerdaFormState extends State<PerdaForm> {
       final lista = await ApiService.listarProdutos();
       if (!mounted) return;
       setState(() => produtos = lista.where((p) => (p.quantidade ?? 0) > 0).toList());
+      // veio com o produto escolhido (atalho do armazenamento): ja carrega os lotes dele
+      if (widget.produto != null) await escolherProduto(widget.produto!.id);
     } catch (e) {
       mostrarErro(e);
     }

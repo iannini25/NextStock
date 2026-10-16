@@ -161,7 +161,8 @@ NextStock/
 
 Precisa de **Python 3.10+**, **MySQL** e o **Flutter SDK** instalados. São 3 partes: a API, o
 proxy e o app. Cada um roda num terminal. Pra testar a integração com ERP sem ter um ERP de verdade,
-tem também um ERP simulado opcional (seção 4).
+tem também um ERP simulado opcional (seção 4), e pra testar o monitoramento de temperatura, um
+sensor simulado (seção 5).
 
 ### 1. Backend (a API)
 
@@ -307,3 +308,55 @@ Dá pra escolher o produto e a quantidade mandando um JSON, por exemplo
 > - Pra ligar um ERP de verdade, é só ele seguir o mesmo formato (rotas `/status`, `/produtos` e
 >   `/vendas`, autenticação `Authorization: Bearer <chave>`, descrito no começo do
 >   `erp_simulado.py`) ou criar um conector novo em `backend/services/erp/`.
+
+### 5. Sensor de temperatura simulado (opcional, pra testar o monitoramento do armazenamento)
+
+As leituras de temperatura podem ser lançadas na tela (**Armazenamento** → abrir o local →
+"Registrar leitura") ou chegar sozinhas de um dispositivo. O `tools/simular_sensor.py` faz o papel
+desse dispositivo: de tempos em tempos manda uma leitura e, de vez em quando, um pico fora da faixa
+pra disparar o alerta. Não precisa instalar nada.
+
+**Antes, uma vez só: a chave do sensor no `.env`**
+
+O sensor não faz login: ele manda uma chave no header `X-Sensor-Key`, e essa chave só serve pra
+registrar leitura. Gere uma com:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Cole no `backend/.env` e **reinicie a API**:
+
+```
+SENSOR_API_KEY=<o texto gerado>
+```
+
+**Rodar o simulador**
+
+1. No app, entre como **administrador**, abra **Armazenamento** e crie o local (ex.: "Geladeira
+   laticínios", refrigerado, de 0 a 5 °C).
+2. Abra o local e veja o número dele no cartão de cima (`Local #1`).
+3. Com a API e o proxy rodando, em outro terminal, **na raiz do projeto**:
+
+```bash
+python tools/simular_sensor.py --local 1 --min 0 --max 5
+```
+
+Ele lê a `SENSOR_API_KEY` do `backend/.env` sozinho e manda uma leitura a cada 5 segundos. A cada 6
+leituras vem um pico acima do máximo. Pare com Ctrl+C.
+
+Opções úteis: `--intervalo 10` (segundos entre leituras), `--pico-cada 3` (0 = nunca), `--vezes 5`
+(para depois de 5 leituras) e `--chave ...` (se não quiser ler do `.env`).
+
+**O que dá pra testar com ele**
+
+| Teste | O que deve acontecer |
+|---|---|
+| Leitura dentro da faixa | O local fica "OK" na tela Armazenamento |
+| Pico fora da faixa | O local fica "Fora da faixa", aparece o aviso em Alertas e o selo do menu aumenta |
+| Chave errada (`--chave errada`) | "chave do sensor inválida" e o simulador para |
+| Sem `SENSOR_API_KEY` no `.env` | "sensor não configurado: defina SENSOR_API_KEY no .env e reinicie a API" |
+| Parar o simulador por mais de 12 h | O local vira "Sem leitura" |
+
+> Um local sem nenhuma leitura também aparece como "Sem leitura": registre a primeira leitura
+> (na tela ou com o simulador) para ele ficar "OK".

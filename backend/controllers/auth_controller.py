@@ -1,3 +1,7 @@
+import hmac
+import os
+import re
+
 from flask import Blueprint, g, request, jsonify
 
 from models.empresa_model import Empresa
@@ -14,6 +18,21 @@ ROTAS_PUBLICAS = {
     ("GET", "/setup/status"),
 }
 
+# a unica rota que um dispositivo (sensor de temperatura) usa, com o header X-Sensor-Key no lugar do login
+ROTA_DO_SENSOR = re.compile(r"^/locais-armazenamento/\d+/leituras$")
+
+
+# sensor mandando leitura: so passa com a chave certa (SENSOR_API_KEY no .env).
+# devolve None se liberou, ou a resposta de erro. a chave nunca vai pro log nem pra resposta
+def conferir_sensor(chave):
+    esperada = os.getenv("SENSOR_API_KEY", "")
+    if not esperada:
+        return jsonify({"erro": "sensor não configurado: defina SENSOR_API_KEY no .env e reinicie a API"}), 401
+    if not hmac.compare_digest(chave.encode(), esperada.encode()):
+        return jsonify({"erro": "chave do sensor inválida"}), 401
+    g.sensor = True
+    return None
+
 
 # roda antes de toda requisicao (registrado no app.py): sem token valido, responde 401.
 # assim nenhuma rota fica sem protecao, nem as que ainda vao ser criadas.
@@ -25,6 +44,10 @@ def exigir_login():
     # a configuracao inicial so e publica enquanto nao existe empresa
     if request.method == "POST" and request.path == "/setup" and not Empresa.buscar_unica():
         return None
+    # dispositivo enviando leitura de temperatura (sem o header, segue o login normal)
+    chave_sensor = request.headers.get("X-Sensor-Key")
+    if chave_sensor is not None and request.method == "POST" and ROTA_DO_SENSOR.match(request.path):
+        return conferir_sensor(chave_sensor)
 
     cabecalho = request.headers.get("Authorization", "")
     if not cabecalho.startswith("Bearer "):

@@ -11,6 +11,18 @@ CREATE TABLE IF NOT EXISTS categoria (
     descricao VARCHAR(255)
 );
 
+-- onde a mercadoria fica guardada, com a faixa de temperatura certa. nao e apagado, so desativado
+-- tipo: ambiente | refrigerado | congelado
+CREATE TABLE IF NOT EXISTS local_armazenamento (
+    id_local INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE,
+    tipo VARCHAR(20) NOT NULL DEFAULT 'refrigerado',
+    temp_min DECIMAL(5,1) NOT NULL,
+    temp_max DECIMAL(5,1) NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em DATETIME
+);
+
 CREATE TABLE IF NOT EXISTS produto (
     id_produto INT AUTO_INCREMENT PRIMARY KEY,
     id_categoria INT,
@@ -22,7 +34,9 @@ CREATE TABLE IF NOT EXISTS produto (
     estoque_minimo INT DEFAULT 0,
     unidade VARCHAR(10) DEFAULT 'UN',
     data_validade DATE,
-    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+    id_local_armazenamento INT,
+    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria),
+    FOREIGN KEY (id_local_armazenamento) REFERENCES local_armazenamento(id_local)
 );
 
 CREATE TABLE IF NOT EXISTS venda (
@@ -173,8 +187,23 @@ CREATE TABLE IF NOT EXISTS erp_venda_importada (
     FOREIGN KEY (id_venda) REFERENCES venda(id_venda)
 );
 
+-- leituras de temperatura de cada local (lancadas na tela ou enviadas por um sensor)
+-- origem: manual | sensor
+CREATE TABLE IF NOT EXISTS leitura_temperatura (
+    id_leitura INT AUTO_INCREMENT PRIMARY KEY,
+    id_local INT NOT NULL,
+    temperatura DECIMAL(5,1) NOT NULL,
+    umidade DECIMAL(5,1),
+    data_hora DATETIME NOT NULL,
+    origem VARCHAR(10) NOT NULL DEFAULT 'manual',
+    id_usuario INT,
+    FOREIGN KEY (id_local) REFERENCES local_armazenamento(id_local),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
+-- (a coluna produto.id_local_armazenamento a API cria sozinha quando sobe)
 
 -- dados de exemplo
 -- cada categoria so entra se ainda nao existir (rodar o script de novo nao duplica)

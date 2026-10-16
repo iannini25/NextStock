@@ -14,6 +14,7 @@ import '../screens/categorias_screen.dart';
 import '../screens/vendas_screen.dart';
 import '../screens/movimentacoes_screen.dart';
 import '../screens/perdas_screen.dart';
+import '../screens/armazenamento_screen.dart';
 import '../screens/eventos_screen.dart';
 import '../screens/previsao_screen.dart';
 import '../screens/compras_screen.dart';
@@ -47,6 +48,7 @@ const List<ItemNav> modulosNav = [
   ItemNav('vendas', Icons.point_of_sale, 'Vendas'),
   ItemNav('movimentacoes', Icons.swap_vert, 'Movimentações'),
   ItemNav('perdas', Icons.delete_sweep, 'Perdas'),
+  ItemNav('armazenamento', Icons.thermostat, 'Armazenamento'),
   ItemNav('eventos', Icons.event, 'Eventos'),
   ItemNav('previsao', Icons.trending_up, 'Previsão'),
   ItemNav('compras', Icons.shopping_cart, 'Compras'),
@@ -107,7 +109,7 @@ class _AppShellState extends State<AppShell> {
 
   void _selecionar(String id) {
     setState(() => selecionado = id);
-    if (id == 'alertas') _atualizarAlertas(); // o selo bate com o que a tela mostra
+    if (id == 'alertas' || id == 'armazenamento') _atualizarAlertas(); // o selo bate com o que a tela mostra
   }
 
   // monta a tela conforme o item escolhido no menu
@@ -116,7 +118,7 @@ class _AppShellState extends State<AppShell> {
       case 'produtos':
         return const ProdutosScreen();
       case 'alertas':
-        return const AlertasScreen();
+        return AlertasScreen(aoAbrirArmazenamento: () => _selecionar('armazenamento'));
       case 'assistente':
         return const AssistenteScreen();
       case 'categorias':
@@ -127,6 +129,8 @@ class _AppShellState extends State<AppShell> {
         return const MovimentacoesScreen();
       case 'perdas':
         return const PerdasScreen();
+      case 'armazenamento':
+        return const ArmazenamentoScreen();
       case 'eventos':
         return const EventosScreen();
       case 'previsao':
@@ -342,10 +346,18 @@ class _ListaModulos extends StatelessWidget {
   final ValueChanged<String> aoSelecionar;
   const _ListaModulos({required this.selecionado, this.alertas, required this.aoSelecionar});
 
-  // selo com o total no item Alertas: vermelho se tem alerta de prioridade alta
+  // selo com o total no item Alertas (vermelho se tem alerta de prioridade alta)
+  // e com os locais com problema no item Armazenamento
   Widget? _selo(ItemNav m) {
     final a = alertas;
-    if (m.id != 'alertas' || a == null || a.total == 0) return null;
+    if (a == null) return null;
+    if (m.id == 'armazenamento' && a.temperatura > 0) {
+      return Tooltip(
+        message: '${a.temperatura} local(is) com problema de temperatura',
+        child: Badge(label: Text('${a.temperatura}'), backgroundColor: Colors.red),
+      );
+    }
+    if (m.id != 'alertas' || a.total == 0) return null;
     return Tooltip(
       message: a.descricao,
       child: Badge(

@@ -26,6 +26,10 @@ ROTAS_SO_ADMIN = {
     ("/produtos/<int:id>", "DELETE"),
     ("/categorias/<int:id>", "DELETE"),
     ("/eventos/<int:id>", "DELETE"),
+    # etapa 13: locais de armazenamento sao configuracao (leitura de temperatura todo mundo registra)
+    ("/locais-armazenamento", "POST"),
+    ("/locais-armazenamento/<int:id>", "PUT"),
+    ("/locais-armazenamento/<int:id>", "DELETE"),
 }
 
 ROTAS_COMUNS = sorted(set(rotas_registradas()) - ROTAS_PUBLICAS - ROTAS_SO_ADMIN)

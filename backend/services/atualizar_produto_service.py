@@ -2,6 +2,7 @@ from models.database import db
 from models.produto_model import Produto
 from models.categoria_model import Categoria
 from services.estoque_lote_service import EstoqueLoteService
+from services.situacao_local import virar_local
 from services.utils import numero, inteiro, virar_data
 
 
@@ -40,6 +41,11 @@ class AtualizarProdutoService:
         venda = numero(dados.get("preco_venda"))
         minimo = inteiro(dados.get("estoque_minimo")) or 0
         unidade = (dados.get("unidade") or "UN").upper()
+        # local de armazenamento: sem o campo, fica como esta (quem nao conhece o campo nao apaga o local);
+        # com o campo vazio/null, o produto fica sem local
+        mexer_no_local = "id_local_armazenamento" in dados
+        if mexer_no_local:
+            id_local = virar_local(dados.get("id_local_armazenamento"), atual=p.id_local_armazenamento)
 
         p.nome = dados["nome"]
         p.id_categoria = cat
@@ -48,6 +54,8 @@ class AtualizarProdutoService:
         p.preco_venda = venda
         p.estoque_minimo = minimo
         p.unidade = unidade
+        if mexer_no_local:
+            p.id_local_armazenamento = id_local
         try:
             if nova_quantidade is not None:
                 EstoqueLoteService().ajustar_para(p, nova_quantidade, data_validade=validade)

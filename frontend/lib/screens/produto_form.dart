@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/produto.dart';
 import '../models/categoria.dart';
+import '../models/armazenamento.dart';
 import '../services/api_service.dart';
 import 'lotes_screen.dart';
 
@@ -26,6 +27,10 @@ class _ProdutoFormState extends State<ProdutoForm> {
   int? categoriaId;
   bool carregouCategorias = false;
   bool salvando = false;
+  // local de armazenamento (opcional). se a lista nao carregar, o campo some e o local fica como esta
+  List<LocalArmazenamento> locais = [];
+  int? localId;
+  bool carregouLocais = false;
 
   @override
   void initState() {
@@ -42,8 +47,23 @@ class _ProdutoFormState extends State<ProdutoForm> {
       unidade.text = p.unidade ?? 'UN';
       validade.text = p.validade ?? '';
       categoriaId = p.idCategoria;
+      localId = p.idLocal;
     }
     carregarCategorias();
+    carregarLocais();
+  }
+
+  Future<void> carregarLocais() async {
+    try {
+      final lista = await ApiService.listarLocais();
+      if (!mounted) return;
+      setState(() {
+        locais = lista;
+        carregouLocais = true;
+      });
+    } catch (_) {
+      // sem a lista o formulario funciona igual: so nao mexe no local
+    }
   }
 
   Future<void> carregarCategorias() async {
@@ -99,6 +119,8 @@ class _ProdutoFormState extends State<ProdutoForm> {
       estoqueMinimo: int.tryParse(minimo.text),
       unidade: unidade.text.isEmpty ? 'UN' : unidade.text,
       validade: editando || validade.text.isEmpty ? null : validade.text,
+      idLocal: localId,
+      enviarLocal: carregouLocais,
     );
     try {
       if (widget.produto == null) {
@@ -146,6 +168,7 @@ class _ProdutoFormState extends State<ProdutoForm> {
           ],
           campo(minimo, 'Estoque mínimo (pra alertar antes de faltar)', numero: true),
           campo(unidade, 'Unidade'),
+          if (carregouLocais) montarDropdownLocal(),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: salvando ? null : salvar,
@@ -178,6 +201,24 @@ class _ProdutoFormState extends State<ProdutoForm> {
               (c) => DropdownMenuItem<int?>(value: c.id, child: Text(c.nome))),
         ],
         onChanged: (v) => categoriaId = v,
+      ),
+    );
+  }
+
+  // onde o produto fica guardado. se o local dele foi desativado, continua aparecendo (marcado)
+  Widget montarDropdownLocal() {
+    final itens = <int?, String>{null: 'Sem local definido', for (final l in locais) l.id: '${l.nome} (${l.faixa})'};
+    if (localId != null && !itens.containsKey(localId)) {
+      itens[localId] = '${widget.produto?.localNome ?? 'Local #$localId'} (desativado)';
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<int?>(
+        initialValue: localId,
+        isExpanded: true,
+        decoration: const InputDecoration(labelText: 'Local de armazenamento', border: OutlineInputBorder()),
+        items: itens.entries.map((e) => DropdownMenuItem<int?>(value: e.key, child: Text(e.value))).toList(),
+        onChanged: (v) => localId = v,
       ),
     );
   }

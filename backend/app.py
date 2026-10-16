@@ -15,7 +15,10 @@ from models.erp_venda_importada_model import ErpVendaImportada
 from models.lote_model import Lote
 from models.movimentacao_estoque_model import MovimentacaoEstoque
 from models.perda_model import Perda
+from models.local_armazenamento_model import LocalArmazenamento
+from models.leitura_temperatura_model import LeituraTemperatura
 from services.estoque_lote_service import criar_lotes_iniciais, preencher_historico
+from services.migracao_armazenamento import garantir_coluna_local_produto
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
@@ -37,6 +40,7 @@ from controllers.lote_controller import lote_bp
 from controllers.movimentacao_controller import movimentacao_bp
 from controllers.perda_controller import perda_bp
 from controllers.alerta_controller import alerta_bp
+from controllers.armazenamento_controller import armazenamento_bp
 
 load_dotenv()
 
@@ -76,6 +80,7 @@ app.register_blueprint(lote_bp)
 app.register_blueprint(movimentacao_bp)
 app.register_blueprint(perda_bp)
 app.register_blueprint(alerta_bp)
+app.register_blueprint(armazenamento_bp)
 
 
 @app.get("/")
@@ -86,6 +91,10 @@ def home():
 # cria as tabelas se nao existir
 with app.app_context():
     db.create_all()
+    # produto ganhou a coluna do local de armazenamento: banco antigo recebe ela aqui (so na primeira vez).
+    # tem que vir antes de qualquer consulta de produto
+    if garantir_coluna_local_produto(db.engine):
+        print("produto: coluna id_local_armazenamento criada")
     # historico de movimentacoes: registra o que ja existia antes dele (so na primeira vez)
     registros_antigos = preencher_historico()
     if registros_antigos:

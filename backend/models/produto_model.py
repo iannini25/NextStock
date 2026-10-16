@@ -1,5 +1,7 @@
 from .database import db
 
+MANTER = object()  # no atualizar: parametro nao informado = fica como esta
+
 
 class Produto(db.Model):
     __tablename__ = "produto"
@@ -14,15 +16,21 @@ class Produto(db.Model):
     estoque_minimo = db.Column(db.Integer, default=0)
     unidade = db.Column(db.String(10), default="UN")
     data_validade = db.Column(db.Date)
+    # onde o produto fica guardado (opcional). coluna nova: criada no startup se o banco for antigo
+    id_local_armazenamento = db.Column(db.Integer, db.ForeignKey("local_armazenamento.id_local"))
 
     categoria = db.relationship("Categoria")
+    local_armazenamento = db.relationship("LocalArmazenamento")
 
     def salvar(self):
         db.session.add(self)
         db.session.commit()
 
-    # atualiza tudo de uma vez (a tela sempre manda o form inteiro)
-    def atualizar(self, nome, id_categoria, codigo, custo, venda, qtd, minimo, unidade, validade):
+    # atualiza tudo de uma vez (a tela sempre manda o form inteiro).
+    # id_local e opcional: sem ele, o local de armazenamento fica como esta
+    def atualizar(self, nome, id_categoria, codigo, custo, venda, qtd, minimo, unidade, validade, id_local=MANTER):
+        if id_local is not MANTER:
+            self.id_local_armazenamento = id_local
         self.nome = nome
         self.id_categoria = id_categoria
         self.codigo_barras = codigo
@@ -63,4 +71,6 @@ class Produto(db.Model):
             "estoque_minimo": self.estoque_minimo,
             "unidade": self.unidade,
             "data_validade": self.data_validade.isoformat() if self.data_validade else None,
+            "id_local_armazenamento": self.id_local_armazenamento,
+            "local_armazenamento": self.local_armazenamento.nome if self.local_armazenamento else None,
         }

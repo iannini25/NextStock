@@ -74,6 +74,15 @@ ROTAS_EXISTENTES = {
     # etapa 12: alertas de excesso e resumo pro selo do menu
     ("/alertas/excesso", "GET"),
     ("/alertas/resumo", "GET"),
+    # etapa 13: armazenamento e temperatura
+    ("/locais-armazenamento", "GET"),
+    ("/locais-armazenamento", "POST"),
+    ("/locais-armazenamento/<int:id>", "GET"),
+    ("/locais-armazenamento/<int:id>", "PUT"),
+    ("/locais-armazenamento/<int:id>", "DELETE"),
+    ("/locais-armazenamento/<int:id>/leituras", "GET"),
+    ("/locais-armazenamento/<int:id>/leituras", "POST"),
+    ("/armazenamento/alertas", "GET"),
 }
 
 # o que funciona sem login. /setup tambem, mas so enquanto nao existe empresa (testado em test_empresa)

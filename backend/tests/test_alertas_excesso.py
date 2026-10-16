@@ -200,7 +200,7 @@ def test_resumo_bate_com_as_listas(client):
 
 def test_resumo_vazio(client):
     assert client.get("/alertas/resumo").get_json() == {
-        "vencendo": 0, "falta": 0, "excesso": 0, "total": 0, "prioridade_alta": 0,
+        "vencendo": 0, "falta": 0, "excesso": 0, "temperatura": 0, "total": 0, "prioridade_alta": 0,
     }
 
 
