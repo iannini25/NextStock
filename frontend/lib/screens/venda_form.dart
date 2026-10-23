@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/previa_venda.dart';
 import '../models/produto.dart';
 import '../models/venda.dart';
@@ -153,7 +154,7 @@ class _VendaFormState extends State<VendaForm> {
               Text('• ${s.texto}', style: TextStyle(color: s.vencido ? Colors.red : null)),
             if (!p.suficiente)
               Text('Estoque insuficiente: faltam ${p.falta}', style: const TextStyle(color: Colors.red)),
-            if (p.aviso != null) Text(p.aviso!, style: const TextStyle(color: Colors.orange)),
+            if (p.aviso != null) Text(p.aviso!, style: const TextStyle(color: corAviso)),
           ],
         ),
       ),

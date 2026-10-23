@@ -150,10 +150,15 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       return const Center(child: Text('Nenhuma venda no período.'));
     }
     final itens = <Widget>[
-      ListTile(
-        title: Text(
-          'total vendido: ${r.totalVendido}  •  faturamento: R\$ ${r.faturamentoTotal.toStringAsFixed(2)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+      // resumo no topo, igual ao da tela de perdas
+      Card(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            'total vendido: ${r.totalVendido}  •  faturamento: R\$ ${r.faturamentoTotal.toStringAsFixed(2)}',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ),
       ),
     ];
@@ -205,7 +210,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
 
   Widget montarTitulo(String texto) {
     return ListTile(
-      title: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(texto, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
     );
   }
 

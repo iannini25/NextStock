@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../services/api_service.dart';
 import '../services/sessao.dart';
 
@@ -84,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           Sessao.aviso!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.orange),
+                          style: const TextStyle(color: corAviso),
                         ),
                       ),
                     TextField(

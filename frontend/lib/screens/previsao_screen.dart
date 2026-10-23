@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/clima_dia.dart';
 import '../models/previsao.dart';
 import '../services/api_service.dart';
@@ -131,7 +132,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
           if (avisoClima != null && avisoClima!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: Colors.orange)),
+              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: corAviso)),
             ),
           const SizedBox(height: 8),
           if (climaDias.isEmpty)

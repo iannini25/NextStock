@@ -231,8 +231,9 @@ class _AlertasScreenState extends State<AlertasScreen> {
 
   ButtonStyle estiloBotao(bool ativo) {
     return ElevatedButton.styleFrom(
-      backgroundColor: ativo ? corAzul : Colors.grey.shade300,
-      foregroundColor: ativo ? Colors.white : Colors.black87,
+      // o botao apagado usa as cores do tema pra nao ficar claro demais no tema escuro
+      backgroundColor: ativo ? corAzul : Theme.of(context).colorScheme.surfaceContainerHighest,
+      foregroundColor: ativo ? Colors.white : Theme.of(context).colorScheme.onSurface,
       elevation: ativo ? 2 : 0,
     );
   }
@@ -279,7 +280,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
           if (avisoClima != null && avisoClima!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: Colors.orange)),
+              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: corAviso)),
             ),
           const SizedBox(height: 8),
           if (climaDias.isEmpty)
@@ -376,11 +377,15 @@ class _AlertasScreenState extends State<AlertasScreen> {
       itemCount: excessos.length + 1,
       itemBuilder: (_, i) {
         if (i == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Text(
-              '${excessos.length} alerta(s)  •  R\$ ${total.toStringAsFixed(2)} em risco',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          // resumo no topo, igual ao da tela de perdas
+          return Card(
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                '${excessos.length} alerta(s)  •  R\$ ${total.toStringAsFixed(2)} em risco',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           );
         }

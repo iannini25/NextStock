@@ -126,7 +126,7 @@ class _SetupScreenState extends State<SetupScreen> {
   Widget titulo(String texto) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      child: Text(texto, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
     );
   }
 

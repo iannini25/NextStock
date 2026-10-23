@@ -181,7 +181,7 @@ class _LocalDetalheScreenState extends State<LocalDetalheScreen> {
 
   Widget titulo(String texto) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-        child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        child: Text(texto, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
       );
 
   Widget montarSituacao(LocalArmazenamento l) {

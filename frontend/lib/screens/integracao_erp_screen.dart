@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/configuracao_erp.dart';
 import '../models/sincronizacao_erp.dart';
 import '../services/api_service.dart';
@@ -261,7 +262,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Sincronização', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text('Sincronização', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 4),
         Text(
           pronto
@@ -289,7 +290,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        const Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 4),
         if (historico.isEmpty)
           const Padding(
@@ -349,7 +350,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final l in linhas.skip(1)) Text(l),
-            if (c.aviso != null) Text(c.aviso!, style: const TextStyle(color: Colors.orange)),
+            if (c.aviso != null) Text(c.aviso!, style: const TextStyle(color: corAviso)),
           ],
         ),
       ),
