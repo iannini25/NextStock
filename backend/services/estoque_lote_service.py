@@ -142,3 +142,8 @@ class EstoqueLoteService:
         )
         movimentacao.salvar(confirmar=False)
         return movimentacao
+
+
+def criar_lotes_iniciais():
+    from services.criar_lotes_iniciais_service import CriarLotesIniciaisService
+    return CriarLotesIniciaisService().executar()

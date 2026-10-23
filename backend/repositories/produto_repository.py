@@ -15,6 +15,9 @@ def _padrao_like(texto):
 # o service nao monta query, so pede pro repository.
 class ProdutoRepository:
 
+    def listar_sem_lote_com_estoque(self):
+        return Produto.query.filter(Produto.quantidade_estoque > 0, ~Produto.lotes.any()).all()
+
     # produtos que vencem de hoje ate daqui a X dias (nao traz o que ja venceu ha muito tempo? traz sim,
     # produto vencido tambem precisa aparecer pro lojista tirar da prateleira)
     def listar_proximos_do_vencimento(self, dias):
