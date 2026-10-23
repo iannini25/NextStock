@@ -22,6 +22,7 @@ import '../screens/reposicao_screen.dart';
 import '../screens/painel_screen.dart';
 import '../screens/recomendacoes_screen.dart';
 import '../screens/relatorios_screen.dart';
+import '../screens/importar_erp_screen.dart';
 import '../screens/integracao_erp_screen.dart';
 import '../screens/empresa_screen.dart';
 import '../screens/usuarios_screen.dart';
@@ -55,6 +56,7 @@ const List<ItemNav> modulosNav = [
   ItemNav('painel', Icons.dashboard, 'Painel'),
   ItemNav('recomendacoes', Icons.lightbulb, 'Recomendações'),
   ItemNav('relatorios', Icons.bar_chart, 'Relatórios'),
+  ItemNav('importar', Icons.cloud_upload, 'Importar', soAdmin: true),
   ItemNav('erp', Icons.hub, 'Integração ERP', soAdmin: true),
   ItemNav('empresa', Icons.business, 'Empresa'),
   ItemNav('usuarios', Icons.people, 'Usuários', soAdmin: true),
@@ -143,6 +145,8 @@ class _AppShellState extends State<AppShell> {
         return const RecomendacoesScreen();
       case 'relatorios':
         return const RelatoriosScreen();
+      case 'importar':
+        return const ImportarErpScreen();
       case 'erp':
         return const IntegracaoErpScreen();
       case 'empresa':

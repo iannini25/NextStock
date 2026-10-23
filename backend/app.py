@@ -26,6 +26,7 @@ from controllers.clima_controller import clima_bp
 from controllers.compra_controller import compra_bp
 from controllers.reposicao_controller import reposicao_bp
 from controllers.erp_controller import erp_bp
+from controllers.importar_controller import importar_bp
 from controllers.painel_controller import painel_bp
 from controllers.recomendacao_controller import recomendacao_bp
 from controllers.relatorio_controller import relatorio_bp
@@ -65,6 +66,7 @@ app.register_blueprint(clima_bp)
 app.register_blueprint(compra_bp)
 app.register_blueprint(reposicao_bp)
 app.register_blueprint(erp_bp)
+app.register_blueprint(importar_bp)
 app.register_blueprint(painel_bp)
 app.register_blueprint(recomendacao_bp)
 app.register_blueprint(relatorio_bp)
