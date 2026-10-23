@@ -7,7 +7,6 @@ import '../models/evento.dart';
 import '../models/previsao.dart';
 import '../models/sugestao_compra.dart';
 import '../models/reposicao.dart';
-import '../models/importacao.dart';
 import '../models/painel.dart';
 import '../models/recomendacao.dart';
 import '../models/relatorio.dart';
@@ -25,11 +24,11 @@ import '../models/alerta.dart';
 import '../models/armazenamento.dart';
 import 'sessao.dart';
 
-// Endereco do PROXY. O app nao fala direto com a api, passa pelo proxy (porta 8000).
-// - Flutter Web e Desktop: http://127.0.0.1:8000
-// - Emulador Android: troque para http://10.0.2.2:8000
+// Endereco da API Flask.
+// - Flutter Web e Desktop: http://127.0.0.1:5000
+// - Emulador Android: troque para http://10.0.2.2:5000
 //   (no emulador o 10.0.2.2 aponta pro localhost do PC)
-const String baseUrl = 'http://127.0.0.1:8000';
+const String baseUrl = 'http://127.0.0.1:5000';
 
 class ApiService {
   // toda chamada leva o token de quem esta logado (a API recusa sem ele)
@@ -201,34 +200,6 @@ class ApiService {
     if (r.statusCode != 200) throw pegarErro(r);
     final j = jsonDecode(utf8.decode(r.bodyBytes));
     return ResultadoClima.fromJson(j);
-  }
-
-  static Future<List<int>> baixarModelo(String modulo) async {
-    final r = await http.get(Uri.parse('$baseUrl/importar/modelo?modulo=$modulo'), headers: autorizacao);
-    if (r.statusCode != 200) throw pegarErro(r);
-    return r.bodyBytes;
-  }
-
-  static Future<ResultadoImportacao> importarPlanilha(
-    String modulo,
-    String nomeArquivo,
-    List<int> bytes,
-  ) async {
-    final req = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseUrl/importar?modulo=$modulo'),
-    );
-    req.headers.addAll(autorizacao);
-    req.files.add(http.MultipartFile.fromBytes(
-      'arquivo',
-      bytes,
-      filename: nomeArquivo,
-    ));
-    final enviado = await req.send();
-    final r = await http.Response.fromStream(enviado);
-    if (r.statusCode != 200) throw pegarErro(r);
-    final j = jsonDecode(utf8.decode(r.bodyBytes));
-    return ResultadoImportacao.fromJson(j);
   }
 
   static Future<Painel> montarPainel() async {

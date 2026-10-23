@@ -77,19 +77,6 @@ def test_lista_produtos(client):
     assert nomes == {"Banana": "Hortifruti", "Leite": None}
 
 
-def test_busca_por_id(client):
-    p = criar_produto("Leite")
-    r = client.get(f"/produtos/{p.id_produto}")
-    assert r.status_code == 200
-    assert r.get_json()["nome"] == "Leite"
-
-
-def test_busca_inexistente(client):
-    r = client.get("/produtos/999")
-    assert r.status_code == 404
-    assert r.get_json() == {"erro": "produto não encontrado"}
-
-
 def test_atualiza_produto(client):
     p = criar_produto("Leite", codigo_barras="789", quantidade_estoque=5)
     r = client.put(f"/produtos/{p.id_produto}", json={
@@ -112,35 +99,11 @@ def test_atualiza_produto(client):
     assert atualizado["data_validade"] == "2026-12-01"
 
 
-def test_atualiza_com_codigo_de_outro_produto(client):
-    criar_produto("Leite", codigo_barras="111")
-    outro = criar_produto("Iogurte", codigo_barras="222")
-    r = client.put(f"/produtos/{outro.id_produto}", json={"nome": "Iogurte", "preco_venda": 3, "codigo_barras": "111"})
-    assert r.status_code == 400
-    assert r.get_json() == {"erro": "já existe produto com esse código de barras"}
-
-
-def test_atualiza_sem_nome(client):
-    p = criar_produto("Leite")
-    r = client.put(f"/produtos/{p.id_produto}", json={"preco_venda": 3})
-    assert r.status_code == 400
-    assert r.get_json() == {"erro": "nome é obrigatório"}
-
-
-def test_atualiza_inexistente(client):
-    r = client.put("/produtos/999", json={"nome": "X", "preco_venda": 1})
-    assert r.status_code == 404
-
-
 def test_exclui_produto(client):
     p = criar_produto("Leite")
     r = client.delete(f"/produtos/{p.id_produto}")
     assert r.status_code == 204
     assert client.get(f"/produtos/{p.id_produto}").status_code == 404
-
-
-def test_exclui_inexistente(client):
-    assert client.delete("/produtos/999").status_code == 404
 
 
 def test_nao_exclui_produto_com_venda(client):

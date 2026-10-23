@@ -3,7 +3,6 @@ from datetime import date, datetime
 from models.database import db
 from models.lote_model import Lote
 from models.movimentacao_estoque_model import MovimentacaoEstoque
-from models.produto_model import Produto
 from services.utils import usuario_logado
 
 
@@ -155,54 +154,3 @@ class EstoqueLoteService:
         db.session.add(movimentacao)
         return movimentacao
 
-
-# roda quando a API sobe, ANTES do criar_lotes_iniciais: se o historico ainda esta vazio, registra o que ja
-# existia (lotes como entrada e vendas antigas, com origem "historico" e sem saldo). so roda uma vez:
-# depois que tem qualquer registro, nao faz nada. devolve quantos registros criou
-def preencher_historico():
-    if MovimentacaoEstoque.query.first():
-        return 0
-    from models.venda_model import Venda
-
-    criados = 0
-    tipos_por_origem_do_lote = {"inicial": "saldo_inicial", "ajuste": "ajuste_entrada"}
-    for lote in Lote.query.order_by(Lote.id_lote).all():
-        db.session.add(MovimentacaoEstoque(
-            id_produto=lote.id_produto,
-            id_lote=lote.id_lote,
-            tipo=tipos_por_origem_do_lote.get(lote.origem, "entrada"),
-            quantidade=lote.quantidade_inicial,
-            custo_unitario=lote.custo_unitario,
-            id_usuario=lote.id_usuario,
-            origem="historico",
-            data_hora=lote.criado_em or datetime.combine(lote.data_entrada, datetime.min.time()),
-        ))
-        criados += 1
-    for venda in Venda.query.order_by(Venda.id_venda).all():
-        db.session.add(MovimentacaoEstoque(
-            id_produto=venda.id_produto,
-            tipo="venda",
-            quantidade=venda.quantidade,
-            id_venda=venda.id_venda,
-            origem="historico",
-            observacao="venda registrada antes do histórico de movimentações",
-            data_hora=datetime.combine(venda.data_venda, datetime.min.time()),
-        ))
-        criados += 1
-    if criados:
-        db.session.commit()
-    return criados
-
-
-# roda quando a API sobe: produto antigo com estoque e sem lote ganha o "estoque inicial".
-# pode rodar quantas vezes for: quem ja tem lote nao e mexido. devolve quantos lotes criou
-def criar_lotes_iniciais():
-    servico = EstoqueLoteService(origem_movimento="sistema")
-    criados = 0
-    for produto in Produto.query.filter(Produto.quantidade_estoque > 0).all():
-        if not produto.lotes:
-            servico.garantir_lote_inicial(produto)
-            criados += 1
-    if criados:
-        db.session.commit()
-    return criados

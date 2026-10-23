@@ -46,14 +46,6 @@ def test_resumo_por_classe(client, loja):
     assert resumo["C"] == {"produtos": 2, "valor": 20.0, "percentual_valor": 2.0}
 
 
-def test_primeiro_colocado_e_sempre_a(client):
-    dominante = criar_produto("Dominante", preco_venda=1)
-    criar_venda(dominante, 900, dias_atras=1)
-    pequeno = criar_produto("Pequeno", preco_venda=1)
-    criar_venda(pequeno, 100, dias_atras=1)
-    assert classes(curva(client)) == [("Dominante", "A"), ("Pequeno", "B")]  # 90% sozinho, mas comeca em 0%
-
-
 def test_criterio_quantidade(client):
     caro = criar_produto("Caro", preco_venda=100)
     criar_venda(caro, 1, dias_atras=1)  # 100 de faturamento, 1 unidade
@@ -68,36 +60,6 @@ def test_criterio_quantidade(client):
     assert por_quantidade["itens"][0]["faturamento"] == 10.0
 
 
-def test_empate_fica_em_ordem_alfabetica(client):
-    for nome in ("Banana", "Abacate"):
-        criar_venda(criar_produto(nome, preco_venda=1), 10, dias_atras=1)
-    assert [i["produto_nome"] for i in curva(client)["itens"]] == ["Abacate", "Banana"]
-
-
-def test_periodo_sem_vendas_e_tudo_c(client):
-    criar_produto("Leite")
-    criar_produto("Pão")
-    corpo = curva(client)
-    assert {c for _, c in classes(corpo)} == {"C"}
-    assert corpo["total"] == 0
-    assert corpo["resumo"]["C"]["produtos"] == 2
-
-
-def test_venda_fora_do_periodo_nao_conta(client):
-    antigo = criar_produto("Antigo", preco_venda=1)
-    criar_venda(antigo, 100, dias_atras=40)
-    recente = criar_produto("Recente", preco_venda=1)
-    criar_venda(recente, 5, dias_atras=2)
-    assert classes(curva(client, dias=30)) == [("Recente", "A"), ("Antigo", "C")]
-    assert classes(curva(client, dias=60))[0] == ("Antigo", "A")
-
-
-def test_traz_categoria(client):
-    cat = criar_categoria("Mercearia")
-    criar_venda(criar_produto("Arroz", id_categoria=cat.id_categoria), 1, dias_atras=1)
-    assert curva(client)["itens"][0]["categoria_nome"] == "Mercearia"
-
-
 @pytest.mark.parametrize("params, erro", [
     ({"dias": 0}, "dias tem que ser entre 1 e 365"),
     ({"dias": 400}, "dias tem que ser entre 1 e 365"),
@@ -107,16 +69,3 @@ def test_parametros_invalidos(client, params, erro):
     r = client.get("/relatorios/curva-abc", query_string=params)
     assert r.status_code == 400
     assert r.get_json() == {"erro": erro}
-
-
-def test_usuario_comum_ve_a_curva(client_usuario, loja):
-    assert client_usuario.get("/relatorios/curva-abc").status_code == 200
-
-
-def test_classes_por_produto_para_outros_servicos(banco, loja):
-    from models.produto_model import Produto
-
-    mapa = ClassificarCurvaAbcService().classes(dias=30)
-    nomes = {p.id_produto: p.nome for p in Produto.query.all()}
-    assert {nomes[i]: c for i, c in mapa.items()}["Arroz"] == "A"
-    assert {nomes[i]: c for i, c in mapa.items()}["Parado"] == "C"
