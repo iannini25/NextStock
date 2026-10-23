@@ -82,7 +82,16 @@ class _RecomendacoesScreenState extends State<RecomendacoesScreen> {
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
-      return const Center(child: Text('Nenhuma recomendação no momento.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lightbulb_outline, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma recomendação no momento.'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       itemCount: lista.length,

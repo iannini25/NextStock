@@ -82,7 +82,16 @@ class _ReposicaoScreenState extends State<ReposicaoScreen> {
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
-      return const Center(child: Text('Nenhuma reposição sugerida.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.autorenew, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma reposição sugerida.'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       itemCount: lista.length,

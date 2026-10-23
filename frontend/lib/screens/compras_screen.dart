@@ -115,7 +115,16 @@ class _ComprasScreenState extends State<ComprasScreen> {
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
-      return const Center(child: Text('Nenhuma compra sugerida.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma compra sugerida.'),
+          ],
+        ),
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

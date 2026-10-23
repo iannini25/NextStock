@@ -101,7 +101,16 @@ class _VendasScreenState extends State<VendasScreen> {
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
-      return const Center(child: Text('Nenhuma venda nesse período.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.point_of_sale, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma venda nesse período.'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80), // espaco pro botao

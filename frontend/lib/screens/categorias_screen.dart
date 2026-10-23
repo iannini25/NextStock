@@ -89,7 +89,16 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (categorias.isEmpty) {
-      return const Center(child: Text('Nenhuma categoria cadastrada.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.category_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma categoria cadastrada.'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80), // espaco pro botao

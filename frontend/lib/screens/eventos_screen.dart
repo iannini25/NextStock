@@ -93,7 +93,18 @@ class _EventosScreenState extends State<EventosScreen> {
 
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
-    if (lista.isEmpty) return const Center(child: Text('Nenhum evento cadastrado.'));
+    if (lista.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.event_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhum evento cadastrado.'),
+          ],
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: lista.length,

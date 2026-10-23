@@ -152,23 +152,36 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              Text('Colunas: ${info['colunas']}'),
-              const SizedBox(height: 4),
-              Text('Obrigatórias: ${info['obrigatorias']}'),
-              const SizedBox(height: 4),
-              Text(info['dica']!),
+              // informacoes do modulo escolhido num card
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Colunas: ${info['colunas']}'),
+                      const SizedBox(height: 4),
+                      Text('Obrigatórias: ${info['obrigatorias']}'),
+                      const SizedBox(height: 4),
+                      Text(info['dica']!),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
+              // os dois primeiros botoes sao de apoio, o principal e o Importar
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
+                    child: OutlinedButton(
                       onPressed: baixando ? null : baixarModelo,
                       child: Text(baixando ? 'Baixando...' : 'Baixar modelo'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: ElevatedButton(
+                    child: OutlinedButton(
                       onPressed: escolherArquivo,
                       child: const Text('Escolher arquivo'),
                     ),

@@ -231,7 +231,14 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (produtos.isEmpty) {
       return Center(
-        child: Text(temFiltro ? 'Nenhum produto encontrado com esses filtros.' : 'Nenhum produto cadastrado.'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey),
+            const SizedBox(height: 8),
+            Text(temFiltro ? 'Nenhum produto encontrado com esses filtros.' : 'Nenhum produto cadastrado.'),
+          ],
+        ),
       );
     }
     return ListView.builder(

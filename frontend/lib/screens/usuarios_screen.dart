@@ -94,7 +94,18 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
-    if (usuarios.isEmpty) return const Center(child: Text('Nenhum usuário cadastrado.'));
+    if (usuarios.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.people_outline, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhum usuário cadastrado.'),
+          ],
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: usuarios.length,
