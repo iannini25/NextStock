@@ -5,6 +5,8 @@ import 'shell/entrada.dart';
 // cores da marca
 const corNavy = Color(0xFF122540);
 const corAzul = Color(0xFF0066FF);
+// laranja mais escuro pra texto de aviso (o laranja normal some no fundo branco)
+const corAviso = Color(0xFFE65100);
 
 // chave usada pra guardar a preferencia de tema
 const _kTemaEscuro = 'tema_escuro';
@@ -80,7 +82,8 @@ ThemeData _tema(Brightness brilho) {
     scaffoldBackgroundColor: fundo,
     cardTheme: CardThemeData(
       color: corCard,
-      elevation: 1,
+      // no claro so a borda ja separa o card do fundo, sem sombra
+      elevation: claro ? 0 : 1,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.black.withValues(alpha: claro ? 0.12 : 0.40),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -89,8 +92,10 @@ ThemeData _tema(Brightness brilho) {
         side: BorderSide(color: corBordaCard, width: 1),
       ),
     ),
+    // a barra de titulo de cada tela fica da cor da pagina, assim nao parece
+    // uma segunda barra embaixo da barra da marca
     appBarTheme: AppBarTheme(
-      backgroundColor: claro ? Colors.white : const Color(0xFF12203A),
+      backgroundColor: fundo,
       foregroundColor: claro ? corNavy : Colors.white,
       elevation: 0,
       scrolledUnderElevation: 1,
@@ -142,10 +147,16 @@ ThemeData _tema(Brightness brilho) {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
+    // nome do item um pouco mais forte que o texto de baixo
     listTileTheme: const ListTileThemeData(
+      titleTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
+    ),
+    chipTheme: ChipThemeData(
+      side: BorderSide(color: corBordaCard),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
