@@ -147,3 +147,8 @@ class EstoqueLoteService:
 def criar_lotes_iniciais():
     from services.criar_lotes_iniciais_service import CriarLotesIniciaisService
     return CriarLotesIniciaisService().executar()
+
+
+def preencher_historico():
+    from services.preencher_historico_service import PreencherHistoricoService
+    return PreencherHistoricoService().executar()
