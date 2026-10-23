@@ -175,13 +175,22 @@ class _AppShellState extends State<AppShell> {
       body: Column(
         children: [
           const BarraTopo(),
+          const Divider(height: 1),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _BarraLateral(selecionado: selecionado, alertas: alertas, aoSelecionar: _selecionar),
                 const VerticalDivider(width: 1),
-                Expanded(child: _corpo()),
+                // em tela grande a tela do modulo fica no meio, com largura maxima
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: _corpo(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -213,6 +222,7 @@ class _AppShellState extends State<AppShell> {
               alertas: alertas?.total ?? 0, // no celular o menu fica fechado: o selo vai no botao dele
             ),
           ),
+          const Divider(height: 1),
           Expanded(child: _corpo()),
         ],
       ),
@@ -331,9 +341,11 @@ class _BarraLateral extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // mesma familia de cor da barra de cima: branco no claro, azul escuro no escuro
+    final escuro = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 240,
-      color: Theme.of(context).colorScheme.surface,
+      color: escuro ? const Color(0xFF12203A) : Colors.white,
       child: _ListaModulos(selecionado: selecionado, alertas: alertas, aoSelecionar: aoSelecionar),
     );
   }

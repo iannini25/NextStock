@@ -131,75 +131,81 @@ class _PerdaFormState extends State<PerdaForm> {
     final valor = custo == null ? null : qtd * custo!;
     return Scaffold(
       appBar: AppBar(title: Text(tipo == 'descarte' ? 'Registrar descarte' : 'Registrar perda')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (loteFixo)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                '${produto?.nome ?? lote!.produtoNome ?? ""}  •  ${lote!.titulo}  •  '
-                'saldo: ${lote!.quantidadeAtual}  •  ${lote!.textoValidade}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (loteFixo)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    '${produto?.nome ?? lote!.produtoNome ?? ""}  •  ${lote!.titulo}  •  '
+                    'saldo: ${lote!.quantidadeAtual}  •  ${lote!.textoValidade}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )
+              else ...[
+                seletor<int>(
+                  rotulo: 'Produto *',
+                  valor: produto?.id,
+                  itens: {for (final p in produtos) p.id!: '${p.nome} (estoque: ${p.quantidade ?? 0})'},
+                  aoMudar: escolherProduto,
+                ),
+                seletor<int>(
+                  rotulo: 'Lote *',
+                  valor: lote?.id,
+                  itens: {
+                    for (final l in lotes) l.id: '${l.titulo} - saldo ${l.quantidadeAtual} - ${l.textoValidade}',
+                  },
+                  aoMudar: (id) => setState(() => lote = lotes.where((l) => l.id == id).firstOrNull),
+                ),
+              ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: quantidade,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}), // atualiza o valor
+                  decoration: const InputDecoration(labelText: 'Quantidade *', border: OutlineInputBorder()),
+                ),
               ),
-            )
-          else ...[
-            seletor<int>(
-              rotulo: 'Produto *',
-              valor: produto?.id,
-              itens: {for (final p in produtos) p.id!: '${p.nome} (estoque: ${p.quantidade ?? 0})'},
-              aoMudar: escolherProduto,
-            ),
-            seletor<int>(
-              rotulo: 'Lote *',
-              valor: lote?.id,
-              itens: {
-                for (final l in lotes) l.id: '${l.titulo} - saldo ${l.quantidadeAtual} - ${l.textoValidade}',
-              },
-              aoMudar: (id) => setState(() => lote = lotes.where((l) => l.id == id).firstOrNull),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: TextField(
-              controller: quantidade,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}), // atualiza o valor
-              decoration: const InputDecoration(labelText: 'Quantidade *', border: OutlineInputBorder()),
-            ),
+              seletor<String>(
+                rotulo: 'Tipo',
+                valor: tipo,
+                itens: tiposPerda,
+                aoMudar: (v) => setState(() => tipo = v ?? tipo),
+              ),
+              seletor<String>(
+                rotulo: 'Motivo *',
+                valor: motivo,
+                itens: motivosPerda,
+                aoMudar: (v) => setState(() => motivo = v),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: observacao,
+                  decoration: const InputDecoration(labelText: 'Observação (opcional)', border: OutlineInputBorder()),
+                ),
+              ),
+              // o valor aparece antes de confirmar
+              Text(
+                valor == null
+                    ? 'Valor da perda: sem custo cadastrado (fica R\$ 0,00)'
+                    : 'Valor da perda: R\$ ${valor.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Confirmar'),
+              ),
+            ],
           ),
-          seletor<String>(
-            rotulo: 'Tipo',
-            valor: tipo,
-            itens: tiposPerda,
-            aoMudar: (v) => setState(() => tipo = v ?? tipo),
-          ),
-          seletor<String>(
-            rotulo: 'Motivo *',
-            valor: motivo,
-            itens: motivosPerda,
-            aoMudar: (v) => setState(() => motivo = v),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: TextField(
-              controller: observacao,
-              decoration: const InputDecoration(labelText: 'Observação (opcional)', border: OutlineInputBorder()),
-            ),
-          ),
-          // o valor aparece antes de confirmar
-          Text(
-            valor == null
-                ? 'Valor da perda: sem custo cadastrado (fica R\$ 0,00)'
-                : 'Valor da perda: R\$ ${valor.toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Confirmar'),
-          ),
-        ],
+        ),
       ),
     );
   }

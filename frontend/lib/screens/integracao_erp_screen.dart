@@ -171,7 +171,13 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
         title: const Text('Integração ERP'),
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: carregar)],
       ),
-      body: carregando ? const Center(child: CircularProgressIndicator()) : montarFormulario(),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: carregando ? const Center(child: CircularProgressIndicator()) : montarFormulario(),
+        ),
+      ),
     );
   }
 

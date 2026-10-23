@@ -102,36 +102,42 @@ class _LocalFormState extends State<LocalForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.local == null ? 'Novo local' : 'Editar local')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          campo(nome, 'Nome * (ex.: Geladeira laticínios)'),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String>(
-              initialValue: tipo,
-              decoration: const InputDecoration(labelText: 'Tipo', border: OutlineInputBorder()),
-              items: tiposLocal.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-              onChanged: trocarTipo,
-            ),
-          ),
-          Row(
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Expanded(child: campo(tempMin, 'Mínima (°C) *', numero: true)),
-              const SizedBox(width: 12),
-              Expanded(child: campo(tempMax, 'Máxima (°C) *', numero: true)),
+              campo(nome, 'Nome * (ex.: Geladeira laticínios)'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: DropdownButtonFormField<String>(
+                  initialValue: tipo,
+                  decoration: const InputDecoration(labelText: 'Tipo', border: OutlineInputBorder()),
+                  items: tiposLocal.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+                  onChanged: trocarTipo,
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(child: campo(tempMin, 'Mínima (°C) *', numero: true)),
+                  const SizedBox(width: 12),
+                  Expanded(child: campo(tempMax, 'Máxima (°C) *', numero: true)),
+                ],
+              ),
+              const Text(
+                'Fora dessa faixa o sistema avisa e mostra os produtos guardados aqui.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
             ],
           ),
-          const Text(
-            'Fora dessa faixa o sistema avisa e mostra os produtos guardados aqui.',
-            style: TextStyle(fontSize: 12),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
-          ),
-        ],
+        ),
       ),
     );
   }

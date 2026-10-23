@@ -87,28 +87,34 @@ class _LoteFormState extends State<LoteForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(corrigindo ? 'Corrigir ${widget.lote!.titulo}' : 'Nova entrada - ${widget.produto.nome}')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (corrigindo)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text('A quantidade não muda por aqui: entra pela entrada de mercadoria e sai pelas vendas.'),
-            )
-          else
-            campo(quantidade, 'Quantidade *', numero: true),
-          campo(validade, 'Validade (aaaa-mm-dd, vazio = sem validade)'),
-          campo(codigo, 'Código do lote (opcional)'),
-          if (!corrigindo) ...[
-            campo(custo, 'Custo unitário', numero: true),
-            campo(dataEntrada, 'Data de entrada (aaaa-mm-dd, vazio = hoje)'),
-          ],
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (corrigindo)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text('A quantidade não muda por aqui: entra pela entrada de mercadoria e sai pelas vendas.'),
+                )
+              else
+                campo(quantidade, 'Quantidade *', numero: true),
+              campo(validade, 'Validade (aaaa-mm-dd, vazio = sem validade)'),
+              campo(codigo, 'Código do lote (opcional)'),
+              if (!corrigindo) ...[
+                campo(custo, 'Custo unitário', numero: true),
+                campo(dataEntrada, 'Data de entrada (aaaa-mm-dd, vazio = hoje)'),
+              ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

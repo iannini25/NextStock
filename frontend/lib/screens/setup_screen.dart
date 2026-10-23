@@ -90,29 +90,35 @@ class _SetupScreenState extends State<SetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Configuração inicial')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text('Cadastre a empresa e o primeiro administrador do NextStock.'),
-          const SizedBox(height: 16),
-          titulo('Empresa'),
-          campo(nomeEmpresa, 'Razão social *'),
-          campo(nomeFantasia, 'Nome fantasia'),
-          campo(cnpj, 'CNPJ', numero: true),
-          campo(emailEmpresa, 'E-mail da empresa'),
-          campo(telefone, 'Telefone'),
-          const SizedBox(height: 8),
-          titulo('Administrador'),
-          campo(nomeAdmin, 'Seu nome *'),
-          campo(emailAdmin, 'E-mail de acesso *'),
-          campo(senha, 'Senha (mínimo 8 caracteres) *', oculto: true),
-          campo(confirmacao, 'Confirmar senha *', oculto: true),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text('Cadastre a empresa e o primeiro administrador do NextStock.'),
+              const SizedBox(height: 16),
+              titulo('Empresa'),
+              campo(nomeEmpresa, 'Razão social *'),
+              campo(nomeFantasia, 'Nome fantasia'),
+              campo(cnpj, 'CNPJ', numero: true),
+              campo(emailEmpresa, 'E-mail da empresa'),
+              campo(telefone, 'Telefone'),
+              const SizedBox(height: 8),
+              titulo('Administrador'),
+              campo(nomeAdmin, 'Seu nome *'),
+              campo(emailAdmin, 'E-mail de acesso *'),
+              campo(senha, 'Senha (mínimo 8 caracteres) *', oculto: true),
+              campo(confirmacao, 'Confirmar senha *', oculto: true),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

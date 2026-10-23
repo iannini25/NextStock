@@ -142,39 +142,45 @@ class _ProdutoFormState extends State<ProdutoForm> {
     final editando = widget.produto != null;
     return Scaffold(
       appBar: AppBar(title: Text(editando ? 'Editar produto' : 'Novo produto')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          campo(nome, 'Nome *'),
-          montarDropdown(),
-          campo(codigo, 'Código de barras'),
-          campo(custo, 'Preço de custo', numero: true),
-          campo(venda, 'Preço de venda *', numero: true),
-          if (editando) ...[
-            // com lotes, o estoque e a validade vem das entradas e das vendas
-            campo(qtd, 'Quantidade em estoque', numero: true, somenteLeitura: true),
-            campo(validade, 'Próxima validade (do lote que vence antes)', somenteLeitura: true),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: OutlinedButton.icon(
-                onPressed: gerenciarLotes,
-                icon: const Icon(Icons.inventory),
-                label: const Text('Gerenciar lotes (entradas e validades)'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              campo(nome, 'Nome *'),
+              montarDropdown(),
+              campo(codigo, 'Código de barras'),
+              campo(custo, 'Preço de custo', numero: true),
+              campo(venda, 'Preço de venda *', numero: true),
+              if (editando) ...[
+                // com lotes, o estoque e a validade vem das entradas e das vendas
+                campo(qtd, 'Quantidade em estoque', numero: true, somenteLeitura: true),
+                campo(validade, 'Próxima validade (do lote que vence antes)', somenteLeitura: true),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: OutlinedButton.icon(
+                    onPressed: gerenciarLotes,
+                    icon: const Icon(Icons.inventory),
+                    label: const Text('Gerenciar lotes (entradas e validades)'),
+                  ),
+                ),
+              ] else ...[
+                campo(qtd, 'Quantidade em estoque', numero: true),
+                campo(validade, 'Validade (aaaa-mm-dd)'),
+              ],
+              campo(minimo, 'Estoque mínimo (pra alertar antes de faltar)', numero: true),
+              campo(unidade, 'Unidade'),
+              if (carregouLocais) montarDropdownLocal(),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
               ),
-            ),
-          ] else ...[
-            campo(qtd, 'Quantidade em estoque', numero: true),
-            campo(validade, 'Validade (aaaa-mm-dd)'),
-          ],
-          campo(minimo, 'Estoque mínimo (pra alertar antes de faltar)', numero: true),
-          campo(unidade, 'Unidade'),
-          if (carregouLocais) montarDropdownLocal(),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

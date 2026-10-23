@@ -120,7 +120,13 @@ class _EmpresaScreenState extends State<EmpresaScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      body: montarCorpo(),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: montarCorpo(),
+        ),
+      ),
     );
   }
 

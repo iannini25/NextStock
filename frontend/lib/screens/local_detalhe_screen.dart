@@ -161,14 +161,20 @@ class _LocalDetalheScreenState extends State<LocalDetalheScreen> {
           ? const Center(child: CircularProgressIndicator())
           : l == null
               ? const Center(child: Text('Não foi possível carregar o local.'))
-              : ListView(
-                  padding: const EdgeInsets.all(12),
-                  children: [
-                    montarSituacao(l),
-                    if (l.ativo) montarLeitura(),
-                    montarProdutos(l),
-                    montarHistorico(l),
-                  ],
+              // no computador o conteudo fica no meio e nao estica na tela toda
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: ListView(
+                      padding: const EdgeInsets.all(12),
+                      children: [
+                        montarSituacao(l),
+                        if (l.ativo) montarLeitura(),
+                        montarProdutos(l),
+                        montarHistorico(l),
+                      ],
+                    ),
+                  ),
                 ),
     );
   }

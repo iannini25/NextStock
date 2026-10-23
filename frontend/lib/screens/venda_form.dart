@@ -116,19 +116,25 @@ class _VendaFormState extends State<VendaForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Nova venda')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          montarDropdown(),
-          campo(quantidade, 'Quantidade *', numero: true, aoMudar: (_) => atualizarPrevia()),
-          campo(data, 'Data (aaaa-mm-dd, vazio = hoje)'),
-          if (previa != null) montarPrevia(previa!),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Registrar venda'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              montarDropdown(),
+              campo(quantidade, 'Quantidade *', numero: true, aoMudar: (_) => atualizarPrevia()),
+              campo(data, 'Data (aaaa-mm-dd, vazio = hoje)'),
+              if (previa != null) montarPrevia(previa!),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Registrar venda'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

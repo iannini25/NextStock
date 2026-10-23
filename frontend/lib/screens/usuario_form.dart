@@ -92,45 +92,51 @@ class _UsuarioFormState extends State<UsuarioForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(editando ? 'Editar usuário' : 'Novo usuário')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          campo(nome, 'Nome *'),
-          campo(email, 'E-mail *'),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String>(
-              initialValue: perfil,
-              decoration: InputDecoration(
-                labelText: 'Perfil',
-                border: const OutlineInputBorder(),
-                helperText: ehVoceMesmo ? 'você não pode mudar o seu próprio perfil' : null,
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              campo(nome, 'Nome *'),
+              campo(email, 'E-mail *'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: DropdownButtonFormField<String>(
+                  initialValue: perfil,
+                  decoration: InputDecoration(
+                    labelText: 'Perfil',
+                    border: const OutlineInputBorder(),
+                    helperText: ehVoceMesmo ? 'você não pode mudar o seu próprio perfil' : null,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'usuario', child: Text('Usuário')),
+                    DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+                  ],
+                  onChanged: ehVoceMesmo ? null : (v) => perfil = v ?? 'usuario',
+                ),
               ),
-              items: const [
-                DropdownMenuItem(value: 'usuario', child: Text('Usuário')),
-                DropdownMenuItem(value: 'admin', child: Text('Administrador')),
-              ],
-              onChanged: ehVoceMesmo ? null : (v) => perfil = v ?? 'usuario',
-            ),
+              campo(senha, editando ? 'Nova senha (em branco = manter a atual)' : 'Senha (mínimo 8 caracteres) *',
+                  oculto: true),
+              campo(confirmacao, editando ? 'Confirmar nova senha' : 'Confirmar senha *', oculto: true),
+              if (editando)
+                SwitchListTile(
+                  title: const Text('Ativo'),
+                  subtitle: Text(ehVoceMesmo
+                      ? 'você não pode desativar o seu próprio usuário'
+                      : 'usuário inativo não consegue entrar no sistema'),
+                  value: ativo,
+                  onChanged: ehVoceMesmo ? null : (v) => setState(() => ativo = v),
+                ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
+            ],
           ),
-          campo(senha, editando ? 'Nova senha (em branco = manter a atual)' : 'Senha (mínimo 8 caracteres) *',
-              oculto: true),
-          campo(confirmacao, editando ? 'Confirmar nova senha' : 'Confirmar senha *', oculto: true),
-          if (editando)
-            SwitchListTile(
-              title: const Text('Ativo'),
-              subtitle: Text(ehVoceMesmo
-                  ? 'você não pode desativar o seu próprio usuário'
-                  : 'usuário inativo não consegue entrar no sistema'),
-              value: ativo,
-              onChanged: ehVoceMesmo ? null : (v) => setState(() => ativo = v),
-            ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
-          ),
-        ],
+        ),
       ),
     );
   }

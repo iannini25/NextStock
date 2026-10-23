@@ -59,30 +59,36 @@ class _CategoriaFormState extends State<CategoriaForm> {
     final editando = widget.categoria != null;
     return Scaffold(
       appBar: AppBar(title: Text(editando ? 'Editar categoria' : 'Nova categoria')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: TextField(
-              controller: nome,
-              decoration: const InputDecoration(
-                  labelText: 'Nome *', border: OutlineInputBorder()),
-            ),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: nome,
+                  decoration: const InputDecoration(
+                      labelText: 'Nome *', border: OutlineInputBorder()),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: descricao,
+                  decoration: const InputDecoration(
+                      labelText: 'Descrição', border: OutlineInputBorder()),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: TextField(
-              controller: descricao,
-              decoration: const InputDecoration(
-                  labelText: 'Descrição', border: OutlineInputBorder()),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -47,19 +47,25 @@ class _EventoFormState extends State<EventoForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Novo evento')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          campo(nome, 'Nome *'),
-          campo(inicio, 'Data início (aaaa-mm-dd) *'),
-          campo(fim, 'Data fim (aaaa-mm-dd) *'),
-          campo(impacto, 'Impacto na demanda (%)', numero: true),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Salvar'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              campo(nome, 'Nome *'),
+              campo(inicio, 'Data início (aaaa-mm-dd) *'),
+              campo(fim, 'Data fim (aaaa-mm-dd) *'),
+              campo(impacto, 'Impacto na demanda (%)', numero: true),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Salvar'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
