@@ -2,20 +2,24 @@ from datetime import date, timedelta
 
 from models.produto_model import Produto
 from repositories.venda_repository import VendaRepository
-from services.estoque_lote_service import ordenar_lotes_para_saida
+from services.priorizar_lotes_service import PriorizarLotesService
 from services.prever_demanda_service import PreverDemandaService
 
 
 class GerarRecomendacoesService:
 
-    def __init__(self):
-        self.repo_venda = VendaRepository()
+    def __init__(self, repo_venda=None, previsao=None, produto_model=None, prioridade=None, hoje=None):
+        self.repo_venda = repo_venda if repo_venda is not None else VendaRepository()
+        self.previsao = previsao if previsao is not None else PreverDemandaService()
+        self.produto_model = produto_model if produto_model is not None else Produto
+        self.prioridade = prioridade if prioridade is not None else PriorizarLotesService()
+        self.hoje = hoje if hoje is not None else date.today
 
     def executar(self):
-        hoje = date.today()
-        previsoes = {p["id_produto"]: p for p in PreverDemandaService().executar(7, "auto")}
+        hoje = self.hoje()
+        previsoes = {p["id_produto"]: p for p in self.previsao.executar(7, "auto")}
         lista = []
-        for produto in Produto.listar_todos():
+        for produto in self.produto_model.listar_todos():
             estoque = produto.quantidade_estoque or 0
             minimo = produto.estoque_minimo or 0
             vendido = self.repo_venda.total_vendido(produto.id_produto, hoje - timedelta(days=30), hoje)
@@ -24,7 +28,7 @@ class GerarRecomendacoesService:
 
             # validade: por lote (cada lote tem a sua). produto antigo sem lote usa a validade do produto
             if produto.lotes:
-                lista += self.recomendacoes_de_validade_por_lote(produto)
+                lista += self.recomendacoes_de_validade_por_lote(produto, hoje)
             else:
                 lista += self.recomendacoes_de_validade_do_produto(produto, estoque, hoje)
 
@@ -47,11 +51,12 @@ class GerarRecomendacoesService:
 
     # lote vencido: retirar. lote que vence em ate 3 dias: vender primeiro / fazer promocao.
     # a mensagem fala da quantidade DAQUELE lote, nao do estoque inteiro do produto
-    def recomendacoes_de_validade_por_lote(self, produto):
+    def recomendacoes_de_validade_por_lote(self, produto, hoje=None):
+        hoje = hoje if hoje is not None else self.hoje()
         recomendacoes = []
-        com_saldo = ordenar_lotes_para_saida([l for l in produto.lotes if l.quantidade_atual > 0])
+        com_saldo = self.prioridade.executar([l for l in produto.lotes if l.quantidade_atual > 0], hoje=hoje)
         for lote in com_saldo:
-            dias = lote.dias_para_vencer()
+            dias = lote.dias_para_vencer(hoje)
             if dias is None:
                 continue
             if dias < 0:
@@ -69,13 +74,8 @@ class GerarRecomendacoesService:
 
     @staticmethod
     def tem_lote_mais_novo(lote, lotes):
-        for outro in lotes:
-            if outro is lote:
-                continue
-            dias = outro.dias_para_vencer()
-            if dias is None or dias > lote.dias_para_vencer():
-                return True
-        return False
+        return any(outro is not lote and (outro.data_validade is None or outro.data_validade > lote.data_validade)
+                   for outro in lotes)
 
     def recomendacoes_de_validade_do_produto(self, produto, estoque, hoje):
         if not produto.data_validade or estoque <= 0:

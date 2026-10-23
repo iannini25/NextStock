@@ -45,6 +45,12 @@ class MovimentacaoEstoque(db.Model):
     lote = db.relationship("Lote", backref=db.backref("movimentacoes", cascade="all, delete-orphan"))
     usuario = db.relationship("Usuario")
 
+    def salvar(self, confirmar=True):
+        db.session.add(self)
+        if confirmar:
+            db.session.commit()
+        return self
+
     def virar_dict(self):
         nome, sinal = self.TIPOS.get(self.tipo, (self.tipo, 0))
         lote = self.lote.titulo() if self.lote else None

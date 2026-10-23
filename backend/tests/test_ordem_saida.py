@@ -195,3 +195,73 @@ def test_recomendacoes_sem_validade_nao_tem_lote(client):
     criar_produto("Parado", quantidade_estoque=5)
     rec = next(r for r in client.get("/recomendacoes").get_json() if r["tipo"] == "produto_parado")
     assert rec["id_lote"] is None
+
+
+@pytest.mark.parametrize("dias", [-1, 0, 3, None])
+def test_previa_legada_respeita_validade_sem_criar_lote(client, dias):
+    produto = Produto(nome="Legado", preco_venda=5, quantidade_estoque=6,
+                      data_validade=dia(dias) if dias is not None else None)
+    db.session.add(produto)
+    db.session.commit()
+    resultado = previa(client, produto, 4)
+    saida = resultado["lotes"][0]
+    assert saida["titulo"] == "Estoque inicial"
+    assert saida["id_lote"] is None
+    assert saida["dias_para_vencer"] == dias
+    assert saida["vencido"] is (dias is not None and dias < 0)
+    assert bool(resultado["aviso"]) is (dias is not None and dias < 0)
+    assert Lote.query.count() == MovimentacaoEstoque.query.count() == 0
+    assert produto.quantidade_estoque == 6
+
+
+@pytest.mark.parametrize("quantidade", [True, 1.5, 1.0])
+def test_venda_rejeita_quantidade_json_nao_inteira_sem_baixar(client, quantidade):
+    from models.venda_model import Venda
+
+    produto = criar_produto("Leite", quantidade_estoque=5)
+    movimentos = MovimentacaoEstoque.query.count()
+    assert client.post("/vendas", json={"id_produto": produto.id_produto, "quantidade": quantidade}).status_code == 400
+    assert Venda.query.count() == 0
+    assert produto.quantidade_estoque == Lote.query.one().quantidade_atual == 5
+    assert MovimentacaoEstoque.query.count() == movimentos
+
+
+@pytest.mark.parametrize("dados", [[1], True, "texto"])
+def test_venda_rejeita_json_que_nao_e_objeto(client, dados):
+    assert client.post("/vendas", json=dados).status_code == 400
+
+
+def test_falha_ao_gravar_venda_reverte_todos_os_lotes_e_movimentos(client, monkeypatch):
+    from models.venda_model import Venda
+
+    produto = criar_produto("Leite", quantidade_estoque=3, data_validade=dia(2))
+    entrada(client, produto, 5, data_validade=dia(10).isoformat())
+    lotes = Lote.query.order_by(Lote.id_lote).all()
+    movimentos = MovimentacaoEstoque.query.count()
+
+    def falhar():
+        db.session.flush()
+        raise RuntimeError("falha de gravacao simulada")
+
+    monkeypatch.setattr(db.session, "commit", falhar)
+    assert client.post("/vendas", json={"id_produto": produto.id_produto, "quantidade": 6}).status_code == 500
+    db.session.expire_all()
+    assert produto.quantidade_estoque == 8
+    assert [l.quantidade_atual for l in lotes] == [3, 5]
+    assert Venda.query.count() == 0
+    assert MovimentacaoEstoque.query.count() == movimentos
+
+
+def test_ordem_saida_legada_cria_lote_uma_vez_e_lista_esgotados_sem_selo(client):
+    produto = Produto(nome="Antigo", preco_venda=5, quantidade_estoque=6, data_validade=dia(3))
+    db.session.add(produto)
+    db.session.commit()
+    primeira = client.get(f"/produtos/{produto.id_produto}/ordem-saida").get_json()
+    assert primeira["lotes"][0]["vender_primeiro"] is True
+    segunda = client.get(f"/produtos/{produto.id_produto}/ordem-saida").get_json()
+    assert segunda == primeira
+    assert Lote.query.count() == MovimentacaoEstoque.query.count() == 1
+    client.post("/vendas", json={"id_produto": produto.id_produto, "quantidade": 6})
+    assert client.get(f"/produtos/{produto.id_produto}/ordem-saida").get_json()["lotes"] == []
+    lote = client.get(f"/produtos/{produto.id_produto}/lotes?todos=1").get_json()["lotes"][0]
+    assert (lote["quantidade_atual"], lote["posicao_saida"], lote["vender_primeiro"]) == (0, None, False)

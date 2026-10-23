@@ -68,15 +68,14 @@ class _VendaFormState extends State<VendaForm> {
   // se der erro, so nao mostra a previa: a venda continua podendo ser registrada
   void atualizarPrevia() {
     esperaPrevia?.cancel();
+    final pedido = ++pedidoPrevia; // invalida também pedidos em andamento ao limpar o campo
+    setState(() => previa = null);
+    final id = produtoId;
     final qtd = int.tryParse(quantidade.text.trim());
-    if (produtoId == null || qtd == null || qtd <= 0) {
-      setState(() => previa = null);
-      return;
-    }
-    final pedido = ++pedidoPrevia;
+    if (id == null || qtd == null || qtd <= 0) return;
     esperaPrevia = Timer(const Duration(milliseconds: 400), () async {
       try {
-        final p = await ApiService.previaVenda(produtoId!, qtd);
+        final p = await ApiService.previaVenda(id, qtd);
         if (!mounted || pedido != pedidoPrevia) return;
         setState(() => previa = p);
       } catch (_) {

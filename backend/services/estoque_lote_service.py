@@ -4,6 +4,8 @@ from models.database import db
 from models.lote_model import Lote
 from models.movimentacao_estoque_model import MovimentacaoEstoque
 from models.produto_model import Produto
+from services.planejar_saida_service import PlanejarSaidaService
+from services.priorizar_lotes_service import PriorizarLotesService
 from services.utils import usuario_logado
 
 
@@ -14,28 +16,13 @@ from services.utils import usuario_logado
 #   4. lote JA VENCIDO vai pro fim da fila: vencido e pra retirar/descartar, nao pra vender.
 #      so sai numa venda se nao sobrar mais nada (e a previa da venda avisa)
 def ordenar_lotes_para_saida(lotes):
-    hoje = date.today()
-    return sorted(lotes, key=lambda l: (
-        l.data_validade is not None and l.data_validade < hoje,
-        l.data_validade is None,
-        l.data_validade or date.max,
-        l.data_entrada or date.min,
-        l.id_lote or 0,
-    ))
+    return PriorizarLotesService().executar(lotes)
 
 
 # de quais lotes (e quanto de cada) sairia `quantidade`, sem mexer em nada.
 # devolve ([(lote, quanto sai)], quanto falta). a baixa de verdade e a previa da venda usam esta mesma conta
 def planejar_saida(lotes, quantidade):
-    plano = []
-    falta = quantidade
-    for lote in ordenar_lotes_para_saida([l for l in lotes if l.quantidade_atual > 0]):
-        if falta == 0:
-            break
-        sai = min(falta, lote.quantidade_atual)
-        plano.append((lote, sai))
-        falta -= sai
-    return plano, falta
+    return PlanejarSaidaService().executar(lotes, quantidade)
 
 
 # toda mudanca de estoque passa por aqui. o estoque e a validade do produto sao derivados dos lotes:
@@ -46,8 +33,9 @@ def planejar_saida(lotes, quantidade):
 class EstoqueLoteService:
 
     # origem_movimento: de onde a mudanca veio (manual, planilha, erp, sistema) - vai pro historico
-    def __init__(self, origem_movimento="manual"):
+    def __init__(self, origem_movimento="manual", planejador=None):
         self.origem_movimento = origem_movimento
+        self.planejador = planejador if planejador is not None else PlanejarSaidaService()
 
     def lotes_com_saldo(self, produto):
         self.garantir_lote_inicial(produto)
@@ -67,7 +55,7 @@ class EstoqueLoteService:
                 custo_unitario=produto.preco_custo,
                 origem="inicial",
             )
-            db.session.add(lote)
+            lote.salvar(confirmar=False)
             self.registrar(produto, lote, "saldo_inicial", estoque, origem="sistema")
 
     # origem = de onde o LOTE veio (entrada, inicial, ajuste, importacao, erp)
@@ -89,7 +77,7 @@ class EstoqueLoteService:
             origem=origem,
             id_usuario=usuario.id_usuario if usuario else None,
         )
-        db.session.add(lote)
+        lote.salvar(confirmar=False)
         self.sincronizar_produto(produto)
         tipo = tipo or ("saldo_inicial" if origem == "inicial" else "entrada")
         self.registrar(produto, lote, tipo, quantidade, observacao=observacao)
@@ -98,7 +86,7 @@ class EstoqueLoteService:
     # tira a quantidade dos lotes na ordem de saida. devolve [(lote, quanto saiu dele)].
     # cada lote que entrou na baixa vira um registro no historico (uma venda pode atravessar 2 lotes)
     def baixar(self, produto, quantidade, tipo="venda", id_venda=None, observacao=None):
-        plano, falta = planejar_saida(self.lotes_com_saldo(produto), quantidade)
+        plano, falta = self.planejador.executar(self.lotes_com_saldo(produto), quantidade)
         if falta > 0:
             raise ValueError("estoque insuficiente")
         for lote, sai in plano:
@@ -152,57 +140,15 @@ class EstoqueLoteService:
             observacao=observacao,
             data_hora=datetime.now(),
         )
-        db.session.add(movimentacao)
+        movimentacao.salvar(confirmar=False)
         return movimentacao
 
 
-# roda quando a API sobe, ANTES do criar_lotes_iniciais: se o historico ainda esta vazio, registra o que ja
-# existia (lotes como entrada e vendas antigas, com origem "historico" e sem saldo). so roda uma vez:
-# depois que tem qualquer registro, nao faz nada. devolve quantos registros criou
-def preencher_historico():
-    if MovimentacaoEstoque.query.first():
-        return 0
-    from models.venda_model import Venda
-
-    criados = 0
-    tipos_por_origem_do_lote = {"inicial": "saldo_inicial", "ajuste": "ajuste_entrada"}
-    for lote in Lote.query.order_by(Lote.id_lote).all():
-        db.session.add(MovimentacaoEstoque(
-            id_produto=lote.id_produto,
-            id_lote=lote.id_lote,
-            tipo=tipos_por_origem_do_lote.get(lote.origem, "entrada"),
-            quantidade=lote.quantidade_inicial,
-            custo_unitario=lote.custo_unitario,
-            id_usuario=lote.id_usuario,
-            origem="historico",
-            data_hora=lote.criado_em or datetime.combine(lote.data_entrada, datetime.min.time()),
-        ))
-        criados += 1
-    for venda in Venda.query.order_by(Venda.id_venda).all():
-        db.session.add(MovimentacaoEstoque(
-            id_produto=venda.id_produto,
-            tipo="venda",
-            quantidade=venda.quantidade,
-            id_venda=venda.id_venda,
-            origem="historico",
-            observacao="venda registrada antes do histórico de movimentações",
-            data_hora=datetime.combine(venda.data_venda, datetime.min.time()),
-        ))
-        criados += 1
-    if criados:
-        db.session.commit()
-    return criados
-
-
-# roda quando a API sobe: produto antigo com estoque e sem lote ganha o "estoque inicial".
-# pode rodar quantas vezes for: quem ja tem lote nao e mexido. devolve quantos lotes criou
 def criar_lotes_iniciais():
-    servico = EstoqueLoteService(origem_movimento="sistema")
-    criados = 0
-    for produto in Produto.query.filter(Produto.quantidade_estoque > 0).all():
-        if not produto.lotes:
-            servico.garantir_lote_inicial(produto)
-            criados += 1
-    if criados:
-        db.session.commit()
-    return criados
+    from services.criar_lotes_iniciais_service import CriarLotesIniciaisService
+    return CriarLotesIniciaisService().executar()
+
+
+def preencher_historico():
+    from services.preencher_historico_service import PreencherHistoricoService
+    return PreencherHistoricoService().executar()

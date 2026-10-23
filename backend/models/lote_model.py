@@ -33,21 +33,47 @@ class Lote(db.Model):
     produto = db.relationship("Produto", backref=db.backref("lotes", cascade="all, delete-orphan"))
     usuario = db.relationship("Usuario")
 
+    def salvar(self, confirmar=True):
+        db.session.add(self)
+        if confirmar:
+            db.session.commit()
+        return self
+
+    def atualizar(self, codigo_lote, data_validade, confirmar=True):
+        self.codigo_lote = codigo_lote
+        self.data_validade = data_validade
+        return self.salvar(confirmar)
+
     @staticmethod
     def buscar_por_id(id):
         return db.session.get(Lote, id)
+
+    @staticmethod
+    def listar_todos():
+        return Lote.query.order_by(Lote.id_lote).all()
 
     # "Lote L-12" (com codigo) ou "Lote #3"
     def titulo(self):
         return ("Lote " + self.codigo_lote) if self.codigo_lote else ("Lote #" + str(self.id_lote))
 
-    def dias_para_vencer(self):
+    def dias_para_vencer(self, hoje=None):
         if not self.data_validade:
             return None
-        return (self.data_validade - date.today()).days
+        return (self.data_validade - (hoje if hoje is not None else date.today())).days
 
-    def virar_dict(self):
-        dias = self.dias_para_vencer()
+    def saida(self, quantidade, hoje=None):
+        dias = self.dias_para_vencer(hoje)
+        return {
+            "id_lote": self.id_lote,
+            "titulo": "Estoque inicial" if self.id_lote is None and self.origem == "inicial" else self.titulo(),
+            "quantidade": quantidade,
+            "data_validade": self.data_validade.isoformat() if self.data_validade else None,
+            "dias_para_vencer": dias,
+            "vencido": dias is not None and dias < 0,
+        }
+
+    def virar_dict(self, hoje=None):
+        dias = self.dias_para_vencer(hoje)
         return {
             "id_lote": self.id_lote,
             "titulo": self.titulo(),

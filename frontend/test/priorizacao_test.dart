@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:nextstock/models/produto.dart';
 import 'package:nextstock/screens/lotes_screen.dart';
 import 'package:nextstock/screens/recomendacoes_screen.dart';
@@ -73,6 +76,51 @@ void main() {
       await tester.pump(const Duration(milliseconds: 450)); // espera de digitacao
       await tester.pumpAndSettle();
     }
+
+    for (final invalida in ['', '0', 'abc']) {
+      testWidgets('resposta atrasada não restaura prévia após quantidade "$invalida"', (tester) async {
+        final resposta = Completer<http.Response>();
+        final cliente = MockClient((req) async {
+          if (req.url.path == '/produtos') return respostaJson([leiteJson]);
+          return resposta.future;
+        });
+        await http.runWithClient(() async {
+          usarTelaAlta(tester);
+          await tester.pumpWidget(const MaterialApp(home: VendaForm()));
+          await tester.pumpAndSettle();
+          await escolherProduto(tester);
+          await digitarQuantidade(tester, '3');
+          await preencher(tester, 'Quantidade *', invalida);
+          await tester.pump();
+          resposta.complete(respostaJson({'id_produto': 1, 'quantidade': 3, 'suficiente': true,
+            'falta': 0, 'lotes': [saida('Lote ANTIGO', 3, 2)], 'aviso': null}));
+          await tester.pumpAndSettle();
+          expect(find.textContaining('Vai sair'), findsNothing);
+          expect(find.textContaining('Lote ANTIGO'), findsNothing);
+        }, () => cliente);
+      });
+    }
+
+    testWidgets('limpa a prévia anterior enquanto consulta uma nova quantidade', (tester) async {
+      final api = ApiFalsa({
+        '/produtos': (_) => respostaJson([leiteJson]),
+        '/vendas/previa': (_) => respostaJson({'id_produto': 1, 'quantidade': 3, 'suficiente': true,
+          'falta': 0, 'lotes': [saida('Lote ANTIGO', 3, 2)], 'aviso': null}),
+      });
+      await api.usar(() async {
+        usarTelaAlta(tester);
+        await tester.pumpWidget(const MaterialApp(home: VendaForm()));
+        await tester.pumpAndSettle();
+        await escolherProduto(tester);
+        await digitarQuantidade(tester, '3');
+        expect(find.textContaining('Lote ANTIGO'), findsOneWidget);
+        await preencher(tester, 'Quantidade *', '7');
+        await tester.pump();
+        expect(find.textContaining('Lote ANTIGO'), findsNothing);
+        await tester.pump(const Duration(milliseconds: 450));
+        await tester.pumpAndSettle();
+      });
+    });
 
     testWidgets('mostra a prévia dos lotes e atualiza quando muda a quantidade', (tester) async {
       final api = ApiFalsa({

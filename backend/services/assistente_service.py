@@ -14,8 +14,6 @@ from services.vendas_em_chuva_service import VendasEmChuvaService
 
 class AssistenteService:
 
-    MODELO = "gemini-3.5-flash"
-
     def montar_contexto(self):
         linhas = []
         for p in ListarProdutosService().executar():
@@ -123,6 +121,9 @@ class AssistenteService:
         if not chave or chave == "sua_chave":
             return {"resposta": self.responder_simples(pergunta)}
 
+        # da pra trocar o modelo no .env sem mexer no codigo
+        modelo = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+
         contexto = self.montar_contexto()
         instrucoes = (
             "Você é o assistente do NextStock, sistema de estoque de produtos perecíveis "
@@ -146,7 +147,7 @@ class AssistenteService:
 
         cliente = genai.Client(api_key=chave)
         resposta = cliente.models.generate_content(
-            model=self.MODELO,
+            model=modelo,
             contents=mensagens,
             config=types.GenerateContentConfig(
                 system_instruction=instrucoes,

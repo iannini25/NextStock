@@ -18,7 +18,7 @@ from models.perda_model import Perda
 from models.local_armazenamento_model import LocalArmazenamento
 from models.leitura_temperatura_model import LeituraTemperatura
 from services.estoque_lote_service import criar_lotes_iniciais, preencher_historico
-from services.migracao_armazenamento import garantir_coluna_local_produto
+from infrastructure.migracao_armazenamento import MigrarArmazenamento
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
@@ -93,7 +93,7 @@ with app.app_context():
     db.create_all()
     # produto ganhou a coluna do local de armazenamento: banco antigo recebe ela aqui (so na primeira vez).
     # tem que vir antes de qualquer consulta de produto
-    if garantir_coluna_local_produto(db.engine):
+    if MigrarArmazenamento(db.engine).executar():
         print("produto: coluna id_local_armazenamento criada")
     # historico de movimentacoes: registra o que ja existia antes dele (so na primeira vez)
     registros_antigos = preencher_historico()

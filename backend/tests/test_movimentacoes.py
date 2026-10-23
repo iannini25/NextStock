@@ -234,3 +234,30 @@ def test_excluir_produto_sem_venda_apaga_o_historico_dele(client):
     entrada(client, leite, 5)
     assert client.delete(f"/produtos/{leite.id_produto}").status_code == 204
     assert MovimentacaoEstoque.query.count() == 0
+
+
+def test_fim_maximo_do_calendario_nao_estoura(client):
+    assert client.get("/movimentacoes?fim=9999-12-31").status_code == 200
+
+
+def test_consulta_paginada_nao_busca_relacoes_por_registro(client):
+    from sqlalchemy import event
+    from services.listar_movimentacoes_service import ListarMovimentacoesService
+
+    for nome in ["Leite", "Queijo", "Arroz"]:
+        criar_produto(nome, quantidade_estoque=5)
+    db.session.expire_all()
+    consultas = []
+
+    def contar(conn, cursor, sql, parametros, contexto, muitos):
+        if sql.lstrip().upper().startswith("SELECT"):
+            consultas.append(sql)
+
+    event.listen(db.engine, "before_cursor_execute", contar)
+    try:
+        resposta = ListarMovimentacoesService().executar({})
+    finally:
+        event.remove(db.engine, "before_cursor_execute", contar)
+    assert resposta["total"] == 3
+    assert {i["produto_nome"] for i in resposta["itens"]} == {"Leite", "Queijo", "Arroz"}
+    assert len(consultas) == 2  # contagem + página, com todas as relações

@@ -1,20 +1,15 @@
 # NextStock
 
-## Sobre o Projeto
+Sistema de controle de estoque para mercados, padarias, acougues e hortifrutis, focado em
+produtos pereciveis. Ele usa as vendas, a validade dos lotes, o clima e os eventos da cidade
+para avisar o que esta vencendo, o que vai faltar e o que esta sobrando, reduzindo desperdicio.
 
-O NextStock é uma plataforma de inteligência preditiva para gestão de estoque no varejo de
-perecíveis. A ideia é usar dados de vendas, estoque, sazonalidade, clima e eventos locais para
-prever a demanda e ajudar o lojista a comprar, repor e promover melhor, reduzindo desperdício e
-evitando falta de produto em mercados, padarias, açougues e hortifrutis.
-
-Esta entrega são **10 funcionalidades completas de ponta a ponta**: o CRUD de Produto e Categoria
-mais dois alertas (produto vencendo e produto em risco de faltar), feitos por uma API em Flask +
-SQLAlchemy com banco MySQL e um **app em Flutter** que consome essa API.
+Sao duas partes: uma API em Flask com banco MySQL e um aplicativo em Flutter que consome essa API.
 
 ## Equipe
 
 * Bernardo Iannini
-* José Augusto
+* Jose Augusto
 * Manuella Zanola
 * Matheus Freitas Martins
 * Renan
@@ -22,93 +17,156 @@ SQLAlchemy com banco MySQL e um **app em Flutter** que consome essa API.
 
 ## Stack
 
-**Backend:** Python + Flask + SQLAlchemy (ORM)
-**Banco:** MySQL (driver PyMySQL)
-**Frontend:** Flutter (Dart), usando o pacote `http` pra falar com a API
+* **Frontend:** Flutter (Dart), usando o pacote `http` para chamar a API
+* **Backend:** Python + Flask + SQLAlchemy (ORM)
+* **Banco:** MySQL (driver PyMySQL)
 
 ## Arquitetura
 
-Backend em camadas (como pede a atividade):
+O caminho de toda funcionalidade e sempre o mesmo:
 
 ```
-App Flutter  ->  Proxy  ->  Controller  ->  Service  ->  Model / Repository  ->  MySQL
+Tela (Flutter) -> API Flask -> Controller -> Service -> Model / Repository -> MySQL
 ```
 
-* **Model** (`models/`): representa a tabela, herda de `db.Model` e tem os métodos `salvar()`,
-  `atualizar()`, `deletar()`, `listar_todos()` e `buscar_por_id()`.
-* **Service** (`services/`): uma classe por caso de uso (`CriarProdutoService`,
-  `ListarProdutosVencendoService`...), cada uma com um método `executar()`. É onde ficam as
-  validações.
-* **Repository** (`repositories/`): só pras consultas que fogem do CRUD, tipo filtro por data de
-  validade e comparação entre colunas. O service não monta query, ele pede pro repository.
-* **Controller** (`controllers/`): uma classe por recurso (`ProdutoController`,
-  `CategoriaController`). Recebe a requisição, chama o service e devolve JSON. As rotas do
-  Blueprint ficam registradas no fim do arquivo apontando pros métodos da classe.
-* **Proxy** (`proxy/`): um Flask pequeno que fica na frente da API. O app só fala com o proxy, e
-  o proxy repassa tudo pra API. Assim a API não fica exposta direto.
+* **Model** (`backend/models/`): representa a tabela. Herda de `db.Model` e tem os metodos de
+  persistencia (`salvar()`, `atualizar()`, `deletar()`, `listar_todos()`, `buscar_por_id()`).
+* **Service** (`backend/services/`): uma classe por caso de uso, com um metodo `executar()`.
+  E onde ficam as validacoes e as regras.
+* **Repository** (`backend/repositories/`): so para consulta que nao e CRUD, tipo filtro por
+  data de validade, busca com varios filtros e soma de vendas por periodo. O Service nao monta
+  query, ele pede para o Repository.
+* **Controller** (`backend/controllers/`): uma classe por recurso. Recebe a requisicao, chama o
+  Service e devolve o JSON. Nao tem regra de negocio nem SQL.
 
-No app Flutter a organização é simples: `models/` (as classes), `services/api_service.dart` (as
-chamadas http) e `screens/` (as telas). Nada de gerenciador de estado, só `StatefulWidget` +
-`setState`.
-
-## Models implementadas
-
-* **Categoria** — `id_categoria`, `nome`, `descricao`
-* **Produto** — `id_produto`, `id_categoria` (FK pra Categoria), `nome`, `codigo_barras`,
-  `preco_custo`, `preco_venda`, `quantidade_estoque`, `estoque_minimo`, `unidade`, `data_validade`
-
-Cada produto pode pertencer a uma categoria (relacionamento por chave estrangeira).
+No app Flutter: `models/` com as classes, `services/api_service.dart` com as chamadas http e
+`screens/` com as telas. Sem gerenciador de estado, so `StatefulWidget` com `setState`.
 
 ## Funcionalidades Implementadas
 
-As 10 funcionalidades estao completas de ponta a ponta
-(tela Flutter -> proxy -> API Flask -> Controller -> Service -> Model/Repository -> banco):
+Todas funcionam de ponta a ponta (tela -> API -> Controller -> Service -> Model/Repository -> banco):
 
-1. Cadastrar categoria
-2. Listar categorias
-3. Atualizar categoria
-4. Excluir categoria
-5. Cadastrar produto
-6. Listar produtos
-7. Atualizar produto
-8. Excluir produto
-9. Listar produtos proximos do vencimento (alerta de validade, com filtro de dias)
-10. Listar produtos em risco de ruptura (estoque atual <= estoque minimo)
+1. Cadastro de empresa e usuarios
+2. Login com autenticacao (e-mail e senha)
+3. Controle de permissoes (admin e usuario comum)
+4. Cadastro da chave de API do ERP
+5. Integracao com ERP para importar produtos e vendas
+6. Visualizacao do estoque atual
+7. Dashboard com os indicadores principais
+8. Historico de movimentacoes de estoque
+9. Filtros de busca de produtos
+10. Geracao de relatorios simples
+11. Identificacao de produtos com baixo estoque
+12. Identificacao de produtos parados (sem venda)
+13. Lista de produtos mais vendidos
+14. Previsao de demanda com base no historico
+15. Sugestao de reposicao de estoque
+16. Sugestao de reducao de estoque (evitar excesso)
+17. Alertas inteligentes de falta ou excesso
+18. Analise de fatores externos (eventos e clima)
+19. Classificacao de produtos usando Curva ABC
+20. Tela de recomendacoes com acoes sugeridas (comprar, reduzir, promover)
+21. Controle de validade por lote e monitoramento de vencimentos
+22. Alertas automaticos para produtos proximos do vencimento
+23. Monitoramento das condicoes de armazenamento e temperatura
+24. Priorizacao da venda dos produtos que vencem primeiro (PEPS)
+25. Rastreamento de perdas e descartes por lote, com impacto financeiro
+26. Importacao de categorias, produtos, vendas e eventos por CSV ou XLSX
+27. Download de modelos de planilha pela tela de importacao
 
-As duas ultimas usam o `ProdutoRepository`, porque sao consultas com filtro e nao CRUD simples.
-Elas atendem os requisitos RF03 (alerta de vencimento) e RF06 (risco de ruptura) do projeto.
+Alem dessas, o sistema tem o cadastro de categorias (usado pelos filtros e relatorios) e um
+assistente que responde perguntas sobre o estoque usando a API do Gemini.
 
-Validacoes: nome e preco de venda obrigatorios, preco/quantidade nao podem ser negativos, codigo
-de barras nao pode repetir e a categoria informada tem que existir. Os erros da API aparecem no app
-num SnackBar vermelho.
+A importacao manual JSON por `POST /erp/importar` tambem permanece disponivel
+para clientes da API, com as mesmas permissoes administrativas da integracao ERP.
+
+## Compatibilidade corrigida apos a limpeza
+
+As rotas `/erp/importar`, `/importar` e `/importar/modelo` foram recuperadas com
+Controllers em classe. A importacao tem Services separados para coordenacao,
+leitura, geracao de modelo e cada recurso; consultas especiais ficam nos
+Repositories, e a persistencia fica nas Models. A inicializacao volta a adaptar
+bancos antigos e preparar lotes e historico de forma idempotente. A venda preserva
+a mesma regra PVPS na previa e na baixa e descarta respostas atrasadas da tela.
+
+A comunicacao Flutter -> API direta e `GEMINI_MODEL` da branch de limpeza foram
+mantidos. `NEXTSTOCK_API_URL` pode ser configurada com `--dart-define`, mantendo
+`http://127.0.0.1:5000` como padrao. O proxy continua removido.
+
+Validacao: **517 testes backend da branch**, **596 testes originais externos** e
+**21 testes Flutter da branch** aprovados; analise estatica sem problemas e build
+web concluido. Na previa local foram conferidos download XLSX, upload CSV,
+persistencia, importacao ERP e respostas 401/403, sem erros JavaScript.
+Os **133 testes Flutter externos da revisao anterior** tambem passaram usando
+`NEXTSTOCK_API_URL` em 8000 para os contratos dos mocks; o padrao da aplicacao
+continua sendo a API direta na porta 5000.
+
+Detalhes das causas, arquitetura, testes e commits por funcionalidade:
+[revisao da branch de limpeza](docs/REVISAO_BRANCH_LIMPEZA.md).
+
+## Models
+
+Sao 15 tabelas, todas herdando de `db.Model`:
+
+| Model | Tabela | Para que serve |
+|---|---|---|
+| `Empresa` | empresa | a loja que usa o sistema |
+| `Usuario` | usuario | quem faz login (admin ou usuario) |
+| `Categoria` | categoria | categoria do produto |
+| `Produto` | produto | o produto em si |
+| `Lote` | lote | cada entrada de produto, com validade e custo |
+| `MovimentacaoEstoque` | movimentacao_estoque | historico de tudo que entra e sai |
+| `Venda` | venda | venda registrada |
+| `Perda` | perda | descarte, com o prejuizo em reais |
+| `LocalArmazenamento` | local_armazenamento | geladeira, camara fria, prateleira |
+| `LeituraTemperatura` | leitura_temperatura | temperatura medida em um local |
+| `Evento` | evento | evento da cidade que mexe na demanda |
+| `ClimaDia` | clima_dia | clima de cada dia |
+| `ConfiguracaoErp` | configuracao_erp | url e chave do ERP (chave criptografada) |
+| `SincronizacaoErp` | sincronizacao_erp | historico das sincronizacoes |
+| `ErpVendaImportada` | erp_venda_importada | evita importar a mesma venda duas vezes |
+
+Principais relacionamentos: um produto pertence a uma categoria e pode ficar em um local de
+armazenamento; um lote pertence a um produto; perda e movimentacao apontam para produto e lote;
+usuario pertence a uma empresa.
+
+## Repositories
+
+Usamos Repository so onde a consulta nao e CRUD simples:
+
+| Repository | O que faz |
+|---|---|
+| `ProdutoRepository` | produtos perto do vencimento, em risco de ruptura, busca com filtros |
+| `LoteRepository` | lotes vencendo e lotes vencidos que ainda tem saldo |
+| `VendaRepository` | vendas por periodo, por produto e total vendido |
+| `EventoRepository` | eventos dentro de um periodo |
+| `ClimaRepository` | clima de um periodo e gravacao em lote |
 
 ## Rotas da API
 
-### Categorias
-| Método | Rota               | O que faz              |
-|--------|--------------------|------------------------|
-| GET    | `/categorias`      | lista todas            |
-| GET    | `/categorias/<id>` | busca uma pelo id      |
-| POST   | `/categorias`      | cria                   |
-| PUT    | `/categorias/<id>` | edita                  |
-| DELETE | `/categorias/<id>` | apaga                  |
+Sao 64 rotas. As principais:
 
-### Produtos
-| Método | Rota              | O que faz              |
-|--------|-------------------|------------------------|
-| GET    | `/produtos`       | lista todos            |
-| GET    | `/produtos/<id>`  | busca um pelo id       |
-| POST   | `/produtos`       | cria                   |
-| PUT    | `/produtos/<id>`  | edita                  |
-| DELETE | `/produtos/<id>`  | apaga                  |
+| Grupo | Rotas |
+|---|---|
+| Login e setup | `POST /auth/login`, `GET /auth/me`, `POST /setup`, `GET /setup/status` |
+| Empresa | `GET /empresa`, `PUT /empresa` |
+| Usuarios | `GET POST /usuarios`, `PUT DELETE /usuarios/<id>` |
+| Categorias | `GET POST /categorias`, `GET PUT DELETE /categorias/<id>` |
+| Produtos | `GET POST /produtos`, `GET PUT DELETE /produtos/<id>` |
+| Alertas de produto | `GET /produtos/vencendo`, `GET /produtos/risco-ruptura` |
+| Lotes | `POST /lotes`, `PUT /lotes/<id>`, `GET /lotes/vencendo`, `GET /produtos/<id>/lotes`, `GET /produtos/<id>/ordem-saida` |
+| Vendas | `GET POST /vendas`, `GET /vendas/previa` |
+| Perdas | `GET POST /perdas`, `GET /perdas/resumo` |
+| Movimentacoes | `GET /movimentacoes` |
+| Alertas gerais | `GET /alertas/resumo`, `GET /alertas/excesso` |
+| Armazenamento | `GET POST /locais-armazenamento`, `GET PUT DELETE /locais-armazenamento/<id>`, `GET POST /locais-armazenamento/<id>/leituras`, `GET /armazenamento/alertas` |
+| Eventos e clima | `GET POST /eventos`, `DELETE /eventos/<id>`, `GET /clima` |
+| Inteligencia | `GET /previsao`, `GET /compras/sugestoes`, `GET /reposicao`, `GET /recomendacoes`, `POST /assistente` |
+| Relatorios | `GET /relatorios/consumo`, `/relatorios/desempenho`, `/relatorios/tendencias`, `/relatorios/curva-abc` |
+| Painel | `GET /painel` |
+| ERP | `GET PUT /erp/configuracao`, `DELETE /erp/configuracao/chave`, `POST /erp/testar-conexao`, `POST /erp/sincronizar`, `GET /erp/sincronizacoes` |
 
-### Alertas (essas duas passam pelo Repository)
-| Método | Rota                        | O que faz                                |
-|--------|-----------------------------|------------------------------------------|
-| GET    | `/produtos/vencendo?dias=7` | produtos que vencem nos próximos X dias  |
-| GET    | `/produtos/risco-ruptura`   | produtos com estoque <= estoque mínimo   |
-
-Exemplo de JSON pra criar um produto:
+Exemplo de JSON para cadastrar um produto:
 
 ```json
 {
@@ -124,239 +182,151 @@ Exemplo de JSON pra criar um produto:
 }
 ```
 
-## Estrutura de pastas
-
-```
-NextStock/
-├── backend/                        # a API (Flask) - NÃO muda
-│   ├── app.py
-│   ├── requirements.txt
-│   ├── .env.example
-│   ├── database/create_database.sql
-│   ├── models/                     # Categoria e Produto (herdam de db.Model)
-│   ├── services/                   # uma classe por caso de uso
-│   ├── repositories/               # consultas especiais (vencimento, ruptura)
-│   └── controllers/                # classes com as rotas da API
-├── proxy/                          # proxy simples na frente da API
-│   ├── proxy.py
-│   └── requirements.txt
-└── frontend/                       # o app Flutter (novo)
-    ├── pubspec.yaml                # dependencias (tem o http)
-    └── lib/
-        ├── main.dart               # entrada do app, tema e navegacao
-        ├── models/
-        │   ├── produto.dart        # classe Produto (fromJson/toJson)
-        │   └── categoria.dart
-        ├── services/
-        │   └── api_service.dart    # todas as chamadas http + erros
-        └── screens/
-            ├── produtos_screen.dart
-            ├── produto_form.dart
-            ├── alertas_screen.dart
-            ├── categorias_screen.dart
-            └── categoria_form.dart
-```
-
 ## Como rodar
 
-Precisa de **Python 3.10+**, **MySQL** e o **Flutter SDK** instalados. São 3 partes: a API, o
-proxy e o app. Cada um roda num terminal. Pra testar a integração com ERP sem ter um ERP de verdade,
-tem também um ERP simulado opcional (seção 4), e pra testar o monitoramento de temperatura, um
-sensor simulado (seção 5).
+Precisa de Python 3.10 ou mais novo, MySQL e o Flutter SDK. Sao duas partes, cada uma num terminal.
 
 ### 1. Backend (a API)
 
 ```bash
 cd backend
 
-# ambiente virtual
 python -m venv venv
 venv\Scripts\activate        # linux/mac: source venv/bin/activate
 
-# instala as dependencias
 pip install -r requirements.txt
 
-# cria o banco no mysql (ja poe dados de exemplo)
+# cria o banco e ja poe dados de exemplo
 mysql -u root -p < database/create_database.sql
 
-# configura a conexao: copia o modelo e poe a senha do seu mysql no .env
+# copia o modelo do .env e poe a senha do seu mysql
 copy .env.example .env       # linux/mac: cp .env.example .env
 
-
-# sobe a api
 python app.py
 ```
 
 A API fica em `http://127.0.0.1:5000`.
 
-> Se não quiser instalar MySQL só pra testar, dá pra usar SQLite: no `.env` deixe
-> `DATABASE_URL=sqlite:///nextstock.db`. A aplicação cria as tabelas sozinha ao subir.
+Se nao quiser instalar o MySQL so para testar, no `.env` deixe `DATABASE_URL=sqlite:///nextstock.db`.
+A aplicacao cria as tabelas sozinha quando sobe.
 
-> **Deixar a API escondida:** o ideal é a API só aceitar conexão local, pra ninguém acessar ela
-> direto (só o proxy). Pra isso, em `app.py` troque `host="0.0.0.0"` por `host="127.0.0.1"`. Aí
-> só o proxy fica acessível de fora.
-
-### 2. Proxy
+### 2. Frontend (o app Flutter)
 
 Com a API rodando, em outro terminal:
 
 ```bash
-cd proxy
-pip install -r requirements.txt
-python proxy.py
-```
-
-O proxy sobe em `http://127.0.0.1:8000` e repassa tudo pra API na 5000.
-
-### 3. Frontend (o app Flutter)
-
-Deixe a API e o proxy rodando e, em outro terminal:
-
-```bash
 cd frontend
 flutter pub get
-flutter run
+flutter run -d chrome
 ```
 
-Escolha o dispositivo (Chrome, Windows, Android...). Pra rodar no Chrome direto:
-`flutter run -d chrome`.
+O endereco da API fica na constante `baseUrl`, em `frontend/lib/services/api_service.dart`.
+Para web e desktop deixe `http://127.0.0.1:5000`. No emulador Android troque para
+`http://10.0.2.2:5000`, que e como o emulador enxerga o localhost do PC.
 
+### 3. Testes
 
-> **Endereço:** no arquivo `frontend/lib/services/api_service.dart` tem a constante `baseUrl`, que
-> aponta pro **proxy**. Deixe `http://127.0.0.1:8000` pra web e desktop. Se for rodar no **emulador
-> Android**, troque pra `http://10.0.2.2:8000` (é assim que o emulador enxerga o localhost do PC).
+Os testes do backend rodam com pytest e usam um banco SQLite em memoria, entao nao mexem no
+banco de verdade:
 
-### 4. ERP simulado (opcional, pra testar a integração com ERP)
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest -q
+```
 
-O `tools/erp_simulado/erp_simulado.py` é um ERP de mentira, feito em Flask, que responde do mesmo
-jeito que o NextStock espera de um ERP de verdade. Ele já vem com **5 produtos** (arroz, feijão,
-café, queijo e refrigerante) e **20 dias de vendas**, então dá pra testar o botão "Sincronizar
-agora" do começo ao fim. Ele serve só pra desenvolvimento e teste.
+Tem um arquivo de teste para cada funcionalidade principal (produtos, categorias, login, lotes,
+ordem de saida, vendas, perdas, alertas, relatorios, curva ABC e previsao).
 
-**Antes, uma vez só: a chave de criptografia no `.env`**
+## Variaveis do .env
 
-A chave da API do ERP fica salva criptografada no banco. Pra isso, o `backend/.env` precisa da
-`ERP_CHAVE_CRIPTOGRAFIA`, um texto aleatório de pelo menos 32 caracteres, diferente da `SECRET_KEY`.
-Gere um com:
+| Variavel | Para que serve |
+|---|---|
+| `DATABASE_URL` | conexao com o banco |
+| `SECRET_KEY` | assina os tokens de login |
+| `ERP_CHAVE_CRIPTOGRAFIA` | criptografa a chave do ERP antes de salvar no banco |
+| `SENSOR_API_KEY` | chave que o sensor de temperatura manda para registrar leitura |
+| `GEMINI_API_KEY` | chave do Gemini, usada so pelo assistente |
+| `GEMINI_MODEL` | modelo do Gemini (padrao: `gemini-2.5-flash`) |
+| `WEATHER_LAT`, `WEATHER_LON`, `WEATHER_CITY` | cidade usada para buscar o clima |
+
+Nenhuma chave vai para o repositorio: o `.env` esta no `.gitignore` e o que vai versionado e so
+o `.env.example`.
+
+## Estrutura de pastas
+
+```
+NextStock/
+├── backend/
+│   ├── app.py                  # sobe a API e registra as rotas
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── database/
+│   │   └── create_database.sql # cria as tabelas e os dados de exemplo
+│   ├── models/                 # as 15 tabelas (herdam de db.Model)
+│   ├── services/               # uma classe por caso de uso
+│   ├── repositories/           # as consultas que nao sao CRUD
+│   ├── controllers/            # uma classe por recurso, com as rotas
+│   └── tests/                  # testes com pytest
+├── frontend/
+│   ├── pubspec.yaml
+│   └── lib/
+│       ├── main.dart           # entrada do app, tema e navegacao
+│       ├── shell/              # menu lateral e tela de entrada
+│       ├── models/             # as classes do app
+│       ├── services/
+│       │   └── api_service.dart # todas as chamadas http
+│       └── screens/            # as telas
+└── tools/                      # simuladores usados so para testar
+    ├── erp_simulado/
+    └── simular_sensor.py
+```
+
+## Simuladores (opcional)
+
+### ERP simulado
+
+Serve para testar a integracao com ERP sem ter um ERP de verdade. Ele ja vem com 5 produtos e
+20 dias de vendas.
+
+Antes, uma vez so: gere a chave de criptografia e coloque no `backend/.env`, depois reinicie a API.
 
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
-
-Cole o resultado no `backend/.env`:
 
 ```
 ERP_CHAVE_CRIPTOGRAFIA=<o texto gerado>
 ```
 
-Depois **reinicie a API**, porque ela só lê o `.env` quando sobe. Guarde essa chave: se ela mudar,
-a chave do ERP salva antes precisa ser cadastrada de novo.
-
-**Subir o ERP simulado**
-
-Com a API e o proxy rodando, em outro terminal, **na raiz do projeto**:
+Com a API rodando, em outro terminal, na raiz do projeto:
 
 ```bash
 python tools/erp_simulado/erp_simulado.py
 ```
 
-Ele sobe em `http://127.0.0.1:5001` e mostra a chave dele no terminal. Não precisa instalar nada
-além do que o backend já usa.
+Ele sobe em `http://127.0.0.1:5001`. No app, entre como administrador, abra **Integracao ERP**,
+preencha a URL `http://127.0.0.1:5001` e a chave `chave-do-erp-simulado-123`, salve, clique em
+**Testar conexao** e depois em **Sincronizar agora**. Os produtos e as vendas entram no sistema e
+o resultado aparece no historico.
 
-**Configurar no app** (entre com um usuário **administrador**)
+Os dados do simulado ficam so na memoria, entao fechou e abriu ele volta ao estado inicial. O que
+ja foi sincronizado continua no banco do NextStock.
 
-1. Abra **Integração ERP** no menu.
-2. Preencha:
-   - **URL da API do ERP:** `http://127.0.0.1:5001`
-   - **Chave da API:** `chave-do-erp-simulado-123`
-3. Clique em **Salvar** e depois em **Testar conexão**. Deve aparecer "Conexão com o ERP funcionando".
-4. Clique em **Sincronizar agora**. Os 5 produtos e as vendas entram no NextStock, e o resultado
-   aparece no **Histórico**, logo abaixo.
+### Sensor de temperatura simulado
 
-**O que dá pra testar com ele**
+As leituras podem ser lancadas na tela (**Armazenamento**, abrir o local, "Registrar leitura") ou
+chegar de um sensor. O `tools/simular_sensor.py` faz o papel do sensor.
 
-| Teste | Como fazer | O que deve acontecer |
-|---|---|---|
-| Chave errada | Salvar outra chave e testar a conexão | "o ERP recusou a chave da API" |
-| Sincronizar de novo | Clicar em "Sincronizar agora" mais uma vez | 0 vendas novas (nada duplica) |
-| Venda nova no ERP | Rodar o comando abaixo e sincronizar | Entra só 1 venda e o estoque do arroz cai |
-| ERP fora do ar | Fechar o simulado (Ctrl+C) e sincronizar | Erro "Ele está no ar?", registrado no histórico como "Falhou" |
-| Integração desligada | Desligar "Integração ativa", salvar e sincronizar | "a integração com o ERP está desligada" |
+Antes, uma vez so: gere a chave e coloque no `backend/.env` como `SENSOR_API_KEY`, depois
+reinicie a API.
 
-Para registrar uma venda nova no ERP simulado (PowerShell):
-
-```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:5001/simular/venda -Headers @{Authorization='Bearer chave-do-erp-simulado-123'}
-```
-
-No Linux/Mac:
-
-```bash
-curl -X POST http://127.0.0.1:5001/simular/venda -H "Authorization: Bearer chave-do-erp-simulado-123"
-```
-
-Dá pra escolher o produto e a quantidade mandando um JSON, por exemplo
-`{"codigo_barras": "7899000000028", "quantidade": 3}`.
-
-> **Bom saber**
-> - Os dados do simulado ficam só na memória: fechou e abriu de novo, ele volta ao estado
->   inicial. O que já foi sincronizado continua no banco do NextStock.
-> - As vendas sincronizadas entram no banco de verdade e passam a contar no painel, nos
->   relatórios e na previsão.
-> - Dá pra mudar a chave e a porta do simulado com as variáveis `ERP_SIMULADO_CHAVE` e
->   `ERP_SIMULADO_PORTA`.
-> - Pra ligar um ERP de verdade, é só ele seguir o mesmo formato (rotas `/status`, `/produtos` e
->   `/vendas`, autenticação `Authorization: Bearer <chave>`, descrito no começo do
->   `erp_simulado.py`) ou criar um conector novo em `backend/services/erp/`.
-
-### 5. Sensor de temperatura simulado (opcional, pra testar o monitoramento do armazenamento)
-
-As leituras de temperatura podem ser lançadas na tela (**Armazenamento** → abrir o local →
-"Registrar leitura") ou chegar sozinhas de um dispositivo. O `tools/simular_sensor.py` faz o papel
-desse dispositivo: de tempos em tempos manda uma leitura e, de vez em quando, um pico fora da faixa
-pra disparar o alerta. Não precisa instalar nada.
-
-**Antes, uma vez só: a chave do sensor no `.env`**
-
-O sensor não faz login: ele manda uma chave no header `X-Sensor-Key`, e essa chave só serve pra
-registrar leitura. Gere uma com:
-
-```bash
-python -c "import secrets; print(secrets.token_hex(32))"
-```
-
-Cole no `backend/.env` e **reinicie a API**:
-
-```
-SENSOR_API_KEY=<o texto gerado>
-```
-
-**Rodar o simulador**
-
-1. No app, entre como **administrador**, abra **Armazenamento** e crie o local (ex.: "Geladeira
-   laticínios", refrigerado, de 0 a 5 °C).
-2. Abra o local e veja o número dele no cartão de cima (`Local #1`).
-3. Com a API e o proxy rodando, em outro terminal, **na raiz do projeto**:
+Crie o local no app (ex.: "Geladeira laticinios", de 0 a 5 graus), veja o numero dele no cartao
+de cima (`Local #1`) e rode:
 
 ```bash
 python tools/simular_sensor.py --local 1 --min 0 --max 5
 ```
 
-Ele lê a `SENSOR_API_KEY` do `backend/.env` sozinho e manda uma leitura a cada 5 segundos. A cada 6
-leituras vem um pico acima do máximo. Pare com Ctrl+C.
-
-Opções úteis: `--intervalo 10` (segundos entre leituras), `--pico-cada 3` (0 = nunca), `--vezes 5`
-(para depois de 5 leituras) e `--chave ...` (se não quiser ler do `.env`).
-
-**O que dá pra testar com ele**
-
-| Teste | O que deve acontecer |
-|---|---|
-| Leitura dentro da faixa | O local fica "OK" na tela Armazenamento |
-| Pico fora da faixa | O local fica "Fora da faixa", aparece o aviso em Alertas e o selo do menu aumenta |
-| Chave errada (`--chave errada`) | "chave do sensor inválida" e o simulador para |
-| Sem `SENSOR_API_KEY` no `.env` | "sensor não configurado: defina SENSOR_API_KEY no .env e reinicie a API" |
-| Parar o simulador por mais de 12 h | O local vira "Sem leitura" |
-
-> Um local sem nenhuma leitura também aparece como "Sem leitura": registre a primeira leitura
-> (na tela ou com o simulador) para ele ficar "OK".
+Ele manda uma leitura a cada 5 segundos e, a cada 6 leituras, um pico fora da faixa para disparar
+o alerta. Pare com Ctrl+C. Opcoes: `--intervalo`, `--pico-cada`, `--vezes` e `--chave`.

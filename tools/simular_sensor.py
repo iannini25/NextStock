@@ -1,7 +1,7 @@
 """Simulador de sensor de temperatura, so pra desenvolvimento e teste do NextStock.
 
-Faz o papel de um termometro ligado na rede: de tempos em tempos manda uma leitura pro NextStock,
-pelo proxy, usando a chave do sensor (header X-Sensor-Key) no lugar do login.
+Faz o papel de um termometro ligado na rede: de tempos em tempos manda uma leitura pro NextStock
+usando a chave do sensor (header X-Sensor-Key) no lugar do login.
 Quase sempre a temperatura fica dentro da faixa, mas de vez em quando ele manda um pico fora dela
 pra disparar o alerta.
 
@@ -10,7 +10,7 @@ Antes, uma vez so:
     2. reinicie a API
     3. no app, crie o local de armazenamento e veja o numero dele (aparece no detalhe do local: "Local #3")
 
-Como usar (na raiz do projeto, com a API e o proxy rodando):
+Como usar (na raiz do projeto, com a API rodando):
     python tools/simular_sensor.py --local 1
     python tools/simular_sensor.py --local 1 --min 0 --max 5 --intervalo 10 --pico-cada 5
     python tools/simular_sensor.py --local 2 --min -25 --max -18 --vezes 3
@@ -63,7 +63,7 @@ def enviar(url, chave, id_local, temperatura, umidade):
 def main():
     p = argparse.ArgumentParser(description="Manda leituras de temperatura pro NextStock como se fosse um sensor.")
     p.add_argument("--local", type=int, required=True, help="número do local de armazenamento")
-    p.add_argument("--url", default="http://127.0.0.1:8000", help="endereço do proxy (padrão: %(default)s)")
+    p.add_argument("--url", default="http://127.0.0.1:5000", help="endereço da API (padrão: %(default)s)")
     p.add_argument("--chave", default=None, help="chave do sensor (padrão: SENSOR_API_KEY do ambiente ou do backend/.env)")
     p.add_argument("--min", type=float, default=0.0, help="mínimo da faixa do local (padrão: %(default)s)")
     p.add_argument("--max", type=float, default=5.0, help="máximo da faixa do local (padrão: %(default)s)")
@@ -94,7 +94,7 @@ def main():
             try:
                 status, resposta = enviar(args.url, chave, args.local, temperatura, umidade)
             except urllib.error.URLError as e:
-                print(f"#{enviadas} {temperatura:5.1f} °C  -> sem conexão com {args.url} ({e.reason}). O proxy está rodando?")
+                print(f"#{enviadas} {temperatura:5.1f} °C  -> sem conexão com {args.url} ({e.reason}). A API está rodando?")
             else:
                 if status == 201:
                     situacao = resposta["local"]["nome_status"]

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from sqlalchemy.orm import joinedload
 
 from models.lote_model import Lote
 
@@ -9,7 +10,7 @@ class LoteRepository:
     def listar_vencendo(self, dias):
         limite = date.today() + timedelta(days=dias)
         return (
-            Lote.query
+            Lote.query.options(joinedload(Lote.produto), joinedload(Lote.usuario))
             .filter(Lote.quantidade_atual > 0)
             .filter(Lote.data_validade.isnot(None))
             .filter(Lote.data_validade <= limite)

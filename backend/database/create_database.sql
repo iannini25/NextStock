@@ -203,7 +203,6 @@ CREATE TABLE IF NOT EXISTS leitura_temperatura (
 
 -- se voce ja tinha rodado esse script antes, roda essa linha na mao pra criar a coluna nova:
 -- ALTER TABLE produto ADD COLUMN estoque_minimo INT DEFAULT 0 AFTER quantidade_estoque;
--- (a coluna produto.id_local_armazenamento a API cria sozinha quando sobe)
 
 -- dados de exemplo
 -- cada categoria so entra se ainda nao existir (rodar o script de novo nao duplica)

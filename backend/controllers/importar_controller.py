@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request, send_file
 from controllers.permissoes import exigir_admin
 
 from services.importar_planilha_service import ImportarPlanilhaService
+from services.gerar_modelo_planilha_service import GerarModeloPlanilhaService
 
 importar_bp = Blueprint("importar", __name__)
 
@@ -12,7 +13,7 @@ class ImportarController:
     @staticmethod
     def modelo():
         try:
-            arquivo, nome = ImportarPlanilhaService().gerar_modelo(request.args.get("modulo", ""))
+            arquivo, nome = GerarModeloPlanilhaService().executar(request.args.get("modulo", ""))
             return send_file(
                 arquivo,
                 as_attachment=True,

@@ -4,5 +4,5 @@ Flask-Cors==4.0.1
 python-dotenv==1.0.1
 PyMySQL==1.1.1
 google-genai==1.29.0
-openpyxl==3.1.5
 cryptography==50.0.2
+openpyxl==3.1.5
