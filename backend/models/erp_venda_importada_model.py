@@ -11,6 +11,11 @@ class ErpVendaImportada(db.Model):
     id_venda = db.Column(db.Integer, db.ForeignKey("venda.id_venda"), nullable=False)
     importado_em = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
+    def salvar(self):
+        db.session.add(self)
+        db.session.commit()
+        return self
+
     @staticmethod
     def ja_importada(id_externo):
         return db.session.get(ErpVendaImportada, id_externo) is not None

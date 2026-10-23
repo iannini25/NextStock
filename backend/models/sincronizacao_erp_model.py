@@ -30,17 +30,14 @@ class SincronizacaoErp(db.Model):
 
     @staticmethod
     def listar_recentes(limite):
-        return SincronizacaoErp.query.order_by(SincronizacaoErp.id_sincronizacao.desc()).limit(limite).all()
+        from repositories.sincronizacao_erp_repository import SincronizacaoErpRepository
+        return SincronizacaoErpRepository().listar_recentes(limite)
 
     # a ultima que deu certo sem nenhum erro: a proxima busca so o que mudou depois dela
     @staticmethod
     def ultima_com_sucesso():
-        return (
-            SincronizacaoErp.query
-            .filter_by(status="sucesso")
-            .order_by(SincronizacaoErp.id_sincronizacao.desc())
-            .first()
-        )
+        from repositories.sincronizacao_erp_repository import SincronizacaoErpRepository
+        return SincronizacaoErpRepository().ultima_com_sucesso()
 
     def virar_dict(self):
         return {

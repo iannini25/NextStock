@@ -1,4 +1,5 @@
 from .database import db
+from sqlalchemy.orm import joinedload
 
 MANTER = object()  # no atualizar: parametro nao informado = fica como esta
 
@@ -22,9 +23,13 @@ class Produto(db.Model):
     categoria = db.relationship("Categoria")
     local_armazenamento = db.relationship("LocalArmazenamento")
 
-    def salvar(self):
+    def salvar(self, confirmar=True):
         db.session.add(self)
-        db.session.commit()
+        if confirmar:
+            db.session.commit()
+        else:
+            db.session.flush()
+        return self
 
     # atualiza tudo de uma vez (a tela sempre manda o form inteiro).
     # id_local e opcional: sem ele, o local de armazenamento fica como esta
@@ -48,7 +53,7 @@ class Produto(db.Model):
 
     @staticmethod
     def listar_todos():
-        return Produto.query.all()
+        return Produto.query.options(joinedload(Produto.categoria), joinedload(Produto.local_armazenamento)).all()
 
     @staticmethod
     def buscar_por_id(id):

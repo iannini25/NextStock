@@ -2,6 +2,7 @@ from flask import Blueprint, g, request, jsonify
 
 from controllers.permissoes import exigir_admin
 
+from services.importar_erp_service import ImportarErpService
 from services.buscar_configuracao_erp_service import BuscarConfiguracaoErpService
 from services.salvar_configuracao_erp_service import SalvarConfiguracaoErpService
 from services.remover_chave_erp_service import RemoverChaveErpService
@@ -15,6 +16,14 @@ erp_bp = Blueprint("erp", __name__)
 
 
 class ErpController:
+
+    @staticmethod
+    def importar():
+        try:
+            resultado = ImportarErpService().executar(request.get_json() or {})
+            return jsonify(resultado)
+        except ValueError as e:
+            return jsonify({"erro": str(e)}), 400
 
     # configuracao da integracao (a chave volta mascarada, ex.: ••••1a2b)
     @staticmethod
@@ -62,6 +71,7 @@ class ErpController:
         return jsonify(ListarSincronizacoesErpService().executar())
 
 
+erp_bp.add_url_rule("/erp/importar", view_func=exigir_admin(ErpController.importar), methods=["POST"])
 erp_bp.add_url_rule("/erp/configuracao", view_func=exigir_admin(ErpController.buscar_configuracao), methods=["GET"])
 erp_bp.add_url_rule("/erp/configuracao", view_func=exigir_admin(ErpController.salvar_configuracao), methods=["PUT"])
 erp_bp.add_url_rule("/erp/configuracao/chave", view_func=exigir_admin(ErpController.remover_chave), methods=["DELETE"])

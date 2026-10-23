@@ -8,9 +8,13 @@ class Categoria(db.Model):
     nome = db.Column(db.String(60), nullable=False)
     descricao = db.Column(db.String(255))
 
-    def salvar(self):
+    def salvar(self, confirmar=True):
         db.session.add(self)
-        db.session.commit()
+        if confirmar:
+            db.session.commit()
+        else:
+            db.session.flush()
+        return self
 
     # muda nome e descricao
     def atualizar(self, nome, descricao):
