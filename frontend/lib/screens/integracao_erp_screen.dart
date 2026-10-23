@@ -90,7 +90,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
     try {
       final s = await ApiService.sincronizarErp();
       if (!mounted) return;
-      avisar('Sincronização: ${s.nomeStatus.toLowerCase()} — ${s.resumo}');
+      avisar('Sincronização: ${s.nomeStatus.toLowerCase()} - ${s.resumo}');
     } catch (e) {
       mostrarErro(e); // a falha tambem fica no historico
     }

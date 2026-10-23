@@ -451,7 +451,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
     }
     // quais lotes (e quanto de cada) estao vencendo
     for (final l in lotesPorProduto[p.id] ?? <Lote>[]) {
-      texto += '\n${l.titulo}: ${l.quantidadeAtual} ${l.unidade ?? ""} — ${l.textoValidade}';
+      texto += '\n${l.titulo}: ${l.quantidadeAtual} ${l.unidade ?? ""} - ${l.textoValidade}';
     }
     return texto;
   }

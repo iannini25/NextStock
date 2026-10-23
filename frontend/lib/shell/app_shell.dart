@@ -376,19 +376,25 @@ class _ListaModulos extends StatelessWidget {
       itemBuilder: (_, i) {
         final m = modulos[i];
         final sel = m.id == selecionado;
-        return ListTile(
-          leading: Icon(m.icone, color: sel ? corAzul : null),
-          title: Text(
-            m.titulo,
-            style: TextStyle(
-              color: sel ? corAzul : null,
-              fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
+        // espaco dos lados pro fundo do item selecionado ficar arredondado
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+          child: ListTile(
+            dense: true,
+            leading: Icon(m.icone, color: sel ? corAzul : null),
+            title: Text(
+              m.titulo,
+              style: TextStyle(
+                fontSize: 14,
+                color: sel ? corAzul : null,
+                fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
+            trailing: _selo(m),
+            selected: sel,
+            selectedTileColor: corAzul.withValues(alpha: 0.12),
+            onTap: () => aoSelecionar(m.id),
           ),
-          trailing: _selo(m),
-          selected: sel,
-          selectedTileColor: corAzul.withValues(alpha: 0.10),
-          onTap: () => aoSelecionar(m.id),
         );
       },
     );

@@ -79,7 +79,15 @@ class InicioScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(m.icone, color: corAzul, size: 30),
+              // icone dentro de um quadradinho azul claro
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: corAzul.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(m.icone, color: corAzul, size: 28),
+              ),
               const Spacer(),
               Text(
                 m.titulo,

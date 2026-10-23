@@ -79,7 +79,7 @@ class AlertasExcessoService:
                 produto, "perecivel", prioridade, classe, por_dia,
                 quantidade=sobra, valor=valor, lote=lote,
                 mensagem=(f"{lote.titulo()}: {sobra} de {lote.quantidade_atual} {produto.unidade or 'UN'} "
-                          f"não devem ser vendidos antes de vencer (em {dias} dia(s)) — "
+                          f"não devem ser vendidos antes de vencer (em {dias} dia(s)) - "
                           f"R$ {valor:.2f} em risco. Faça promoção ou compre menos."),
             ))
         return alertas

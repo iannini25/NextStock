@@ -69,7 +69,7 @@ def mensagem(local, status, ultima, horas_desde, valor):
             desvio = f"{temperatura - float(local.temp_max):.1f} °C acima do máximo"
         else:
             desvio = f"{float(local.temp_min) - temperatura:.1f} °C abaixo do mínimo"
-        return (f"{local.nome}: {graus(temperatura)} em {ultima.data_hora:%d/%m %H:%M} ({faixa}) — "
+        return (f"{local.nome}: {graus(temperatura)} em {ultima.data_hora:%d/%m %H:%M} ({faixa}) - "
                 f"{desvio}.{risco}")
     if status == "sem_leitura":
         if ultima is None:

@@ -124,7 +124,7 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'O NextStock só aceita as colunas do modelo. Baixe o arquivo, preencha e envie um CSV ou XLSX. Colunas a mais são ignoradas. A segunda linha do modelo é um exemplo — apague ou substitua.',
+            'O NextStock só aceita as colunas do modelo. Baixe o arquivo, preencha e envie um CSV ou XLSX. Colunas a mais são ignoradas. A segunda linha do modelo é um exemplo - apague ou substitua.',
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(

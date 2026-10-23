@@ -56,50 +56,57 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // no escuro a logo navy some no fundo, entao fica branca (igual na barra de cima)
-                escuro
-                    ? ColorFiltered(
-                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                        child: logo,
-                      )
-                    : logo,
-                const SizedBox(height: 16),
-                Text(
-                  'Entrar no NextStock',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                if (Sessao.aviso != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      Sessao.aviso!,
+            // tudo dentro de um card pra ficar separado do fundo
+            child: Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // no escuro a logo navy some no fundo, entao fica branca (igual na barra de cima)
+                    escuro
+                        ? ColorFiltered(
+                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                            child: logo,
+                          )
+                        : logo,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Entrar no NextStock',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.orange),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                TextField(
-                  controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'E-mail', border: OutlineInputBorder()),
+                    const SizedBox(height: 16),
+                    if (Sessao.aviso != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          Sessao.aviso!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.orange),
+                        ),
+                      ),
+                    TextField(
+                      controller: email,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'E-mail', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: senha,
+                      obscureText: true,
+                      onSubmitted: (_) => entrando ? null : entrar(),
+                      decoration: const InputDecoration(labelText: 'Senha', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: entrando ? null : entrar,
+                      child: Text(entrando ? 'Entrando...' : 'Entrar'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: senha,
-                  obscureText: true,
-                  onSubmitted: (_) => entrando ? null : entrar(),
-                  decoration: const InputDecoration(labelText: 'Senha', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: entrando ? null : entrar,
-                  child: Text(entrando ? 'Entrando...' : 'Entrar'),
-                ),
-              ],
+              ),
             ),
           ),
         ),

@@ -154,7 +154,7 @@ class _PerdaFormState extends State<PerdaForm> {
               rotulo: 'Lote *',
               valor: lote?.id,
               itens: {
-                for (final l in lotes) l.id: '${l.titulo} — saldo ${l.quantidadeAtual} — ${l.textoValidade}',
+                for (final l in lotes) l.id: '${l.titulo} - saldo ${l.quantidadeAtual} - ${l.textoValidade}',
               },
               aoMudar: (id) => setState(() => lote = lotes.where((l) => l.id == id).firstOrNull),
             ),

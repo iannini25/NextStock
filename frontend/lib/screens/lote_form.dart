@@ -86,7 +86,7 @@ class _LoteFormState extends State<LoteForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(corrigindo ? 'Corrigir ${widget.lote!.titulo}' : 'Nova entrada — ${widget.produto.nome}')),
+      appBar: AppBar(title: Text(corrigindo ? 'Corrigir ${widget.lote!.titulo}' : 'Nova entrada - ${widget.produto.nome}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
