@@ -11,9 +11,13 @@ class Venda(db.Model):
 
     produto = db.relationship("Produto")
 
-    def salvar(self):
+    def salvar(self, confirmar=True):
         db.session.add(self)
-        db.session.commit()
+        if confirmar:
+            db.session.commit()
+        else:
+            db.session.flush()  # gera o ID; baixa e histórico serão confirmados juntos
+        return self
 
     @staticmethod
     def listar_todos():
