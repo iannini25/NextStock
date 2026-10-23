@@ -152,11 +152,20 @@ ThemeData _tema(Brightness brilho) {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
-    // nome do item um pouco mais forte que o texto de baixo
-    listTileTheme: const ListTileThemeData(
-      titleTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-      shape: RoundedRectangleBorder(
+    // nome do item um pouco mais forte que o texto de baixo.
+    // a cor precisa ir junto, senao o texto fica preto no tema escuro
+    listTileTheme: ListTileThemeData(
+      titleTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: scheme.onSurface),
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+    ),
+    // seletor de opcoes (ex.: Vencendo / Vai faltar / Excesso nos alertas)
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: SegmentedButton.styleFrom(
+        selectedBackgroundColor: corAzul,
+        selectedForegroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     ),
     chipTheme: ChipThemeData(

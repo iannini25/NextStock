@@ -156,35 +156,19 @@ class _AlertasScreenState extends State<AlertasScreen> {
   Widget montarBotoes() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('vencendo'),
-              icon: const Icon(Icons.event_busy, size: 18),
-              label: const Text('Vencendo'),
-              style: estiloBotao(modoVencimento),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('falta'),
-              icon: const Icon(Icons.trending_down, size: 18),
-              label: const Text('Vai faltar'),
-              style: estiloBotao(modo == 'falta'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('excesso'),
-              icon: const Icon(Icons.inventory, size: 18),
-              label: const Text('Excesso'),
-              style: estiloBotao(modoExcesso),
-            ),
-          ),
-        ],
+      // seletor com os 3 modos lado a lado (o escolhido fica azul)
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'vencendo', icon: Icon(Icons.event_busy, size: 18), label: Text('Vencendo')),
+            ButtonSegment(value: 'falta', icon: Icon(Icons.trending_down, size: 18), label: Text('Vai faltar')),
+            ButtonSegment(value: 'excesso', icon: Icon(Icons.inventory, size: 18), label: Text('Excesso')),
+          ],
+          selected: {modo},
+          showSelectedIcon: false,
+          onSelectionChanged: (escolhido) => trocarModo(escolhido.first),
+        ),
       ),
     );
   }
@@ -226,15 +210,6 @@ class _AlertasScreenState extends State<AlertasScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  ButtonStyle estiloBotao(bool ativo) {
-    return ElevatedButton.styleFrom(
-      // o botao apagado usa as cores do tema pra nao ficar claro demais no tema escuro
-      backgroundColor: ativo ? corAzul : Theme.of(context).colorScheme.surfaceContainerHighest,
-      foregroundColor: ativo ? Colors.white : Theme.of(context).colorScheme.onSurface,
-      elevation: ativo ? 2 : 0,
     );
   }
 

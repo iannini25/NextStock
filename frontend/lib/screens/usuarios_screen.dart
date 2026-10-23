@@ -88,9 +88,10 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => abrirForm(),
-        child: const Icon(Icons.person_add),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Novo usuário'),
       ),
       body: montarCorpo(),
     );

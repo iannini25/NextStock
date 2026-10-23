@@ -109,20 +109,21 @@ class _PainelScreenState extends State<PainelScreen> {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
+        // tudo centralizado, igual aos cartoes do inicio
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               nome,
+              textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
             // se o valor for grande demais pro cartao, ele diminui em vez de cortar
             FittedBox(
               fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
               child: Text(
                 valor,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: cor),

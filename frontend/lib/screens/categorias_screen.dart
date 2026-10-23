@@ -82,9 +82,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Categorias')),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => abrirForm(),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Nova categoria'),
       ),
       body: montarCorpo(),
     );

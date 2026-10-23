@@ -87,9 +87,10 @@ class _EventosScreenState extends State<EventosScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: abrirForm,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Novo evento'),
       ),
       body: montarLista(),
     );

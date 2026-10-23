@@ -62,9 +62,10 @@ class _VendasScreenState extends State<VendasScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: abrirForm,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Nova venda'),
       ),
       body: Column(
         children: [
