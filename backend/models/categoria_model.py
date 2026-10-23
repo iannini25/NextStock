@@ -22,9 +22,10 @@ class Categoria(db.Model):
         self.descricao = descricao
         db.session.commit()
 
-    def deletar(self):
+    def deletar(self, confirmar=True):
         db.session.delete(self)
-        db.session.commit()
+        if confirmar:
+            db.session.commit()
 
     @staticmethod
     def listar_todos():

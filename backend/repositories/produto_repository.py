@@ -15,6 +15,9 @@ def _padrao_like(texto):
 # o service nao monta query, so pede pro repository.
 class ProdutoRepository:
 
+    def listar_por_categorias(self, ids):
+        return Produto.query.filter(Produto.id_categoria.in_(ids)).all()
+
     def listar_sem_lote_com_estoque(self):
         return Produto.query.filter(Produto.quantidade_estoque > 0, ~Produto.lotes.any()).all()
 
