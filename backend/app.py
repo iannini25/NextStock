@@ -17,6 +17,8 @@ from models.movimentacao_estoque_model import MovimentacaoEstoque
 from models.perda_model import Perda
 from models.local_armazenamento_model import LocalArmazenamento
 from models.leitura_temperatura_model import LeituraTemperatura
+from services.estoque_lote_service import criar_lotes_iniciais, preencher_historico
+from infrastructure.migracao_armazenamento import MigrarArmazenamento
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
@@ -86,9 +88,21 @@ def home():
     return jsonify({"msg": "API do NextStock rodando"})
 
 
-# cria as tabelas se ainda nao existirem
+# cria as tabelas se nao existir
 with app.app_context():
     db.create_all()
+    # produto ganhou a coluna do local de armazenamento: banco antigo recebe ela aqui (so na primeira vez).
+    # tem que vir antes de qualquer consulta de produto
+    if MigrarArmazenamento(db.engine).executar():
+        print("produto: coluna id_local_armazenamento criada")
+    # historico de movimentacoes: registra o que ja existia antes dele (so na primeira vez)
+    registros_antigos = preencher_historico()
+    if registros_antigos:
+        print(f"movimentacoes: {registros_antigos} registro(s) do historico antigo")
+    # produto antigo com estoque e sem lote ganha o "estoque inicial" (so na primeira vez)
+    lotes_criados = criar_lotes_iniciais()
+    if lotes_criados:
+        print(f"lotes: {lotes_criados} produto(s) ganharam o lote de estoque inicial")
 
 
 if __name__ == "__main__":
