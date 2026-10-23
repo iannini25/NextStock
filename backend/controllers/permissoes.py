@@ -1,6 +1,7 @@
 from functools import wraps
 
 from flask import g, jsonify
+from services.verificar_permissao_service import VerificarPermissaoService
 
 
 # marca uma rota como so de administrador. o login ja foi conferido antes (exigir_login no app.py),
@@ -10,7 +11,7 @@ def exigir_admin(funcao):
     @wraps(funcao)
     def protegida(*args, **kwargs):
         usuario = getattr(g, "usuario", None)
-        if not usuario or usuario.perfil != "admin":
+        if not VerificarPermissaoService().executar(usuario):
             return jsonify({"erro": "sem permissão para esta ação"}), 403
         return funcao(*args, **kwargs)
 

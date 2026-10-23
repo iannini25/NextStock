@@ -71,9 +71,38 @@ Todas funcionam de ponta a ponta (tela -> API -> Controller -> Service -> Model/
 23. Monitoramento das condicoes de armazenamento e temperatura
 24. Priorizacao da venda dos produtos que vencem primeiro (PEPS)
 25. Rastreamento de perdas e descartes por lote, com impacto financeiro
+26. Importacao de categorias, produtos, vendas e eventos por CSV ou XLSX
+27. Download de modelos de planilha pela tela de importacao
 
 Alem dessas, o sistema tem o cadastro de categorias (usado pelos filtros e relatorios) e um
 assistente que responde perguntas sobre o estoque usando a API do Gemini.
+
+A importacao manual JSON por `POST /erp/importar` tambem permanece disponivel
+para clientes da API, com as mesmas permissoes administrativas da integracao ERP.
+
+## Compatibilidade corrigida apos a limpeza
+
+As rotas `/erp/importar`, `/importar` e `/importar/modelo` foram recuperadas com
+Controllers em classe. A importacao tem Services separados para coordenacao,
+leitura, geracao de modelo e cada recurso; consultas especiais ficam nos
+Repositories, e a persistencia fica nas Models. A inicializacao volta a adaptar
+bancos antigos e preparar lotes e historico de forma idempotente. A venda preserva
+a mesma regra PVPS na previa e na baixa e descarta respostas atrasadas da tela.
+
+A comunicacao Flutter -> API direta e `GEMINI_MODEL` da branch de limpeza foram
+mantidos. `NEXTSTOCK_API_URL` pode ser configurada com `--dart-define`, mantendo
+`http://127.0.0.1:5000` como padrao. O proxy continua removido.
+
+Validacao: **517 testes backend da branch**, **596 testes originais externos** e
+**21 testes Flutter da branch** aprovados; analise estatica sem problemas e build
+web concluido. Na previa local foram conferidos download XLSX, upload CSV,
+persistencia, importacao ERP e respostas 401/403, sem erros JavaScript.
+Os **133 testes Flutter externos da revisao anterior** tambem passaram usando
+`NEXTSTOCK_API_URL` em 8000 para os contratos dos mocks; o padrao da aplicacao
+continua sendo a API direta na porta 5000.
+
+Detalhes das causas, arquitetura, testes e commits por funcionalidade:
+[revisao da branch de limpeza](docs/REVISAO_BRANCH_LIMPEZA.md).
 
 ## Models
 
