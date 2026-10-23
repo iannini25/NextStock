@@ -120,7 +120,11 @@ class _LocalDetalheScreenState extends State<LocalDetalheScreen> {
               'O histórico e os produtos continuam ligados a ele.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Desativar')),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Desativar'),
+            ),
           ],
         ),
       );

@@ -62,7 +62,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         content: Text('Desativar o usuário "${u.nome}"? Ele não vai mais conseguir entrar no sistema.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );

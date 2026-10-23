@@ -202,7 +202,9 @@ class _AppShellState extends State<AppShell> {
   // celular: barra de cima com botao de menu + drawer + conteudo
   Widget _layoutCelular() {
     return Scaffold(
+      // mesma cor do menu lateral do computador
       drawer: Drawer(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF12203A) : Colors.white,
         child: SafeArea(
           child: _ListaModulos(
             selecionado: selecionado,

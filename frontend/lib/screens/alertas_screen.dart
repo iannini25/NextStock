@@ -268,7 +268,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(
             modoVencimento
                 ? 'calor antecipa perda; chuva costuma reduzir saída'

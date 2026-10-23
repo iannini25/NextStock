@@ -122,6 +122,11 @@ ThemeData _tema(Brightness brilho) {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: corAzul, width: 2),
       ),
+      // campo desabilitado (ex.: estoque ao editar produto) com o mesmo canto, so mais apagado
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: corBordaCampo.withValues(alpha: 0.5)),
+      ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Colors.red),

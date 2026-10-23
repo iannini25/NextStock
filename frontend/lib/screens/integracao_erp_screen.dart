@@ -150,7 +150,11 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
         content: const Text('Remover a chave da API do ERP? A integração para de funcionar até cadastrar outra.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
