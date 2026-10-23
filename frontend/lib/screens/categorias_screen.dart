@@ -92,6 +92,7 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
       return const Center(child: Text('Nenhuma categoria cadastrada.'));
     }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: categorias.length,
       itemBuilder: (_, i) {
         final c = categorias[i];
@@ -103,9 +104,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(c)),
+                IconButton(tooltip: 'Editar', icon: const Icon(Icons.edit), onPressed: () => abrirForm(c)),
                 if (Sessao.ehAdmin) // so admin exclui
                   IconButton(
+                      tooltip: 'Excluir',
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => excluir(c)),
               ],

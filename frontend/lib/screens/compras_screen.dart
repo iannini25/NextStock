@@ -65,7 +65,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
 
   Widget montarFiltros() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
         children: [
           const Text('Dias:'),

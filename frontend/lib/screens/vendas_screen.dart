@@ -77,7 +77,7 @@ class _VendasScreenState extends State<VendasScreen> {
 
   Widget montarFiltroDias() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
         children: [
           const Text('Vendas dos últimos:'),
@@ -104,6 +104,7 @@ class _VendasScreenState extends State<VendasScreen> {
       return const Center(child: Text('Nenhuma venda nesse período.'));
     }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: lista.length,
       itemBuilder: (_, i) {
         final v = lista[i];

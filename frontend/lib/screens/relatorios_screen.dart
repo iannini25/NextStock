@@ -74,7 +74,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
 
   Widget montarFiltros() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
@@ -281,7 +281,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     for (final item in r.itens) {
       final valor = porFaturamento ? 'R\$ ${item.faturamento.toStringAsFixed(2)}' : '${item.quantidadeVendida} vendidos';
       itens.add(Card(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: coresAbc[item.classe],

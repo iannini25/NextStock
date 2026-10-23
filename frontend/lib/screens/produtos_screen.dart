@@ -235,6 +235,7 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
       );
     }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: produtos.length,
       itemBuilder: (_, i) {
         final p = produtos[i];
@@ -250,10 +251,11 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
+                IconButton(tooltip: 'Editar', icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
                 IconButton(tooltip: 'Lotes', icon: const Icon(Icons.inventory), onPressed: () => abrirLotes(p)),
                 if (Sessao.ehAdmin) // so admin exclui
                   IconButton(
+                      tooltip: 'Excluir',
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => excluir(p)),
               ],

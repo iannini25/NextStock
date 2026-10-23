@@ -96,6 +96,7 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (usuarios.isEmpty) return const Center(child: Text('Nenhum usuário cadastrado.'));
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: usuarios.length,
       itemBuilder: (_, i) {
         final u = usuarios[i];

@@ -76,7 +76,7 @@ class _PrevisaoScreenState extends State<PrevisaoScreen> {
 
   Widget montarFiltros() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
         children: [
           const Text('Dias:'),

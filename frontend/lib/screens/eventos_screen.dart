@@ -95,6 +95,7 @@ class _EventosScreenState extends State<EventosScreen> {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) return const Center(child: Text('Nenhum evento cadastrado.'));
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: lista.length,
       itemBuilder: (_, i) {
         final ev = lista[i];
@@ -108,6 +109,7 @@ class _EventosScreenState extends State<EventosScreen> {
             // so admin exclui
             trailing: Sessao.ehAdmin
                 ? IconButton(
+                    tooltip: 'Excluir',
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => excluir(ev),
                   )
