@@ -75,7 +75,7 @@ class _PerdasScreenState extends State<PerdasScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Row(
               children: [
                 const Text('Período:'),
@@ -144,7 +144,7 @@ class _PerdasScreenState extends State<PerdasScreen> {
 
   Widget montarItem(Perda p) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
         leading: const Icon(Icons.delete_sweep, color: Colors.red),
         title: Text('−${p.quantidade} ${p.unidade ?? ""}  •  ${p.produtoNome ?? ""}  •  R\$ ${p.valorTotal.toStringAsFixed(2)}'),

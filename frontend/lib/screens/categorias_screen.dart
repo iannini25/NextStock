@@ -61,7 +61,11 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
         content: Text('Excluir a categoria "${c.nome}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
@@ -78,9 +82,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Categorias')),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => abrirForm(),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Nova categoria'),
       ),
       body: montarCorpo(),
     );
@@ -89,9 +94,19 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (categorias.isEmpty) {
-      return const Center(child: Text('Nenhuma categoria cadastrada.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.category_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma categoria cadastrada.'),
+          ],
+        ),
+      );
     }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: categorias.length,
       itemBuilder: (_, i) {
         final c = categorias[i];
@@ -103,9 +118,10 @@ class _CategoriasScreenState extends State<CategoriasScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(c)),
+                IconButton(tooltip: 'Editar', icon: const Icon(Icons.edit), onPressed: () => abrirForm(c)),
                 if (Sessao.ehAdmin) // so admin exclui
                   IconButton(
+                      tooltip: 'Excluir',
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => excluir(c)),
               ],

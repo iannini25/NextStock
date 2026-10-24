@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/configuracao_erp.dart';
 import '../models/sincronizacao_erp.dart';
 import '../services/api_service.dart';
@@ -90,7 +91,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
     try {
       final s = await ApiService.sincronizarErp();
       if (!mounted) return;
-      avisar('Sincronização: ${s.nomeStatus.toLowerCase()} — ${s.resumo}');
+      avisar('Sincronização: ${s.nomeStatus.toLowerCase()} - ${s.resumo}');
     } catch (e) {
       mostrarErro(e); // a falha tambem fica no historico
     }
@@ -149,7 +150,11 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
         content: const Text('Remover a chave da API do ERP? A integração para de funcionar até cadastrar outra.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
@@ -171,7 +176,13 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
         title: const Text('Integração ERP'),
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: carregar)],
       ),
-      body: carregando ? const Center(child: CircularProgressIndicator()) : montarFormulario(),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: carregando ? const Center(child: CircularProgressIndicator()) : montarFormulario(),
+        ),
+      ),
     );
   }
 
@@ -255,7 +266,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Sincronização', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text('Sincronização', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 4),
         Text(
           pronto
@@ -283,7 +294,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        const Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 4),
         if (historico.isEmpty)
           const Padding(
@@ -343,7 +354,7 @@ class _IntegracaoErpScreenState extends State<IntegracaoErpScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final l in linhas.skip(1)) Text(l),
-            if (c.aviso != null) Text(c.aviso!, style: const TextStyle(color: Colors.orange)),
+            if (c.aviso != null) Text(c.aviso!, style: const TextStyle(color: corAviso)),
           ],
         ),
       ),

@@ -91,7 +91,7 @@ class _LotesScreenState extends State<LotesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lotes — ${produto.nome}'),
+        title: Text('Lotes - ${produto.nome}'),
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: carregar)],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -169,7 +169,7 @@ class _LotesScreenState extends State<LotesScreen> {
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => MovimentacoesScreen(idLote: l.id, titulo: 'Histórico — ${l.titulo}'),
+                      builder: (_) => MovimentacoesScreen(idLote: l.id, titulo: 'Histórico - ${l.titulo}'),
                     ),
                   ),
                 ),

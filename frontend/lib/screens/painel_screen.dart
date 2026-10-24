@@ -60,40 +60,76 @@ class _PainelScreenState extends State<PainelScreen> {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (painel == null) return const Center(child: Text('Não foi possível carregar o painel.'));
     final p = painel!;
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      children: [
-        montarIndicador('Produtos cadastrados', '${p.totalProdutos}'),
-        montarIndicador('Itens em estoque', '${p.itensEmEstoque}'),
-        montarIndicador('Valor em estoque', 'R\$ ${p.valorEstoque.toStringAsFixed(2)}'),
-        montarIndicador('Produtos vencidos', '${p.produtosVencidos}',
-            cor: p.produtosVencidos > 0 ? Colors.red : null),
-        montarIndicador('Valor perdido com vencidos', 'R\$ ${p.valorVencido.toStringAsFixed(2)}',
-            cor: p.valorVencido > 0 ? Colors.red : null),
-        montarIndicador('Vencendo em 7 dias', '${p.produtosVencendo}',
-            cor: p.produtosVencendo > 0 ? Colors.red : null),
-        montarIndicador('Em risco de faltar', '${p.produtosEmRisco}',
-            cor: p.produtosEmRisco > 0 ? Colors.red : null),
-        montarIndicador('Vendas em 30 dias', '${p.vendas30Dias}'),
-        montarIndicador('Faturamento em 30 dias', 'R\$ ${p.faturamento30Dias.toStringAsFixed(2)}'),
-        montarIndicador('Desperdício', '${p.percentualDesperdicio.toStringAsFixed(2)}%'),
-        montarIndicador('Giro de estoque', p.giroEstoque.toStringAsFixed(2)),
-        // perdas e descartes registrados: o prejuizo fica no historico mesmo depois de jogar o produto fora
-        montarIndicador('Perdas registradas (30 dias)', 'R\$ ${p.valorPerdas30Dias.toStringAsFixed(2)}',
-            cor: p.valorPerdas30Dias > 0 ? Colors.red : null),
-        montarIndicador('Itens perdidos (30 dias)', '${p.quantidadePerdas30Dias}'),
-      ],
+    // os indicadores ficam em grade (mais colunas em tela larga), igual aos atalhos do inicio
+    return LayoutBuilder(
+      builder: (context, restricoes) {
+        final largura = restricoes.maxWidth;
+        final colunas = largura >= 1000
+            ? 4
+            : largura >= 700
+                ? 3
+                : 2;
+        return GridView(
+          padding: const EdgeInsets.all(12),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: colunas,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: 110,
+          ),
+          children: [
+            montarIndicador('Produtos cadastrados', '${p.totalProdutos}'),
+            montarIndicador('Itens em estoque', '${p.itensEmEstoque}'),
+            montarIndicador('Valor em estoque', 'R\$ ${p.valorEstoque.toStringAsFixed(2)}'),
+            montarIndicador('Produtos vencidos', '${p.produtosVencidos}',
+                cor: p.produtosVencidos > 0 ? Colors.red : null),
+            montarIndicador('Valor perdido com vencidos', 'R\$ ${p.valorVencido.toStringAsFixed(2)}',
+                cor: p.valorVencido > 0 ? Colors.red : null),
+            montarIndicador('Vencendo em 7 dias', '${p.produtosVencendo}',
+                cor: p.produtosVencendo > 0 ? Colors.red : null),
+            montarIndicador('Em risco de faltar', '${p.produtosEmRisco}',
+                cor: p.produtosEmRisco > 0 ? Colors.red : null),
+            montarIndicador('Vendas em 30 dias', '${p.vendas30Dias}'),
+            montarIndicador('Faturamento em 30 dias', 'R\$ ${p.faturamento30Dias.toStringAsFixed(2)}'),
+            montarIndicador('Desperdício', '${p.percentualDesperdicio.toStringAsFixed(2)}%'),
+            montarIndicador('Giro de estoque', p.giroEstoque.toStringAsFixed(2)),
+            // perdas e descartes registrados: o prejuizo fica no historico mesmo depois de jogar o produto fora
+            montarIndicador('Perdas registradas (30 dias)', 'R\$ ${p.valorPerdas30Dias.toStringAsFixed(2)}',
+                cor: p.valorPerdas30Dias > 0 ? Colors.red : null),
+            montarIndicador('Itens perdidos (30 dias)', '${p.quantidadePerdas30Dias}'),
+          ],
+        );
+      },
     );
   }
 
+  // cartao do indicador: nome pequeno em cima e o valor grande embaixo
   Widget montarIndicador(String nome, String valor, {Color? cor}) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: ListTile(
-        title: Text(nome),
-        trailing: Text(
-          valor,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: cor),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        // tudo centralizado, igual aos cartoes do inicio
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              nome,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            // se o valor for grande demais pro cartao, ele diminui em vez de cortar
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                valor,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: cor),
+              ),
+            ),
+          ],
         ),
       ),
     );

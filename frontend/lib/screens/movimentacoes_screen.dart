@@ -131,7 +131,7 @@ class _MovimentacoesScreenState extends State<MovimentacoesScreen> {
   Widget montarFiltros() {
     final produtoValido = produtos.any((p) => p.id == produtoId) ? produtoId : null;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Wrap(
         spacing: 12,
         runSpacing: 4,
@@ -217,7 +217,7 @@ class _MovimentacoesScreenState extends State<MovimentacoesScreen> {
       if (m.usuario != null) 'por ${m.usuario}',
     ].join('  •  ');
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
         leading: Icon(m.entrou ? Icons.add_circle : Icons.remove_circle, color: cor),
         title: Text('${m.quantidadeComSinal} ${m.unidade ?? ""}  •  ${m.produtoNome ?? ""}'),

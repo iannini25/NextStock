@@ -36,30 +36,32 @@ class ItemNav {
   final IconData icone;
   final String titulo;
   final bool soAdmin;
-  const ItemNav(this.id, this.icone, this.titulo, {this.soAdmin = false});
+  final String secao; // grupo do menu (aparece como titulo pequeno em cima do grupo)
+  const ItemNav(this.id, this.icone, this.titulo, {this.soAdmin = false, this.secao = ''});
 }
 
+// os itens ficam em grupos pra achar mais facil no menu
 const List<ItemNav> modulosNav = [
-  ItemNav('inicio', Icons.home, 'Início'),
-  ItemNav('produtos', Icons.inventory_2, 'Produtos'),
-  ItemNav('alertas', Icons.notifications, 'Alertas'),
-  ItemNav('assistente', Icons.smart_toy, 'Assistente'),
-  ItemNav('categorias', Icons.category, 'Categorias'),
-  ItemNav('vendas', Icons.point_of_sale, 'Vendas'),
-  ItemNav('movimentacoes', Icons.swap_vert, 'Movimentações'),
-  ItemNav('perdas', Icons.delete_sweep, 'Perdas'),
-  ItemNav('armazenamento', Icons.thermostat, 'Armazenamento'),
-  ItemNav('eventos', Icons.event, 'Eventos'),
-  ItemNav('previsao', Icons.trending_up, 'Previsão'),
-  ItemNav('compras', Icons.shopping_cart, 'Compras'),
-  ItemNav('reposicao', Icons.autorenew, 'Reposição'),
-  ItemNav('painel', Icons.dashboard, 'Painel'),
-  ItemNav('recomendacoes', Icons.lightbulb, 'Recomendações'),
-  ItemNav('relatorios', Icons.bar_chart, 'Relatórios'),
-  ItemNav('importar', Icons.cloud_upload, 'Importar', soAdmin: true),
-  ItemNav('erp', Icons.hub, 'Integração ERP', soAdmin: true),
-  ItemNav('empresa', Icons.business, 'Empresa'),
-  ItemNav('usuarios', Icons.people, 'Usuários', soAdmin: true),
+  ItemNav('inicio', Icons.home, 'Início', secao: 'Principal'),
+  ItemNav('alertas', Icons.notifications, 'Alertas', secao: 'Principal'),
+  ItemNav('assistente', Icons.smart_toy, 'Assistente', secao: 'Principal'),
+  ItemNav('produtos', Icons.inventory_2, 'Produtos', secao: 'Estoque'),
+  ItemNav('categorias', Icons.category, 'Categorias', secao: 'Estoque'),
+  ItemNav('movimentacoes', Icons.swap_vert, 'Movimentações', secao: 'Estoque'),
+  ItemNav('perdas', Icons.delete_sweep, 'Perdas', secao: 'Estoque'),
+  ItemNav('armazenamento', Icons.thermostat, 'Armazenamento', secao: 'Estoque'),
+  ItemNav('vendas', Icons.point_of_sale, 'Vendas', secao: 'Vendas e planejamento'),
+  ItemNav('eventos', Icons.event, 'Eventos', secao: 'Vendas e planejamento'),
+  ItemNav('previsao', Icons.trending_up, 'Previsão', secao: 'Vendas e planejamento'),
+  ItemNav('compras', Icons.shopping_cart, 'Compras', secao: 'Vendas e planejamento'),
+  ItemNav('reposicao', Icons.autorenew, 'Reposição', secao: 'Vendas e planejamento'),
+  ItemNav('painel', Icons.dashboard, 'Painel', secao: 'Análises'),
+  ItemNav('recomendacoes', Icons.lightbulb, 'Recomendações', secao: 'Análises'),
+  ItemNav('relatorios', Icons.bar_chart, 'Relatórios', secao: 'Análises'),
+  ItemNav('importar', Icons.cloud_upload, 'Importar', soAdmin: true, secao: 'Configurações'),
+  ItemNav('erp', Icons.hub, 'Integração ERP', soAdmin: true, secao: 'Configurações'),
+  ItemNav('empresa', Icons.business, 'Empresa', secao: 'Configurações'),
+  ItemNav('usuarios', Icons.people, 'Usuários', soAdmin: true, secao: 'Configurações'),
 ];
 
 // os itens que quem esta logado pode ver
@@ -175,13 +177,22 @@ class _AppShellState extends State<AppShell> {
       body: Column(
         children: [
           const BarraTopo(),
+          const Divider(height: 1),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _BarraLateral(selecionado: selecionado, alertas: alertas, aoSelecionar: _selecionar),
                 const VerticalDivider(width: 1),
-                Expanded(child: _corpo()),
+                // em tela grande a tela do modulo fica no meio, com largura maxima
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: _corpo(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -193,7 +204,9 @@ class _AppShellState extends State<AppShell> {
   // celular: barra de cima com botao de menu + drawer + conteudo
   Widget _layoutCelular() {
     return Scaffold(
+      // mesma cor do menu lateral do computador
       drawer: Drawer(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF12203A) : Colors.white,
         child: SafeArea(
           child: _ListaModulos(
             selecionado: selecionado,
@@ -213,6 +226,7 @@ class _AppShellState extends State<AppShell> {
               alertas: alertas?.total ?? 0, // no celular o menu fica fechado: o selo vai no botao dele
             ),
           ),
+          const Divider(height: 1),
           Expanded(child: _corpo()),
         ],
       ),
@@ -237,11 +251,79 @@ class BarraTopo extends StatelessWidget {
     );
   }
 
+  // botao com a inicial do usuario. clicando abre um menuzinho com o nome, o perfil e o Sair
+  Widget _usuario(BuildContext context, Usuario usuario, Color corTexto) {
+    final inicial = usuario.nome.trim().isEmpty ? '?' : usuario.nome.trim()[0].toUpperCase();
+    // no celular so a bolinha, pra caber na barra
+    final mostrarNome = aoAbrirMenu == null;
+    return PopupMenuButton<String>(
+      tooltip: 'Conta',
+      offset: const Offset(0, 48),
+      onSelected: (opcao) {
+        if (opcao == 'sair') Sessao.sair();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                usuario.nome,
+                style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+              ),
+              Text(usuario.nomePerfil, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: 'sair',
+          child: Row(
+            children: [
+              Icon(Icons.logout, size: 20),
+              SizedBox(width: 12),
+              Text('Sair'),
+            ],
+          ),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: corAzul,
+              child: Text(
+                inicial,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (mostrarNome) ...[
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 180),
+                child: Text(
+                  usuario.nome,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: corTexto, fontWeight: FontWeight.w600),
+                ),
+              ),
+              Icon(Icons.expand_more, color: corTexto),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final escuro = Theme.of(context).brightness == Brightness.dark;
-    // claro: branco (igual ao fundo). escuro: azul escuro medio pra ver a logo.
-    final corBarra = escuro ? const Color(0xFF1D3A63) : Colors.white;
+    // mesma cor do menu lateral: branco no claro, azul escuro no escuro
+    final corBarra = escuro ? const Color(0xFF12203A) : Colors.white;
     final corIcone = escuro ? Colors.white : corNavy;
 
     return AnimatedContainer(
@@ -250,11 +332,11 @@ class BarraTopo extends StatelessWidget {
       color: corBarra,
       child: Material(
         color: Colors.transparent,
-        elevation: 2,
         child: SafeArea(
           bottom: false,
           child: SizedBox(
             height: 64,
+            // marca no canto esquerdo; tema e usuario no canto direito
             child: Row(
               children: [
                 if (aoAbrirMenu != null)
@@ -267,37 +349,11 @@ class BarraTopo extends StatelessWidget {
                     onPressed: aoAbrirMenu,
                   )
                 else
-                  const SizedBox(width: 16),
-                _marca(escuro, 'assets/logo.png', 40),
+                  const SizedBox(width: 20),
+                _marca(escuro, 'assets/logo.png', 36),
                 const SizedBox(width: 10),
-                _marca(escuro, 'assets/nome.png', 30),
+                _marca(escuro, 'assets/nome.png', 26),
                 const Spacer(),
-                // quem esta logado + botao de sair (o nome encolhe com reticencias em tela pequena)
-                Flexible(
-                  child: ValueListenableBuilder<Usuario?>(
-                    valueListenable: Sessao.usuario,
-                    builder: (_, usuario, _) {
-                      if (usuario == null) return const SizedBox.shrink();
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              usuario.nome,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: corIcone, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Sair',
-                            icon: Icon(Icons.logout, color: corIcone),
-                            onPressed: () => Sessao.sair(),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: modoTema,
                   builder: (_, modo, _) {
@@ -312,7 +368,14 @@ class BarraTopo extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(width: 8),
+                ValueListenableBuilder<Usuario?>(
+                  valueListenable: Sessao.usuario,
+                  builder: (_, usuario, _) {
+                    if (usuario == null) return const SizedBox.shrink();
+                    return _usuario(context, usuario, corIcone);
+                  },
+                ),
+                const SizedBox(width: 12),
               ],
             ),
           ),
@@ -331,9 +394,11 @@ class _BarraLateral extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // mesma familia de cor da barra de cima: branco no claro, azul escuro no escuro
+    final escuro = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 240,
-      color: Theme.of(context).colorScheme.surface,
+      color: escuro ? const Color(0xFF12203A) : Colors.white,
       child: _ListaModulos(selecionado: selecionado, alertas: alertas, aoSelecionar: aoSelecionar),
     );
   }
@@ -376,19 +441,45 @@ class _ListaModulos extends StatelessWidget {
       itemBuilder: (_, i) {
         final m = modulos[i];
         final sel = m.id == selecionado;
-        return ListTile(
-          leading: Icon(m.icone, color: sel ? corAzul : null),
-          title: Text(
-            m.titulo,
-            style: TextStyle(
-              color: sel ? corAzul : null,
-              fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
+        // mostra o nome do grupo antes do primeiro item de cada grupo
+        final comecaSecao = i == 0 || modulos[i - 1].secao != m.secao;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (comecaSecao)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 16, 6),
+                child: Text(
+                  m.secao.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            // espaco dos lados pro fundo do item selecionado ficar arredondado
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+              child: ListTile(
+                dense: true,
+                leading: Icon(m.icone, color: sel ? corAzul : null),
+                title: Text(
+                  m.titulo,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: sel ? corAzul : null,
+                    fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                trailing: _selo(m),
+                selected: sel,
+                selectedTileColor: corAzul.withValues(alpha: 0.12),
+                onTap: () => aoSelecionar(m.id),
+              ),
             ),
-          ),
-          trailing: _selo(m),
-          selected: sel,
-          selectedTileColor: corAzul.withValues(alpha: 0.10),
-          onTap: () => aoSelecionar(m.id),
+          ],
         );
       },
     );

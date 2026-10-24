@@ -120,7 +120,11 @@ class _LocalDetalheScreenState extends State<LocalDetalheScreen> {
               'O histórico e os produtos continuam ligados a ele.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Desativar')),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Desativar'),
+            ),
           ],
         ),
       );
@@ -161,21 +165,27 @@ class _LocalDetalheScreenState extends State<LocalDetalheScreen> {
           ? const Center(child: CircularProgressIndicator())
           : l == null
               ? const Center(child: Text('Não foi possível carregar o local.'))
-              : ListView(
-                  padding: const EdgeInsets.all(12),
-                  children: [
-                    montarSituacao(l),
-                    if (l.ativo) montarLeitura(),
-                    montarProdutos(l),
-                    montarHistorico(l),
-                  ],
+              // no computador o conteudo fica no meio e nao estica na tela toda
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: ListView(
+                      padding: const EdgeInsets.all(12),
+                      children: [
+                        montarSituacao(l),
+                        if (l.ativo) montarLeitura(),
+                        montarProdutos(l),
+                        montarHistorico(l),
+                      ],
+                    ),
+                  ),
                 ),
     );
   }
 
   Widget titulo(String texto) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-        child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        child: Text(texto, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary)),
       );
 
   Widget montarSituacao(LocalArmazenamento l) {

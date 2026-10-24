@@ -62,7 +62,11 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
         content: Text('Desativar o usuário "${u.nome}"? Ele não vai mais conseguir entrar no sistema.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
@@ -84,9 +88,10 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => abrirForm(),
-        child: const Icon(Icons.person_add),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Novo usuário'),
       ),
       body: montarCorpo(),
     );
@@ -94,8 +99,20 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   Widget montarCorpo() {
     if (carregando) return const Center(child: CircularProgressIndicator());
-    if (usuarios.isEmpty) return const Center(child: Text('Nenhum usuário cadastrado.'));
+    if (usuarios.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.people_outline, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhum usuário cadastrado.'),
+          ],
+        ),
+      );
+    }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: usuarios.length,
       itemBuilder: (_, i) {
         final u = usuarios[i];

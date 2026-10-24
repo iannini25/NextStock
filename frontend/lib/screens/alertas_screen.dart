@@ -156,35 +156,19 @@ class _AlertasScreenState extends State<AlertasScreen> {
   Widget montarBotoes() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('vencendo'),
-              icon: const Icon(Icons.event_busy, size: 18),
-              label: const Text('Vencendo'),
-              style: estiloBotao(modoVencimento),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('falta'),
-              icon: const Icon(Icons.trending_down, size: 18),
-              label: const Text('Vai faltar'),
-              style: estiloBotao(modo == 'falta'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => trocarModo('excesso'),
-              icon: const Icon(Icons.inventory, size: 18),
-              label: const Text('Excesso'),
-              style: estiloBotao(modoExcesso),
-            ),
-          ),
-        ],
+      // seletor com os 3 modos lado a lado (o escolhido fica azul)
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'vencendo', icon: Icon(Icons.event_busy, size: 18), label: Text('Vencendo')),
+            ButtonSegment(value: 'falta', icon: Icon(Icons.trending_down, size: 18), label: Text('Vai faltar')),
+            ButtonSegment(value: 'excesso', icon: Icon(Icons.inventory, size: 18), label: Text('Excesso')),
+          ],
+          selected: {modo},
+          showSelectedIcon: false,
+          onSelectionChanged: (escolhido) => trocarModo(escolhido.first),
+        ),
       ),
     );
   }
@@ -229,14 +213,6 @@ class _AlertasScreenState extends State<AlertasScreen> {
     );
   }
 
-  ButtonStyle estiloBotao(bool ativo) {
-    return ElevatedButton.styleFrom(
-      backgroundColor: ativo ? corAzul : Colors.grey.shade300,
-      foregroundColor: ativo ? Colors.white : Colors.black87,
-      elevation: ativo ? 2 : 0,
-    );
-  }
-
   Widget montarFiltroDias() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -267,7 +243,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(
             modoVencimento
                 ? 'calor antecipa perda; chuva costuma reduzir saída'
@@ -279,7 +255,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
           if (avisoClima != null && avisoClima!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: Colors.orange)),
+              child: Text(avisoClima!, style: const TextStyle(fontSize: 12, color: corAviso)),
             ),
           const SizedBox(height: 8),
           if (climaDias.isEmpty)
@@ -376,11 +352,15 @@ class _AlertasScreenState extends State<AlertasScreen> {
       itemCount: excessos.length + 1,
       itemBuilder: (_, i) {
         if (i == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: Text(
-              '${excessos.length} alerta(s)  •  R\$ ${total.toStringAsFixed(2)} em risco',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          // resumo no topo, igual ao da tela de perdas
+          return Card(
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                '${excessos.length} alerta(s)  •  R\$ ${total.toStringAsFixed(2)} em risco',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           );
         }
@@ -451,7 +431,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
     }
     // quais lotes (e quanto de cada) estao vencendo
     for (final l in lotesPorProduto[p.id] ?? <Lote>[]) {
-      texto += '\n${l.titulo}: ${l.quantidadeAtual} ${l.unidade ?? ""} — ${l.textoValidade}';
+      texto += '\n${l.titulo}: ${l.quantidadeAtual} ${l.unidade ?? ""} - ${l.textoValidade}';
     }
     return texto;
   }

@@ -65,7 +65,7 @@ class _ComprasScreenState extends State<ComprasScreen> {
 
   Widget montarFiltros() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
         children: [
           const Text('Dias:'),
@@ -115,14 +115,29 @@ class _ComprasScreenState extends State<ComprasScreen> {
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (lista.isEmpty) {
-      return const Center(child: Text('Nenhuma compra sugerida.'));
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhuma compra sugerida.'),
+          ],
+        ),
+      );
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ListTile(
-          title: Text(
-            'Total estimado: R\$ ${calcularTotal().toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+        // resumo no topo, igual ao da tela de perdas
+        Card(
+          margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              'Total estimado: R\$ ${calcularTotal().toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ),
         ),
         Expanded(
@@ -139,7 +154,10 @@ class _ComprasScreenState extends State<ComprasScreen> {
                     'estoque: ${s.estoqueAtual} (mín: ${s.estoqueMinimo})  •  '
                     'previsão: ${s.previsaoDemanda}',
                   ),
-                  trailing: Text('R\$ ${s.custoEstimado.toStringAsFixed(2)}'),
+                  trailing: Text(
+                    'R\$ ${s.custoEstimado.toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               );
             },

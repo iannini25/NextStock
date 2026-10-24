@@ -129,7 +129,11 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
         content: Text('Excluir o produto "${p.nome}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
@@ -146,9 +150,10 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Produtos')),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => abrirForm(),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Novo produto'),
       ),
       body: Column(
         children: [
@@ -231,10 +236,18 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
     if (carregando) return const Center(child: CircularProgressIndicator());
     if (produtos.isEmpty) {
       return Center(
-        child: Text(temFiltro ? 'Nenhum produto encontrado com esses filtros.' : 'Nenhum produto cadastrado.'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey),
+            const SizedBox(height: 8),
+            Text(temFiltro ? 'Nenhum produto encontrado com esses filtros.' : 'Nenhum produto cadastrado.'),
+          ],
+        ),
       );
     }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: produtos.length,
       itemBuilder: (_, i) {
         final p = produtos[i];
@@ -250,10 +263,11 @@ class _ProdutosScreenState extends State<ProdutosScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
+                IconButton(tooltip: 'Editar', icon: const Icon(Icons.edit), onPressed: () => abrirForm(p)),
                 IconButton(tooltip: 'Lotes', icon: const Icon(Icons.inventory), onPressed: () => abrirLotes(p)),
                 if (Sessao.ehAdmin) // so admin exclui
                   IconButton(
+                      tooltip: 'Excluir',
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => excluir(p)),
               ],

@@ -120,67 +120,86 @@ class _ImportarErpScreenState extends State<ImportarErpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Importar planilha')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'O NextStock só aceita as colunas do modelo. Baixe o arquivo, preencha e envie um CSV ou XLSX. Colunas a mais são ignoradas. A segunda linha do modelo é um exemplo — apague ou substitua.',
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: modulo,
-            decoration: const InputDecoration(
-              labelText: 'Módulo',
-              border: OutlineInputBorder(),
-            ),
-            items: [
-              for (final e in modulos.entries)
-                DropdownMenuItem(value: e.key, child: Text(e.value['label']!)),
-            ],
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() {
-                modulo = v;
-                resultado = null;
-                nomeArquivo = null;
-                bytesArquivo = null;
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          Text('Colunas: ${info['colunas']}'),
-          const SizedBox(height: 4),
-          Text('Obrigatórias: ${info['obrigatorias']}'),
-          const SizedBox(height: 4),
-          Text(info['dica']!),
-          const SizedBox(height: 16),
-          Row(
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: baixando ? null : baixarModelo,
-                  child: Text(baixando ? 'Baixando...' : 'Baixar modelo'),
+              const Text(
+                'O NextStock só aceita as colunas do modelo. Baixe o arquivo, preencha e envie um CSV ou XLSX. Colunas a mais são ignoradas. A segunda linha do modelo é um exemplo - apague ou substitua.',
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: modulo,
+                decoration: const InputDecoration(
+                  labelText: 'Módulo',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  for (final e in modulos.entries)
+                    DropdownMenuItem(value: e.key, child: Text(e.value['label']!)),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() {
+                    modulo = v;
+                    resultado = null;
+                    nomeArquivo = null;
+                    bytesArquivo = null;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              // informacoes do modulo escolhido num card
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Colunas: ${info['colunas']}'),
+                      const SizedBox(height: 4),
+                      Text('Obrigatórias: ${info['obrigatorias']}'),
+                      const SizedBox(height: 4),
+                      Text(info['dica']!),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: escolherArquivo,
-                  child: const Text('Escolher arquivo'),
-                ),
+              const SizedBox(height: 16),
+              // os dois primeiros botoes sao de apoio, o principal e o Importar
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: baixando ? null : baixarModelo,
+                      child: Text(baixando ? 'Baixando...' : 'Baixar modelo'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: escolherArquivo,
+                      child: const Text('Escolher arquivo'),
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 12),
+              Text(nomeArquivo == null ? 'Nenhum arquivo selecionado' : 'Arquivo: $nomeArquivo'),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: importando ? null : importar,
+                child: Text(importando ? 'Importando...' : 'Importar'),
+              ),
+              const SizedBox(height: 16),
+              if (resultado != null) montarResultado(),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(nomeArquivo == null ? 'Nenhum arquivo selecionado' : 'Arquivo: $nomeArquivo'),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: importando ? null : importar,
-            child: Text(importando ? 'Importando...' : 'Importar'),
-          ),
-          const SizedBox(height: 16),
-          if (resultado != null) montarResultado(),
-        ],
+        ),
       ),
     );
   }

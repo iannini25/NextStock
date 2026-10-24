@@ -90,17 +90,42 @@ class _AssistenteScreenState extends State<AssistenteScreen> {
 
   Widget montarMensagens() {
     return ListView.builder(
+      padding: const EdgeInsets.all(12),
       itemCount: mensagens.length,
       itemBuilder: (_, i) {
         final m = mensagens[i];
         final ehUsuario = m.papel == 'usuario';
-        return ListTile(
-          leading: Icon(
-            ehUsuario ? Icons.person : Icons.smart_toy,
-            color: corAzul,
+        // cada mensagem vira um balao: o da pessoa na direita, o do assistente na esquerda
+        return Align(
+          alignment: ehUsuario ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ehUsuario ? corAzul.withValues(alpha: 0.12) : Theme.of(context).cardTheme.color,
+              border: Border.all(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(ehUsuario ? Icons.person : Icons.smart_toy, color: corAzul, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      ehUsuario ? 'Você' : 'Assistente',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(m.texto),
+              ],
+            ),
           ),
-          title: Text(ehUsuario ? 'Você' : 'Assistente'),
-          subtitle: Text(m.texto),
         );
       },
     );
@@ -122,8 +147,10 @@ class _AssistenteScreenState extends State<AssistenteScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.send, color: corAzul),
+          IconButton.filled(
+            tooltip: 'Enviar',
+            style: IconButton.styleFrom(backgroundColor: corAzul, foregroundColor: Colors.white),
+            icon: const Icon(Icons.send),
             onPressed: enviando ? null : enviar,
           ),
         ],

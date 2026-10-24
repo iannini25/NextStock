@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../main.dart';
 import '../models/previa_venda.dart';
 import '../models/produto.dart';
 import '../models/venda.dart';
@@ -116,19 +117,25 @@ class _VendaFormState extends State<VendaForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Nova venda')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          montarDropdown(),
-          campo(quantidade, 'Quantidade *', numero: true, aoMudar: (_) => atualizarPrevia()),
-          campo(data, 'Data (aaaa-mm-dd, vazio = hoje)'),
-          if (previa != null) montarPrevia(previa!),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: salvando ? null : salvar,
-            child: Text(salvando ? 'Salvando...' : 'Registrar venda'),
+      // no computador o formulario nao estica na tela toda
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              montarDropdown(),
+              campo(quantidade, 'Quantidade *', numero: true, aoMudar: (_) => atualizarPrevia()),
+              campo(data, 'Data (aaaa-mm-dd, vazio = hoje)'),
+              if (previa != null) montarPrevia(previa!),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: salvando ? null : salvar,
+                child: Text(salvando ? 'Salvando...' : 'Registrar venda'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -147,7 +154,7 @@ class _VendaFormState extends State<VendaForm> {
               Text('• ${s.texto}', style: TextStyle(color: s.vencido ? Colors.red : null)),
             if (!p.suficiente)
               Text('Estoque insuficiente: faltam ${p.falta}', style: const TextStyle(color: Colors.red)),
-            if (p.aviso != null) Text(p.aviso!, style: const TextStyle(color: Colors.orange)),
+            if (p.aviso != null) Text(p.aviso!, style: const TextStyle(color: corAviso)),
           ],
         ),
       ),

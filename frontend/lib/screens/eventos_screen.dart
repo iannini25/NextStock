@@ -61,7 +61,11 @@ class _EventosScreenState extends State<EventosScreen> {
         content: Text('Excluir o evento "${ev.nome}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Não')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sim')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim'),
+          ),
         ],
       ),
     );
@@ -83,9 +87,10 @@ class _EventosScreenState extends State<EventosScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: carregar),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: abrirForm,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Novo evento'),
       ),
       body: montarLista(),
     );
@@ -93,8 +98,20 @@ class _EventosScreenState extends State<EventosScreen> {
 
   Widget montarLista() {
     if (carregando) return const Center(child: CircularProgressIndicator());
-    if (lista.isEmpty) return const Center(child: Text('Nenhum evento cadastrado.'));
+    if (lista.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.event_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhum evento cadastrado.'),
+          ],
+        ),
+      );
+    }
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // espaco pro botao
       itemCount: lista.length,
       itemBuilder: (_, i) {
         final ev = lista[i];
@@ -108,6 +125,7 @@ class _EventosScreenState extends State<EventosScreen> {
             // so admin exclui
             trailing: Sessao.ehAdmin
                 ? IconButton(
+                    tooltip: 'Excluir',
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => excluir(ev),
                   )
