@@ -12,7 +12,7 @@ Sao duas partes: uma API em Flask com banco MySQL e um aplicativo em Flutter que
 * Jose Augusto
 * Manuella Zanola
 * Matheus Freitas Martins
-* Renan
+* Renan Mulinari
 * Gabriel Abi-Acl
 
 ## Stack
