@@ -18,7 +18,7 @@ from models.perda_model import Perda
 from models.local_armazenamento_model import LocalArmazenamento
 from models.leitura_temperatura_model import LeituraTemperatura
 from services.estoque_lote_service import criar_lotes_iniciais, preencher_historico
-from infrastructure.migracao_armazenamento import MigrarArmazenamento
+from database.migracao_armazenamento import MigrarArmazenamento
 from controllers.categoria_controller import cat_bp
 from controllers.produto_controller import prod_bp
 from controllers.venda_controller import venda_bp
