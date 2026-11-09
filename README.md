@@ -40,7 +40,7 @@ Tela (Flutter) -> API Flask -> Controller -> Service -> Model / Repository -> My
   Service e devolve o JSON. Nao tem regra de negocio nem SQL.
 
 No app Flutter: `models/` com as classes, `services/api_service.dart` com as chamadas http e
-`screens/` com as telas. Sem gerenciador de estado, so `StatefulWidget` com `setState`.
+`views/` com as telas. Sem gerenciador de estado, so `StatefulWidget` com `setState`.
 
 ## Funcionalidades Implementadas
 
@@ -276,7 +276,7 @@ NextStock/
 │       ├── models/             # as classes do app
 │       ├── services/
 │       │   └── api_service.dart # todas as chamadas http
-│       └── screens/            # as telas
+│       └── views/              # as telas
 └── tools/                      # simuladores usados so para testar
     ├── erp_simulado/
     └── simular_sensor.py

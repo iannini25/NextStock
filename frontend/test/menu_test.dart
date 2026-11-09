@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nextstock/screens/empresa_screen.dart';
-import 'package:nextstock/screens/produtos_screen.dart';
-import 'package:nextstock/screens/usuarios_screen.dart';
+import 'package:nextstock/views/empresa_screen.dart';
+import 'package:nextstock/views/produtos_screen.dart';
+import 'package:nextstock/views/usuarios_screen.dart';
 import 'package:nextstock/shell/app_shell.dart';
 
 import 'apoio/api_falsa.dart';

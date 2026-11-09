@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/login_screen.dart';
-import '../screens/setup_screen.dart';
+import '../views/login_screen.dart';
+import '../views/setup_screen.dart';
 import '../services/api_service.dart';
 import '../services/sessao.dart';
 import 'app_shell.dart';

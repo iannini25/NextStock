@@ -16,7 +16,7 @@ lib/
 ├── services/
 │   ├── api_service.dart       # todas as chamadas http e o tratamento de erro
 │   └── sessao.dart            # guarda o token de quem esta logado
-└── screens/                   # as telas e os formularios
+└── views/                     # as telas e os formularios
 ```
 
 ## Como rodar

@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nextstock/models/produto.dart';
-import 'package:nextstock/screens/lotes_screen.dart';
-import 'package:nextstock/screens/recomendacoes_screen.dart';
-import 'package:nextstock/screens/venda_form.dart';
+import 'package:nextstock/views/lotes_screen.dart';
+import 'package:nextstock/views/recomendacoes_screen.dart';
+import 'package:nextstock/views/venda_form.dart';
 
 import 'apoio/api_falsa.dart';
 import 'apoio/dados.dart';
